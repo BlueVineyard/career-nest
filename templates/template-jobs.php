@@ -174,6 +174,16 @@ $job_types = get_terms([
     'taxonomy' => 'job_type',
     'hide_empty' => true,
 ]);
+
+// Get filter settings
+$filter_settings = get_option('careernest_options', []);
+$show_category = isset($filter_settings['filter_category']) ? $filter_settings['filter_category'] === '1' : true;
+$show_job_type = isset($filter_settings['filter_job_type']) ? $filter_settings['filter_job_type'] === '1' : true;
+$show_location = isset($filter_settings['filter_location']) ? $filter_settings['filter_location'] === '1' : true;
+$show_employer = isset($filter_settings['filter_employer']) ? $filter_settings['filter_employer'] === '1' : true;
+$show_salary = isset($filter_settings['filter_salary']) ? $filter_settings['filter_salary'] === '1' : true;
+$show_date_posted = isset($filter_settings['filter_date_posted']) ? $filter_settings['filter_date_posted'] === '1' : true;
+$show_sort = isset($filter_settings['filter_sort']) ? $filter_settings['filter_sort'] === '1' : true;
 ?>
 
 <main id="primary" class="site-main cn-jobs-page">
@@ -236,7 +246,7 @@ $job_types = get_terms([
                         </div>
 
                         <!-- Category Filter -->
-                        <?php if (!empty($job_categories) && !is_wp_error($job_categories)): ?>
+                        <?php if ($show_category && !empty($job_categories) && !is_wp_error($job_categories)): ?>
                             <div class="cn-filter-group">
                                 <label for="job_category" class="cn-filter-label">
                                     <?php esc_html_e('Category', 'careernest'); ?>
@@ -257,7 +267,7 @@ $job_types = get_terms([
                         <?php endif; ?>
 
                         <!-- Job Type Filter -->
-                        <?php if (!empty($job_types) && !is_wp_error($job_types)): ?>
+                        <?php if ($show_job_type && !empty($job_types) && !is_wp_error($job_types)): ?>
                             <div class="cn-filter-group">
                                 <label for="job_type" class="cn-filter-label">
                                     <?php esc_html_e('Job Type', 'careernest'); ?>
@@ -277,15 +287,17 @@ $job_types = get_terms([
                         <?php endif; ?>
 
                         <!-- Location Filter -->
-                        <div class="cn-filter-group">
-                            <label for="job_location" class="cn-filter-label">
-                                <?php esc_html_e('Location', 'careernest'); ?>
-                            </label>
-                            <input type="text" id="job_location" name="job_location"
-                                value="<?php echo esc_attr($selected_location); ?>"
-                                placeholder="<?php esc_attr_e('City, state, or region...', 'careernest'); ?>"
-                                class="cn-filter-input" />
-                        </div>
+                        <?php if ($show_location): ?>
+                            <div class="cn-filter-group">
+                                <label for="job_location" class="cn-filter-label">
+                                    <?php esc_html_e('Location', 'careernest'); ?>
+                                </label>
+                                <input type="text" id="job_location" name="job_location"
+                                    value="<?php echo esc_attr($selected_location); ?>"
+                                    placeholder="<?php esc_attr_e('City, state, or region...', 'careernest'); ?>"
+                                    class="cn-filter-input" />
+                            </div>
+                        <?php endif; ?>
 
                         <!-- Employer Filter -->
                         <?php
@@ -296,7 +308,7 @@ $job_types = get_terms([
                             'order' => 'ASC',
                             'post_status' => 'publish',
                         ]);
-                        if (!empty($employers)): ?>
+                        if ($show_employer && !empty($employers)): ?>
                             <div class="cn-filter-group">
                                 <label for="employer" class="cn-filter-label">
                                     <?php esc_html_e('Employer', 'careernest'); ?>
@@ -316,62 +328,68 @@ $job_types = get_terms([
                         <?php endif; ?>
 
                         <!-- Salary Range Filter -->
-                        <div class="cn-filter-group">
-                            <label class="cn-filter-label">
-                                <?php esc_html_e('Salary Range', 'careernest'); ?>
-                                <span id="salary-range-display" class="cn-salary-display">
-                                    $<?php echo esc_html(number_format($min_salary ?: 0)); ?> -
-                                    $<?php echo esc_html(number_format($max_salary ?: 200000)); ?>
-                                </span>
-                            </label>
-                            <div class="cn-range-inputs">
-                                <input type="range" id="min_salary" name="min_salary" min="0" max="200000" step="5000"
-                                    value="<?php echo esc_attr($min_salary ?: 0); ?>" class="cn-range-slider" />
-                                <input type="range" id="max_salary" name="max_salary" min="0" max="200000" step="5000"
-                                    value="<?php echo esc_attr($max_salary ?: 200000); ?>" class="cn-range-slider" />
+                        <?php if ($show_salary): ?>
+                            <div class="cn-filter-group">
+                                <label class="cn-filter-label">
+                                    <?php esc_html_e('Salary Range', 'careernest'); ?>
+                                    <span id="salary-range-display" class="cn-salary-display">
+                                        $<?php echo esc_html(number_format($min_salary ?: 0)); ?> -
+                                        $<?php echo esc_html(number_format($max_salary ?: 200000)); ?>
+                                    </span>
+                                </label>
+                                <div class="cn-range-inputs">
+                                    <input type="range" id="min_salary" name="min_salary" min="0" max="200000" step="5000"
+                                        value="<?php echo esc_attr($min_salary ?: 0); ?>" class="cn-range-slider" />
+                                    <input type="range" id="max_salary" name="max_salary" min="0" max="200000" step="5000"
+                                        value="<?php echo esc_attr($max_salary ?: 200000); ?>" class="cn-range-slider" />
+                                </div>
+                                <div class="cn-range-labels">
+                                    <span>$0</span>
+                                    <span>$200k+</span>
+                                </div>
                             </div>
-                            <div class="cn-range-labels">
-                                <span>$0</span>
-                                <span>$200k+</span>
-                            </div>
-                        </div>
+                        <?php endif; ?>
 
                         <!-- Date Posted Filter -->
-                        <div class="cn-filter-group">
-                            <label for="date_posted" class="cn-filter-label">
-                                <?php esc_html_e('Date Posted', 'careernest'); ?>
-                            </label>
-                            <div class="cn-custom-select-wrapper" data-icon="calendar">
-                                <select name="date_posted" id="date_posted" class="cn-filter-select cn-custom-select">
-                                    <option value=""><?php esc_html_e('Any Time', 'careernest'); ?></option>
-                                    <option value="24h" <?php selected($date_posted, '24h'); ?>>
-                                        <?php esc_html_e('Last 24 Hours', 'careernest'); ?></option>
-                                    <option value="7d" <?php selected($date_posted, '7d'); ?>>
-                                        <?php esc_html_e('Last 7 Days', 'careernest'); ?></option>
-                                    <option value="30d" <?php selected($date_posted, '30d'); ?>>
-                                        <?php esc_html_e('Last 30 Days', 'careernest'); ?></option>
-                                </select>
+                        <?php if ($show_date_posted): ?>
+                            <div class="cn-filter-group">
+                                <label for="date_posted" class="cn-filter-label">
+                                    <?php esc_html_e('Date Posted', 'careernest'); ?>
+                                </label>
+                                <div class="cn-custom-select-wrapper" data-icon="calendar">
+                                    <select name="date_posted" id="date_posted" class="cn-filter-select cn-custom-select">
+                                        <option value=""><?php esc_html_e('Any Time', 'careernest'); ?></option>
+                                        <option value="24h" <?php selected($date_posted, '24h'); ?>>
+                                            <?php esc_html_e('Last 24 Hours', 'careernest'); ?></option>
+                                        <option value="7d" <?php selected($date_posted, '7d'); ?>>
+                                            <?php esc_html_e('Last 7 Days', 'careernest'); ?></option>
+                                        <option value="30d" <?php selected($date_posted, '30d'); ?>>
+                                            <?php esc_html_e('Last 30 Days', 'careernest'); ?></option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
+                        <?php endif; ?>
 
                         <!-- Sort By -->
-                        <div class="cn-filter-group">
-                            <label for="sort" class="cn-filter-label">
-                                <?php esc_html_e('Sort By', 'careernest'); ?>
-                            </label>
-                            <div class="cn-custom-select-wrapper" data-icon="sort">
-                                <select name="sort" id="sort" class="cn-filter-select cn-custom-select">
-                                    <option value="date_desc" <?php selected($sort_by, 'date_desc'); ?>>
-                                        <?php esc_html_e('Newest First', 'careernest'); ?></option>
-                                    <option value="date_asc" <?php selected($sort_by, 'date_asc'); ?>>
-                                        <?php esc_html_e('Oldest First', 'careernest'); ?></option>
-                                    <option value="title_asc" <?php selected($sort_by, 'title_asc'); ?>>
-                                        <?php esc_html_e('Title (A-Z)', 'careernest'); ?></option>
-                                    <option value="title_desc" <?php selected($sort_by, 'title_desc'); ?>>
-                                        <?php esc_html_e('Title (Z-A)', 'careernest'); ?></option>
-                                </select>
+                        <?php if ($show_sort): ?>
+                            <div class="cn-filter-group">
+                                <label for="sort" class="cn-filter-label">
+                                    <?php esc_html_e('Sort By', 'careernest'); ?>
+                                </label>
+                                <div class="cn-custom-select-wrapper" data-icon="sort">
+                                    <select name="sort" id="sort" class="cn-filter-select cn-custom-select">
+                                        <option value="date_desc" <?php selected($sort_by, 'date_desc'); ?>>
+                                            <?php esc_html_e('Newest First', 'careernest'); ?></option>
+                                        <option value="date_asc" <?php selected($sort_by, 'date_asc'); ?>>
+                                            <?php esc_html_e('Oldest First', 'careernest'); ?></option>
+                                        <option value="title_asc" <?php selected($sort_by, 'title_asc'); ?>>
+                                            <?php esc_html_e('Title (A-Z)', 'careernest'); ?></option>
+                                        <option value="title_desc" <?php selected($sort_by, 'title_desc'); ?>>
+                                            <?php esc_html_e('Title (Z-A)', 'careernest'); ?></option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
+                        <?php endif; ?>
 
                         <!-- Filter Actions -->
                         <div class="cn-filter-actions">
