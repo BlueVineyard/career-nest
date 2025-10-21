@@ -1,0 +1,224 @@
+# CareerNest Plugin - Project Intelligence
+
+## Project Context
+
+CareerNest is a WordPress job portal plugin built exclusively with WordPress core APIs. NO external plugins or frameworks. The project follows a milestone-based development approach with 11 total milestones (M1-M11), currently at M6.
+
+## Critical File Locations
+
+### Core Architecture
+
+- `careernest.php` - Main plugin file, bootstrap logic
+- `includes/class-plugin.php` - Core orchestration, template routing, asset management
+- `includes/class-activator.php` - Plugin activation, page creation, role setup
+- `includes/class-deactivator.php` - Plugin deactivation (data preserved)
+
+### Domain-Specific Classes
+
+- `includes/Data/` - CPTs, taxonomies, roles (data layer)
+- `includes/Admin/` - Backend interfaces, meta boxes, menus
+- `includes/Security/` - Capabilities, access control
+- `templates/` - Frontend templates with WordPress hierarchy support
+- `assets/` - Conditional CSS/JS loading system
+
+### Documentation System
+
+- `docs/` - Technical plans, progress logs, QA checklists
+- `memory-bank/` - Comprehensive project memory system
+- `.clinerules` - This project intelligence file
+
+## Development Patterns
+
+### WordPress-First Approach
+
+- Uses ONLY WordPress core APIs - no exceptions
+- Follows WordPress coding standards religiously
+- Leverages WordPress template hierarchy for theme compatibility
+- All security via WordPress nonces, capabilities, sanitization functions
+
+### Milestone-Based Development
+
+- M1-M5: Foundation (COMPLETE) - Plugin scaffold, CPTs, roles, admin, templates
+- M6: Job listings frontend (CURRENT) - The active development focus
+- M7-M11: Registration, applications, settings, admin tools, polish
+
+### Template System Pattern
+
+```php
+// Template hierarchy: theme override -> plugin fallback
+// Located in includes/class-plugin.php
+public function template_loader(string $template): string
+```
+
+- Theme overrides in `/careernest/` directory
+- Conditional asset loading based on page detection
+- Template routing via `template_include` filter at priority 99
+
+### Data Architecture
+
+- Custom Post Types: `job_listing`, `employer`, `applicant`, `job_application`
+- Complex data as serialized arrays in post meta
+- Role system: `aes_admin`, `employer_team`, `applicant`
+- Page IDs stored in `careernest_pages` option
+
+## Code Quality Standards
+
+### Security Requirements (NON-NEGOTIABLE)
+
+- Every form MUST have nonce verification
+- Every action MUST have capability checks
+- All input MUST be sanitized (sanitize_text_field, sanitize_email, etc.)
+- All output MUST be escaped (esc_html, esc_attr, etc.)
+- File uploads MUST validate type and size
+
+### Naming Conventions
+
+- CSS classes: `cn-` prefix (e.g., `cn-dashboard-container`)
+- Meta keys: `_` prefix for private meta
+- Hook priorities: 5 for early registration, 99 for late template filtering
+- Namespace: `CareerNest\Domain\ClassName` pattern
+
+### Asset Loading Pattern
+
+```php
+// Conditional loading in includes/class-plugin.php
+public function enqueue_frontend_assets(): void {
+    $pages = get_option('careernest_pages', []);
+    if (is_page($page_id)) {
+        wp_enqueue_style/script(...);
+    }
+}
+```
+
+## User Experience Priorities
+
+### Mobile-First Design
+
+- All interfaces MUST be responsive
+- Applicant dashboard is the UX benchmark (professional, comprehensive)
+- Guest application flow is critical - reduces friction significantly
+
+### Role-Based Experience
+
+- Applicants: Profile management, application tracking, job discovery
+- Employers: Job management, candidate review, team access
+- Admins: System oversight, data management, settings control
+
+### Progressive Enhancement
+
+- Core functionality works without JavaScript
+- JavaScript enhances but doesn't break basic functionality
+- Graceful degradation for older browsers
+
+## Current Development Context
+
+### M6 Focus (Job Listings)
+
+- Primary files: `templates/template-jobs.php`, `templates/single-job_listing.php`
+- Key requirements: WP_Query implementation, filtering, pagination, search
+- Integration point: Connect to existing guest application system
+
+### Known Architecture Decisions
+
+- Block editor DISABLED for all CareerNest CPTs (classic editor only)
+- Google Maps API integration for location fields (optional)
+- WordPress native pagination preferred over AJAX infinite scroll
+- Email system currently basic wp_mail() - enhancement planned for M8
+
+## Performance Considerations
+
+### Query Optimization Patterns
+
+```php
+// Efficient queries with limits
+$query = new \WP_Query([
+    'posts_per_page' => 10,
+    'fields' => 'ids',          // When only IDs needed
+    'no_found_rows' => true,    // Skip pagination count when not needed
+]);
+```
+
+### Asset Loading Strategy
+
+- Page-specific CSS/JS only
+- Google Maps API only when configured and needed
+- Admin assets only in admin context
+
+## Integration Points
+
+### Google Maps API
+
+- Conditional loading based on API key existence
+- Location autocomplete in admin meta boxes
+- Map picking modals for precise location selection
+- Graceful fallback when not configured
+
+### WordPress User System
+
+- Seamless integration with WP users and roles
+- Guest-to-user conversion via `user_register` hook
+- Password reset email integration
+
+## Common Patterns to Follow
+
+### Form Processing Security
+
+```php
+// Standard security pattern for all forms
+if (!wp_verify_nonce($_POST['_wpnonce'], 'action_name')) wp_die();
+if (!current_user_can('capability')) wp_die();
+$data = sanitize_text_field($_POST['field']);
+```
+
+### Repeater Field Management
+
+- JavaScript patterns for add/remove functionality
+- Proper array indexing for form submission
+- Server-side array validation and sanitization
+
+### Error Handling
+
+- WordPress wp_die() for security failures
+- User-friendly error messages for validation
+- Graceful degradation for missing data
+
+## Testing Approach
+
+- Manual testing across browsers (Chrome, Firefox, Safari, Edge)
+- Mobile testing essential (mobile-first approach)
+- WordPress multisite compatibility
+- Theme compatibility testing
+
+## Future Considerations
+
+- Email templates system (M8)
+- Advanced search functionality
+- Performance monitoring
+- Automated testing framework
+- REST API endpoints for mobile apps
+
+## Working Effectively With This Project
+
+### Before Making Changes
+
+1. Check current milestone status in memory-bank/activeContext.md
+2. Review relevant patterns in memory-bank/systemPatterns.md
+3. Understand data structures in technical documentation
+
+### When Adding Features
+
+1. Follow security-first patterns
+2. Implement mobile-responsive design
+3. Use conditional asset loading
+4. Document in appropriate memory-bank files
+5. Test guest application flow if touching job applications
+
+### When Debugging
+
+1. Check WordPress debug.log
+2. Verify nonces and capabilities
+3. Validate data sanitization
+4. Test across user roles
+5. Check mobile responsive behavior
+
+This project prioritizes security, performance, and professional user experience while maintaining WordPress best practices throughout.
