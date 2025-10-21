@@ -444,17 +444,25 @@ class Plugin
             if ($maps_api_key !== '') {
                 wp_enqueue_script(
                     'google-maps',
-                    'https://maps.googleapis.com/maps/api/js?key=' . urlencode($maps_api_key) . '&libraries=places',
+                    'https://maps.googleapis.com/maps/api/js?key=' . urlencode($maps_api_key) . '&libraries=places&callback=initCareerNestMaps',
                     [],
                     null,
                     false
                 );
 
-                // Enqueue maps script
+                // Add async attribute to Google Maps script
+                add_filter('script_loader_tag', function ($tag, $handle) {
+                    if ('google-maps' === $handle) {
+                        $tag = str_replace(' src', ' async defer src', $tag);
+                    }
+                    return $tag;
+                }, 10, 2);
+
+                // Enqueue maps script (will be called by Google Maps callback)
                 wp_enqueue_script(
                     'careernest-maps',
                     CAREERNEST_URL . 'assets/js/maps.js',
-                    ['google-maps'],
+                    [],
                     CAREERNEST_VERSION,
                     true
                 );

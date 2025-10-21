@@ -167,9 +167,23 @@
       google.maps.places
     ) {
       try {
-        new google.maps.places.Autocomplete(frontendLocationInput, {
-          fields: ["formatted_address", "name"],
-          types: ["geocode"],
+        var autocomplete = new google.maps.places.Autocomplete(
+          frontendLocationInput,
+          {
+            fields: ["formatted_address", "geometry", "name"],
+            types: ["geocode"],
+          }
+        );
+
+        // When user selects from autocomplete, trigger geocoding for radius search
+        autocomplete.addListener("place_changed", function () {
+          var place = autocomplete.getPlace();
+          if (place && place.formatted_address) {
+            frontendLocationInput.value = place.formatted_address;
+            // Trigger input event to geocode and search
+            var event = new Event("input", { bubbles: true });
+            frontendLocationInput.dispatchEvent(event);
+          }
         });
       } catch (e) {
         // Fail silently; remains a plain text field
@@ -218,12 +232,24 @@
     });
   }
 
+  // Expose init as global callback for Google Maps async loading
+  window.initCareerNestMaps = function () {
+    init();
+  };
+
+  // Also initialize immediately if Google Maps is already loaded
   if (
     document.readyState === "complete" ||
     document.readyState === "interactive"
   ) {
-    init();
+    if (typeof google !== "undefined" && google.maps) {
+      init();
+    }
   } else {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", function () {
+      if (typeof google !== "undefined" && google.maps) {
+        init();
+      }
+    });
   }
 })();

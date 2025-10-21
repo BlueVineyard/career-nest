@@ -272,19 +272,45 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                     <label for="job_location" class="cn-filter-label">
                         <?php esc_html_e('Location', 'careernest'); ?>
                     </label>
-                    <div class="cn-input-with-icon">
-                        <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 20 21" fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z"
-                                stroke="currentColor" stroke-width="1.5" />
-                            <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1.5" />
-                        </svg>
-                        <input type="text" id="job_location" name="job_location"
-                            value="<?php echo esc_attr($GLOBALS['selected_location']); ?>"
-                            placeholder="<?php esc_attr_e('City, state, or region...', 'careernest'); ?>"
-                            class="cn-filter-input cn-input-with-icon-field" />
+                    <div class="cn-location-input-wrapper">
+                        <div class="cn-input-with-icon">
+                            <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 20 21" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z"
+                                    stroke="currentColor" stroke-width="1.5" />
+                                <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1.5" />
+                            </svg>
+                            <input type="text" id="job_location" name="job_location"
+                                value="<?php echo esc_attr($GLOBALS['selected_location']); ?>"
+                                placeholder="<?php esc_attr_e('City, state, or region...', 'careernest'); ?>"
+                                class="cn-filter-input cn-input-with-icon-field cn-input-with-button" />
+                        </div>
+                        <button type="button" class="cn-get-location-btn"
+                            title="<?php esc_attr_e('Use my current location', 'careernest'); ?>"
+                            aria-label="<?php esc_attr_e('Use my current location', 'careernest'); ?>">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                                fill="currentColor">
+                                <path
+                                    d="M440-42v-80q-125-14-214.5-103.5T122-440H42v-80h80q14-125 103.5-214.5T440-838v-80h80v80q125 14 214.5 103.5T838-520h80v80h-80q-14 125-103.5 214.5T520-122v80h-80Zm40-158q116 0 198-82t82-198q0-116-82-198t-198-82q-116 0-198 82t-82 198q0 116 82 198t198 82Zm0-120q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Z" />
+                            </svg>
+                        </button>
                     </div>
+                </div>
+
+                <!-- Radius Filter -->
+                <div class="cn-filter-group">
+                    <label for="search_radius" class="cn-filter-label">
+                        <?php esc_html_e('Distance', 'careernest'); ?>
+                        <span id="radius-display" class="cn-radius-display">Any distance</span>
+                    </label>
+                    <input type="range" id="search_radius" name="search_radius" min="0" max="100" step="5" value="0"
+                        class="cn-range-slider" />
+                    <div class="cn-range-labels">
+                        <span><?php esc_html_e('Any', 'careernest'); ?></span>
+                        <span><?php esc_html_e('100 km', 'careernest'); ?></span>
+                    </div>
+                    <p class="cn-filter-hint"><?php esc_html_e('Set location first, then select distance', 'careernest'); ?></p>
                 </div>
             <?php
             endif;
@@ -1089,6 +1115,93 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         font-size: 0.75rem;
         font-weight: 600;
         margin-left: 0.25rem;
+    }
+
+    .cn-distance-badge {
+        display: inline-block;
+        background: #bee3f8;
+        color: #2c5282;
+        padding: 0.125rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.25rem;
+    }
+
+    /* Radius Filter Styles */
+    .cn-radius-display {
+        float: right;
+        font-size: 0.85rem;
+        color: #0073aa;
+        font-weight: 600;
+    }
+
+    .cn-filter-hint {
+        font-size: 0.75rem;
+        color: #718096;
+        margin: 0.5rem 0 0 0;
+        font-style: italic;
+    }
+
+    /* Location Input with Button */
+    .cn-location-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cn-location-input-wrapper .cn-input-with-icon {
+        flex: 1;
+    }
+
+    .cn-input-with-button {
+        padding-right: 2.5rem !important;
+    }
+
+    .cn-get-location-btn {
+        flex-shrink: 0;
+        padding: 0.625rem;
+        background: white;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #4a5568;
+        min-width: 42px;
+        min-height: 42px;
+    }
+
+    .cn-get-location-btn:hover {
+        background: #f0f8ff;
+        border-color: #0073aa;
+        color: #0073aa;
+    }
+
+    .cn-get-location-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .cn-get-location-btn.cn-location-active {
+        background: #c6f6d5;
+        color: #22543d;
+        border-color: #22543d;
+    }
+
+    .cn-get-location-btn svg {
+        display: block;
+    }
+
+    .cn-get-location-btn.cn-loading {
+        opacity: 0.6;
+        cursor: wait;
+    }
+
+    .cn-get-location-btn.cn-loading svg {
+        animation: cn-spin 1s linear infinite;
     }
 
     .cn-job-excerpt {

@@ -9,8 +9,11 @@
       this.filterForm = $("#cn-jobs-filter-form");
       this.jobsContainer = $(".cn-jobs-main");
       this.isLoading = false;
+      this.userLat = null;
+      this.userLng = null;
 
       this.bindEvents();
+      this.initializeRadius();
     },
 
     bindEvents: function () {
@@ -43,8 +46,20 @@
       let locationTimeout;
       $("#job_location").on("input", function () {
         clearTimeout(locationTimeout);
+        const location = $(this).val();
         locationTimeout = setTimeout(function () {
-          self.loadJobs(1);
+          // Geocode the location to get coordinates for radius search
+          if (location) {
+            self.geocodeLocation(location, function () {
+              // Geocoding complete, now load jobs
+              self.loadJobs(1);
+            });
+          } else {
+            self.userLat = null;
+            self.userLng = null;
+            self.updateLocationStatus(false);
+            self.loadJobs(1);
+          }
         }, 500);
       });
 
@@ -55,6 +70,21 @@
 
       $("#min_salary, #max_salary").on("change", function () {
         self.loadJobs(1);
+      });
+
+      // Radius slider
+      $("#search_radius").on("input", function () {
+        self.updateRadiusDisplay();
+      });
+
+      $("#search_radius").on("change", function () {
+        self.loadJobs(1);
+      });
+
+      // Get location button
+      $(document).on("click", ".cn-get-location-btn", function (e) {
+        e.preventDefault();
+        self.getUserLocation();
       });
 
       // Pagination clicks (delegated)
@@ -98,6 +128,9 @@
         max_salary: $("#max_salary").val(),
         date_posted: $("#date_posted").val(),
         sort: $("#sort").val(),
+        radius: $("#search_radius").val() || 0,
+        user_lat: this.userLat || 0,
+        user_lng: this.userLng || 0,
         paged: page || 1,
       };
 
@@ -125,7 +158,6 @@
     },
 
     showLoading: function () {
-      this.jobsContainer.css("opacity", "0.5");
       this.jobsContainer.css("pointer-events", "none");
 
       if (!$(".cn-loading-spinner").length) {
@@ -136,7 +168,6 @@
     },
 
     hideLoading: function () {
-      this.jobsContainer.css("opacity", "1");
       this.jobsContainer.css("pointer-events", "auto");
       $(".cn-loading-spinner").remove();
     },
@@ -192,7 +223,12 @@
       $("#max_salary").val(200000);
       $("#date_posted").val("");
       $("#sort").val("date_desc");
+      $("#search_radius").val(0);
+      this.userLat = null;
+      this.userLng = null;
       this.updateSalaryDisplay();
+      this.updateRadiusDisplay();
+      this.updateLocationStatus(false);
       this.reinitializeDropdowns();
       this.loadJobs(1);
     },
@@ -244,23 +280,163 @@
         300
       );
     },
+
+    initializeRadius: function () {
+      const self = this;
+
+      // Check if radius filter exists
+      if ($("#search_radius").length) {
+        this.updateRadiusDisplay();
+
+        // If location is already in input, try to geocode it
+        const locationInput = $("#job_location").val();
+        if (locationInput) {
+          this.geocodeLocation(locationInput);
+        }
+      }
+    },
+
+    updateRadiusDisplay: function () {
+      const radius = parseInt($("#search_radius").val()) || 0;
+      if (radius === 0) {
+        $("#radius-display").text("Any distance");
+      } else {
+        $("#radius-display").text(radius + " km");
+      }
+    },
+
+    getUserLocation: function () {
+      const self = this;
+
+      if (!navigator.geolocation) {
+        self.showError("Geolocation is not supported by your browser");
+        return;
+      }
+
+      const btn = $(".cn-get-location-btn");
+      btn.prop("disabled", true).addClass("cn-loading");
+
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          self.userLat = position.coords.latitude;
+          self.userLng = position.coords.longitude;
+
+          // Reverse geocode to get location name
+          self.reverseGeocode(self.userLat, self.userLng);
+
+          self.updateLocationStatus(true);
+          btn.prop("disabled", false).removeClass("cn-loading");
+
+          // Trigger search if radius is set
+          if (parseInt($("#search_radius").val()) > 0) {
+            self.loadJobs(1);
+          }
+        },
+        function (error) {
+          console.error("Geolocation error:", error);
+
+          let errorMsg = "Unable to get your location. ";
+          if (error.code === 1) {
+            // Permission denied or not available on HTTP
+            if (window.location.protocol === "http:") {
+              errorMsg =
+                "Geolocation requires HTTPS. Please enter location manually or use a secure connection.";
+            } else {
+              errorMsg += "Please enable location permissions and try again.";
+            }
+          } else if (error.code === 2) {
+            errorMsg += "Location information unavailable.";
+          } else if (error.code === 3) {
+            errorMsg += "Location request timed out.";
+          }
+
+          self.showError(errorMsg);
+          btn.prop("disabled", false).removeClass("cn-loading");
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000, // 5 minutes
+        }
+      );
+    },
+
+    reverseGeocode: function (lat, lng) {
+      // Only if Google Maps API is available
+      if (typeof google !== "undefined" && google.maps) {
+        const geocoder = new google.maps.Geocoder();
+        const latlng = { lat: lat, lng: lng };
+
+        geocoder.geocode({ location: latlng }, (results, status) => {
+          if (status === "OK" && results[0]) {
+            // Get city/locality from results
+            let locationName = "";
+            for (let component of results[0].address_components) {
+              if (component.types.includes("locality")) {
+                locationName = component.long_name;
+                break;
+              }
+            }
+            if (!locationName && results[0].formatted_address) {
+              locationName = results[0].formatted_address.split(",")[0];
+            }
+            if (locationName) {
+              $("#job_location").val(locationName);
+            }
+          }
+        });
+      }
+    },
+
+    geocodeLocation: function (location, callback) {
+      const self = this;
+
+      // Only if Google Maps API is available
+      if (typeof google !== "undefined" && google.maps) {
+        const geocoder = new google.maps.Geocoder();
+
+        geocoder.geocode({ address: location }, (results, status) => {
+          if (status === "OK" && results[0]) {
+            self.userLat = results[0].geometry.location.lat();
+            self.userLng = results[0].geometry.location.lng();
+            self.updateLocationStatus(true);
+          } else {
+            self.userLat = null;
+            self.userLng = null;
+            self.updateLocationStatus(false);
+          }
+
+          // Call callback when geocoding is complete
+          if (callback) {
+            callback();
+          }
+        });
+      } else {
+        // Google Maps not available, still call callback
+        if (callback) {
+          callback();
+        }
+      }
+    },
+
+    updateLocationStatus: function (hasLocation) {
+      const btn = $(".cn-get-location-btn");
+      if (hasLocation) {
+        btn
+          .addClass("cn-location-active")
+          .attr("title", "Location set - click to refresh");
+      } else {
+        btn
+          .removeClass("cn-location-active")
+          .attr("title", "Use my current location");
+      }
+    },
   };
 
   // Initialize on document ready
   $(document).ready(function () {
-    console.log("CareerNest Jobs AJAX: Script loaded");
-    console.log("Form found:", $("#cn-jobs-filter-form").length > 0);
-    console.log(
-      "careerNestAjax object:",
-      typeof careerNestAjax !== "undefined" ? careerNestAjax : "NOT DEFINED"
-    );
-
     if ($("#cn-jobs-filter-form").length) {
-      console.log("CareerNest Jobs AJAX: Initializing...");
       JobsAjax.init();
-      console.log("CareerNest Jobs AJAX: Initialized successfully");
-    } else {
-      console.log("CareerNest Jobs AJAX: Form not found on page");
     }
   });
 })(jQuery);

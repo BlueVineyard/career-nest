@@ -32,6 +32,11 @@ class Ajax_Handler
         $sort_by = isset($_POST['sort']) ? sanitize_text_field(wp_unslash($_POST['sort'])) : 'date_desc';
         $paged = isset($_POST['paged']) ? absint($_POST['paged']) : 1;
 
+        // Radius search parameters
+        $radius = isset($_POST['radius']) ? absint($_POST['radius']) : 0;
+        $user_lat = isset($_POST['user_lat']) ? floatval($_POST['user_lat']) : 0;
+        $user_lng = isset($_POST['user_lng']) ? floatval($_POST['user_lng']) : 0;
+
         // Build query arguments
         $args = [
             'post_type' => 'job_listing',
@@ -68,12 +73,33 @@ class Ajax_Handler
         // Build meta query array
         $meta_query = ['relation' => 'AND'];
 
-        // Location filter
-        if (!empty($selected_location)) {
+        // Location filter - skip text-based if we have coordinates (for distance-based search)
+        // Only use text-based search when no coordinates are available
+        if (!empty($selected_location) && !($user_lat && $user_lng)) {
             $meta_query[] = [
                 'key' => '_job_location',
                 'value' => $selected_location,
                 'compare' => 'LIKE',
+            ];
+        }
+
+        // Radius search - add bounding box for initial filtering (ONLY when radius > 0)
+        // When radius = 0, we don't filter by location in SQL - just calculate distances in PHP
+        if ($radius > 0 && $user_lat && $user_lng) {
+            $bounds = $this->calculate_bounding_box($user_lat, $user_lng, $radius);
+
+            $meta_query[] = [
+                'key' => '_job_location_lat',
+                'value' => [$bounds['min_lat'], $bounds['max_lat']],
+                'compare' => 'BETWEEN',
+                'type' => 'DECIMAL(10,8)',
+            ];
+
+            $meta_query[] = [
+                'key' => '_job_location_lng',
+                'value' => [$bounds['min_lng'], $bounds['max_lng']],
+                'compare' => 'BETWEEN',
+                'type' => 'DECIMAL(11,8)',
             ];
         }
 
@@ -163,6 +189,11 @@ class Ajax_Handler
         // Execute query
         $jobs_query = new \WP_Query($args);
 
+        // Calculate distances and optionally filter by radius
+        if ($user_lat && $user_lng && $jobs_query->have_posts()) {
+            $jobs_query = $this->calculate_distances($jobs_query, $user_lat, $user_lng, $radius);
+        }
+
         // Generate header HTML
         $active_filters = 0;
         if (!empty($search_query)) $active_filters++;
@@ -172,6 +203,7 @@ class Ajax_Handler
         if ($selected_employer > 0) $active_filters++;
         if ($min_salary > 0 || ($max_salary > 0 && $max_salary < 200000)) $active_filters++;
         if (!empty($date_posted)) $active_filters++;
+        if ($radius > 0 && $user_lat && $user_lng) $active_filters++;
 
         ob_start();
 ?>
@@ -201,10 +233,14 @@ class Ajax_Handler
         <?php
         $header_html = ob_get_clean();
 
+        // Get column setting
+        $filter_settings = get_option('careernest_options', []);
+        $job_columns = isset($filter_settings['job_listing_columns']) ? $filter_settings['job_listing_columns'] : '1';
+
         // Generate jobs HTML
         ob_start();
         if ($jobs_query->have_posts()): ?>
-            <div class="cn-jobs-list">
+            <div class="cn-jobs-list cn-jobs-columns-<?php echo esc_attr($job_columns); ?>">
                 <?php while ($jobs_query->have_posts()): $jobs_query->the_post();
                     $this->render_job_card(get_the_ID());
                 endwhile; ?>
@@ -271,8 +307,124 @@ class Ajax_Handler
         ]);
     }
 
-    private function render_job_card($job_id)
+    /**
+     * Calculate bounding box for initial SQL filtering
+     */
+    private function calculate_bounding_box($lat, $lng, $radius)
     {
+        // Earth's radius in km
+        $earth_radius = 6371;
+
+        // Calculate angular distance
+        $angular_distance = $radius / $earth_radius;
+
+        // Convert to radians
+        $lat_rad = deg2rad($lat);
+        $lng_rad = deg2rad($lng);
+
+        // Calculate bounds
+        $min_lat = $lat - rad2deg($angular_distance);
+        $max_lat = $lat + rad2deg($angular_distance);
+
+        // Longitude calculation accounts for latitude
+        $lng_delta = rad2deg($angular_distance / cos($lat_rad));
+        $min_lng = $lng - $lng_delta;
+        $max_lng = $lng + $lng_delta;
+
+        return [
+            'min_lat' => $min_lat,
+            'max_lat' => $max_lat,
+            'min_lng' => $min_lng,
+            'max_lng' => $max_lng,
+        ];
+    }
+
+    /**
+     * Calculate distances for all jobs and optionally filter by radius
+     * When radius = 0, calculates distances but doesn't filter (shows all with badges)
+     * When radius > 0, filters to only jobs within radius
+     */
+    private function calculate_distances($query, $user_lat, $user_lng, $radius)
+    {
+        $processed_posts = [];
+
+        foreach ($query->posts as $post) {
+            $job_lat = get_post_meta($post->ID, '_job_location_lat', true);
+            $job_lng = get_post_meta($post->ID, '_job_location_lng', true);
+
+            // Skip jobs without coordinates
+            if (empty($job_lat) || empty($job_lng)) {
+                // If radius is 0 (Any distance), keep jobs without coordinates
+                if ($radius === 0) {
+                    $processed_posts[] = $post;
+                }
+                continue;
+            }
+
+            $distance = $this->calculate_distance($user_lat, $user_lng, floatval($job_lat), floatval($job_lng));
+
+            // Store distance for display
+            $post->distance = $distance;
+
+            // If radius is 0 (Any distance), include all jobs with distance badges
+            // If radius > 0, only include jobs within radius
+            if ($radius === 0 || $distance <= $radius) {
+                $processed_posts[] = $post;
+            }
+        }
+
+        // Update query object
+        $query->posts = $processed_posts;
+        $query->post_count = count($processed_posts);
+        $query->found_posts = count($processed_posts);
+
+        // Keep pagination if radius is 0, simplify if radius filtering
+        if ($radius > 0) {
+            $query->max_num_pages = 1;
+        }
+
+        return $query;
+    }
+
+    /**
+     * Calculate distance between two coordinates using Haversine formula
+     * Returns distance in kilometers
+     */
+    private function calculate_distance($lat1, $lon1, $lat2, $lon2)
+    {
+        // Earth's radius in km
+        $earth_radius = 6371;
+
+        // Convert to radians
+        $lat1_rad = deg2rad($lat1);
+        $lon1_rad = deg2rad($lon1);
+        $lat2_rad = deg2rad($lat2);
+        $lon2_rad = deg2rad($lon2);
+
+        // Calculate differences
+        $dlat = $lat2_rad - $lat1_rad;
+        $dlon = $lon2_rad - $lon1_rad;
+
+        // Haversine formula
+        $a = sin($dlat / 2) * sin($dlat / 2) +
+            cos($lat1_rad) * cos($lat2_rad) *
+            sin($dlon / 2) * sin($dlon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        $distance = $earth_radius * $c;
+
+        return round($distance, 2);
+    }
+
+    private function render_job_card($job_id, $distance = null)
+    {
+        // Get distance if set on post object
+        global $post;
+        if ($distance === null && isset($post->distance)) {
+            $distance = $post->distance;
+        }
+
         $employer_id = get_post_meta($job_id, '_employer_id', true);
         $employer_id = $employer_id ? (int) $employer_id : 0;
 
@@ -357,6 +509,9 @@ class Ajax_Handler
                             <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1.5" />
                         </svg>
                         <?php echo esc_html($location); ?>
+                        <?php if ($distance !== null): ?>
+                            <span class="cn-distance-badge"><?php echo esc_html(number_format($distance, 1)); ?> km</span>
+                        <?php endif; ?>
                         <?php if ($remote_position): ?>
                             <span class="cn-remote-badge"><?php esc_html_e('Remote', 'careernest'); ?></span>
                         <?php endif; ?>
