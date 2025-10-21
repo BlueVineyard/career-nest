@@ -1,0 +1,234 @@
+/**
+ * CareerNest Custom Dropdown Styles
+ */
+
+/* Wrapper */
+.cn-custom-select-wrapper {
+  position: relative;
+}
+
+/* Hide native select */
+.cn-custom-select-wrapper .cn-custom-select {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Custom Dropdown */
+.cn-dropdown {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+/* Dropdown Header */
+.cn-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  transition: all 0.2s;
+  min-height: 42px;
+}
+
+.cn-dropdown:hover .cn-dropdown-header,
+.cn-dropdown:focus .cn-dropdown-header {
+  border-color: #0073aa;
+}
+
+.cn-dropdown.cn-open .cn-dropdown-header {
+  border-color: #0073aa;
+  box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.cn-dropdown.cn-open.cn-dropdown-up .cn-dropdown-header {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Dropdown Icon */
+.cn-dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a5568;
+  flex-shrink: 0;
+}
+
+.cn-dropdown-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Selected Text */
+.cn-dropdown-selected {
+  flex: 1;
+  color: #2d3748;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Arrow */
+.cn-dropdown-arrow {
+  color: #718096;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.cn-dropdown.cn-open .cn-dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.cn-dropdown.cn-open.cn-dropdown-up .cn-dropdown-arrow {
+  transform: rotate(0deg);
+}
+
+/* Dropdown List */
+.cn-dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #0073aa;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s;
+}
+
+.cn-dropdown.cn-open .cn-dropdown-list {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Dropdown positioned above */
+.cn-dropdown.cn-dropdown-up .cn-dropdown-list {
+  top: auto;
+  bottom: 100%;
+  border-top: 1px solid #0073aa;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  transform: translateY(10px);
+}
+
+.cn-dropdown.cn-open.cn-dropdown-up .cn-dropdown-list {
+  transform: translateY(0);
+}
+
+/* Dropdown Option */
+.cn-dropdown-option {
+  padding: 0.625rem 0.75rem;
+  color: #2d3748;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  outline: none;
+}
+
+.cn-dropdown-option:hover,
+.cn-dropdown-option:focus {
+  background-color: #f7fafc;
+}
+
+.cn-dropdown-option.cn-selected {
+  background-color: #e6f7ff;
+  color: #0073aa;
+  font-weight: 500;
+}
+
+.cn-dropdown-option.cn-selected:hover,
+.cn-dropdown-option.cn-selected:focus {
+  background-color: #d1f0ff;
+}
+
+/* Custom scrollbar for dropdown list */
+.cn-dropdown-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cn-dropdown-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 0 0 4px 0;
+}
+
+.cn-dropdown-list::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.cn-dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Disabled state */
+.cn-custom-select-wrapper.cn-disabled .cn-dropdown {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading state */
+.cn-custom-select-wrapper.cn-loading .cn-dropdown-header::after {
+  content: "";
+  position: absolute;
+  right: 2.5rem;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #0073aa;
+  border-radius: 50%;
+  animation: cn-dropdown-spin 0.6s linear infinite;
+}
+
+@keyframes cn-dropdown-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .cn-dropdown-header {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .cn-dropdown-option {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .cn-dropdown-list {
+    max-height: 240px;
+  }
+}
+
+/* Focus visible for accessibility */
+.cn-dropdown:focus-visible {
+  outline: 2px solid #0073aa;
+  outline-offset: 2px;
+}
+
+.cn-dropdown-option:focus-visible {
+  outline: 2px solid #0073aa;
+  outline-offset: -2px;
+}

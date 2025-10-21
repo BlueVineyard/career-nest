@@ -437,16 +437,29 @@ class Plugin
         }
 
         // Check if we're on the jobs listing page
-        // Use template detection as a more reliable check
-        $current_template = get_page_template_slug();
-        $is_jobs_page = ($jobs_page_id && is_page($jobs_page_id)) || ($current_template === 'template-jobs.php');
+        if ($jobs_page_id && is_page($jobs_page_id)) {
+            // Enqueue custom dropdown styles
+            wp_enqueue_style(
+                'careernest-custom-dropdown',
+                CAREERNEST_URL . 'assets/css/custom-dropdown.css',
+                [],
+                CAREERNEST_VERSION
+            );
 
-        if ($is_jobs_page) {
+            // Enqueue custom dropdown script
+            wp_enqueue_script(
+                'careernest-custom-dropdown',
+                CAREERNEST_URL . 'assets/js/custom-dropdown.js',
+                ['jquery'],
+                CAREERNEST_VERSION,
+                true
+            );
+
             // Enqueue jobs AJAX script
             wp_enqueue_script(
                 'careernest-jobs-ajax',
                 CAREERNEST_URL . 'assets/js/jobs-ajax.js',
-                ['jquery'],
+                ['jquery', 'careernest-custom-dropdown'],
                 CAREERNEST_VERSION,
                 true
             );

@@ -65,7 +65,13 @@
         self.loadJobs(page);
       });
 
-      // Clear filters
+      // Clear filters button
+      $(document).on("click", ".cn-clear-filters-btn", function (e) {
+        e.preventDefault();
+        self.clearFilters();
+      });
+
+      // Clear filters link in empty state
       $(document).on("click", ".cn-btn-secondary", function (e) {
         if ($(this).text().includes("Clear")) {
           e.preventDefault();
@@ -151,6 +157,16 @@
       });
     },
 
+    reinitializeDropdowns: function () {
+      // Reinitialize custom dropdowns if the component is available
+      if (
+        typeof window.CareerNestDropdown !== "undefined" &&
+        window.CareerNestDropdown.init
+      ) {
+        window.CareerNestDropdown.init();
+      }
+    },
+
     showError: function (message) {
       const errorHtml = `
                 <div class="cn-ajax-error">
@@ -177,6 +193,7 @@
       $("#date_posted").val("");
       $("#sort").val("date_desc");
       this.updateSalaryDisplay();
+      this.reinitializeDropdowns();
       this.loadJobs(1);
     },
 

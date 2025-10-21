@@ -6,8 +6,12 @@
 
 defined('ABSPATH') || exit;
 
-// Enqueue AJAX script directly in template
-wp_enqueue_script('careernest-jobs-ajax', CAREERNEST_URL . 'assets/js/jobs-ajax.js', ['jquery'], CAREERNEST_VERSION, true);
+// Enqueue custom dropdown assets
+wp_enqueue_style('careernest-custom-dropdown', CAREERNEST_URL . 'assets/css/custom-dropdown.css', [], CAREERNEST_VERSION);
+wp_enqueue_script('careernest-custom-dropdown', CAREERNEST_URL . 'assets/js/custom-dropdown.js', ['jquery'], CAREERNEST_VERSION, true);
+
+// Enqueue AJAX script
+wp_enqueue_script('careernest-jobs-ajax', CAREERNEST_URL . 'assets/js/jobs-ajax.js', ['jquery', 'careernest-custom-dropdown'], CAREERNEST_VERSION, true);
 wp_localize_script('careernest-jobs-ajax', 'careerNestAjax', [
     'ajaxurl' => admin_url('admin-ajax.php'),
     'nonce' => wp_create_nonce('careernest_jobs_nonce'),
@@ -237,15 +241,18 @@ $job_types = get_terms([
                                 <label for="job_category" class="cn-filter-label">
                                     <?php esc_html_e('Category', 'careernest'); ?>
                                 </label>
-                                <select name="job_category" id="job_category" class="cn-filter-select">
-                                    <option value=""><?php esc_html_e('All Categories', 'careernest'); ?></option>
-                                    <?php foreach ($job_categories as $category): ?>
-                                        <option value="<?php echo esc_attr($category->term_id); ?>"
-                                            <?php selected($selected_category, $category->term_id); ?>>
-                                            <?php echo esc_html($category->name); ?> (<?php echo esc_html($category->count); ?>)
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <div class="cn-custom-select-wrapper" data-icon="folder">
+                                    <select name="job_category" id="job_category" class="cn-filter-select cn-custom-select">
+                                        <option value=""><?php esc_html_e('All Categories', 'careernest'); ?></option>
+                                        <?php foreach ($job_categories as $category): ?>
+                                            <option value="<?php echo esc_attr($category->term_id); ?>"
+                                                <?php selected($selected_category, $category->term_id); ?>>
+                                                <?php echo esc_html($category->name); ?>
+                                                (<?php echo esc_html($category->count); ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                         <?php endif; ?>
 
@@ -255,15 +262,17 @@ $job_types = get_terms([
                                 <label for="job_type" class="cn-filter-label">
                                     <?php esc_html_e('Job Type', 'careernest'); ?>
                                 </label>
-                                <select name="job_type" id="job_type" class="cn-filter-select">
-                                    <option value=""><?php esc_html_e('All Types', 'careernest'); ?></option>
-                                    <?php foreach ($job_types as $type): ?>
-                                        <option value="<?php echo esc_attr($type->term_id); ?>"
-                                            <?php selected($selected_type, $type->term_id); ?>>
-                                            <?php echo esc_html($type->name); ?> (<?php echo esc_html($type->count); ?>)
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <div class="cn-custom-select-wrapper" data-icon="layers">
+                                    <select name="job_type" id="job_type" class="cn-filter-select cn-custom-select">
+                                        <option value=""><?php esc_html_e('All Types', 'careernest'); ?></option>
+                                        <?php foreach ($job_types as $type): ?>
+                                            <option value="<?php echo esc_attr($type->term_id); ?>"
+                                                <?php selected($selected_type, $type->term_id); ?>>
+                                                <?php echo esc_html($type->name); ?> (<?php echo esc_html($type->count); ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                         <?php endif; ?>
 
@@ -292,15 +301,17 @@ $job_types = get_terms([
                                 <label for="employer" class="cn-filter-label">
                                     <?php esc_html_e('Employer', 'careernest'); ?>
                                 </label>
-                                <select name="employer" id="employer" class="cn-filter-select">
-                                    <option value=""><?php esc_html_e('All Employers', 'careernest'); ?></option>
-                                    <?php foreach ($employers as $employer): ?>
-                                        <option value="<?php echo esc_attr($employer->ID); ?>"
-                                            <?php selected($selected_employer, $employer->ID); ?>>
-                                            <?php echo esc_html(get_the_title($employer->ID)); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <div class="cn-custom-select-wrapper" data-icon="building">
+                                    <select name="employer" id="employer" class="cn-filter-select cn-custom-select">
+                                        <option value=""><?php esc_html_e('All Employers', 'careernest'); ?></option>
+                                        <?php foreach ($employers as $employer): ?>
+                                            <option value="<?php echo esc_attr($employer->ID); ?>"
+                                                <?php selected($selected_employer, $employer->ID); ?>>
+                                                <?php echo esc_html(get_the_title($employer->ID)); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                         <?php endif; ?>
 
@@ -330,15 +341,17 @@ $job_types = get_terms([
                             <label for="date_posted" class="cn-filter-label">
                                 <?php esc_html_e('Date Posted', 'careernest'); ?>
                             </label>
-                            <select name="date_posted" id="date_posted" class="cn-filter-select">
-                                <option value=""><?php esc_html_e('Any Time', 'careernest'); ?></option>
-                                <option value="24h" <?php selected($date_posted, '24h'); ?>>
-                                    <?php esc_html_e('Last 24 Hours', 'careernest'); ?></option>
-                                <option value="7d" <?php selected($date_posted, '7d'); ?>>
-                                    <?php esc_html_e('Last 7 Days', 'careernest'); ?></option>
-                                <option value="30d" <?php selected($date_posted, '30d'); ?>>
-                                    <?php esc_html_e('Last 30 Days', 'careernest'); ?></option>
-                            </select>
+                            <div class="cn-custom-select-wrapper" data-icon="calendar">
+                                <select name="date_posted" id="date_posted" class="cn-filter-select cn-custom-select">
+                                    <option value=""><?php esc_html_e('Any Time', 'careernest'); ?></option>
+                                    <option value="24h" <?php selected($date_posted, '24h'); ?>>
+                                        <?php esc_html_e('Last 24 Hours', 'careernest'); ?></option>
+                                    <option value="7d" <?php selected($date_posted, '7d'); ?>>
+                                        <?php esc_html_e('Last 7 Days', 'careernest'); ?></option>
+                                    <option value="30d" <?php selected($date_posted, '30d'); ?>>
+                                        <?php esc_html_e('Last 30 Days', 'careernest'); ?></option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Sort By -->
@@ -346,16 +359,18 @@ $job_types = get_terms([
                             <label for="sort" class="cn-filter-label">
                                 <?php esc_html_e('Sort By', 'careernest'); ?>
                             </label>
-                            <select name="sort" id="sort" class="cn-filter-select">
-                                <option value="date_desc" <?php selected($sort_by, 'date_desc'); ?>>
-                                    <?php esc_html_e('Newest First', 'careernest'); ?></option>
-                                <option value="date_asc" <?php selected($sort_by, 'date_asc'); ?>>
-                                    <?php esc_html_e('Oldest First', 'careernest'); ?></option>
-                                <option value="title_asc" <?php selected($sort_by, 'title_asc'); ?>>
-                                    <?php esc_html_e('Title (A-Z)', 'careernest'); ?></option>
-                                <option value="title_desc" <?php selected($sort_by, 'title_desc'); ?>>
-                                    <?php esc_html_e('Title (Z-A)', 'careernest'); ?></option>
-                            </select>
+                            <div class="cn-custom-select-wrapper" data-icon="sort">
+                                <select name="sort" id="sort" class="cn-filter-select cn-custom-select">
+                                    <option value="date_desc" <?php selected($sort_by, 'date_desc'); ?>>
+                                        <?php esc_html_e('Newest First', 'careernest'); ?></option>
+                                    <option value="date_asc" <?php selected($sort_by, 'date_asc'); ?>>
+                                        <?php esc_html_e('Oldest First', 'careernest'); ?></option>
+                                    <option value="title_asc" <?php selected($sort_by, 'title_asc'); ?>>
+                                        <?php esc_html_e('Title (A-Z)', 'careernest'); ?></option>
+                                    <option value="title_desc" <?php selected($sort_by, 'title_desc'); ?>>
+                                        <?php esc_html_e('Title (Z-A)', 'careernest'); ?></option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Filter Actions -->
@@ -371,11 +386,14 @@ $job_types = get_terms([
                                 <?php esc_html_e('Apply Filters', 'careernest'); ?>
                             </button>
 
-                            <?php if ($active_filters > 0): ?>
-                                <a href="<?php echo esc_url(get_permalink()); ?>" class="cn-btn cn-btn-secondary">
-                                    <?php esc_html_e('Clear All', 'careernest'); ?>
-                                </a>
-                            <?php endif; ?>
+                            <button type="button" class="cn-btn cn-btn-secondary cn-clear-filters-btn">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <?php esc_html_e('Clear Filters', 'careernest'); ?>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -620,15 +638,6 @@ $job_types = get_terms([
         </div>
     </div>
 </main>
-
-<script>
-    var careerNestAjax = {
-        ajaxurl: '<?php echo esc_js(admin_url("admin-ajax.php")); ?>',
-        nonce: '<?php echo esc_js(wp_create_nonce("careernest_jobs_nonce")); ?>'
-    };
-</script>
-<?php wp_enqueue_script('jquery'); ?>
-<script src="<?php echo esc_url(CAREERNEST_URL . 'assets/js/jobs-ajax.js?ver=' . CAREERNEST_VERSION); ?>"></script>
 
 <style>
     /* Job Listings Page Styles */
@@ -1182,3 +1191,6 @@ $job_types = get_terms([
             justify-content: center;
         }
     }
+</style>
+
+<?php get_footer(); ?>
