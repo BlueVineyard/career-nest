@@ -185,6 +185,7 @@ $show_salary = isset($filter_settings['filter_salary']) ? $filter_settings['filt
 $show_date_posted = isset($filter_settings['filter_date_posted']) ? $filter_settings['filter_date_posted'] === '1' : true;
 $show_sort = isset($filter_settings['filter_sort']) ? $filter_settings['filter_sort'] === '1' : true;
 $filter_position = isset($filter_settings['filter_position']) ? $filter_settings['filter_position'] : 'left';
+$job_columns = isset($filter_settings['job_listing_columns']) ? $filter_settings['job_listing_columns'] : '1';
 
 // Get filter order (default order if not set)
 $default_order = ['search', 'filter_category', 'filter_job_type', 'filter_location', 'filter_employer', 'filter_salary', 'filter_date_posted', 'filter_sort'];
@@ -483,7 +484,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
             <!-- Job Listings -->
             <div class="cn-jobs-main">
                 <?php if ($jobs_query->have_posts()): ?>
-                    <div class="cn-jobs-list">
+                    <div class="cn-jobs-list cn-jobs-columns-<?php echo esc_attr($job_columns); ?>">
                         <?php while ($jobs_query->have_posts()): $jobs_query->the_post();
                             $job_id = get_the_ID();
                             $employer_id = get_post_meta($job_id, '_employer_id', true);
@@ -954,9 +955,18 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
 
     /* Job Cards */
     .cn-jobs-list {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    /* Multi-column layouts */
+    .cn-jobs-columns-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cn-jobs-columns-3 {
+        grid-template-columns: repeat(3, 1fr);
     }
 
     .cn-job-card {
@@ -1301,6 +1311,12 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     }
 
     /* Responsive Design */
+    @media (max-width: 1024px) {
+        .cn-jobs-columns-3 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
     @media (max-width: 768px) {
         .cn-jobs-page {
             padding: 1rem 0.5rem;
@@ -1314,6 +1330,11 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         .cn-filter-position-right {
             grid-template-columns: 1fr;
             gap: 1.5rem;
+        }
+
+        .cn-jobs-columns-2,
+        .cn-jobs-columns-3 {
+            grid-template-columns: 1fr;
         }
 
         .cn-jobs-sidebar {

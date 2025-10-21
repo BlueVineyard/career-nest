@@ -57,6 +57,16 @@ class Settings
             ['label_for' => 'careernest_filter_position']
         );
 
+        // Job Listing Columns
+        add_settings_field(
+            'job_listing_columns',
+            __('Job Listing Columns', 'careernest'),
+            [$this, 'render_job_columns_field'],
+            'careernest_settings',
+            'careernest_filters_section',
+            ['label_for' => 'careernest_job_listing_columns']
+        );
+
         // Sortable filter list
         add_settings_field(
             'filters_order',
@@ -78,6 +88,9 @@ class Settings
 
         // Sanitize filter position
         $out['filter_position'] = isset($opts['filter_position']) && in_array($opts['filter_position'], ['left', 'right', 'top'], true) ? $opts['filter_position'] : 'left';
+
+        // Sanitize job listing columns
+        $out['job_listing_columns'] = isset($opts['job_listing_columns']) && in_array($opts['job_listing_columns'], ['1', '2', '3'], true) ? $opts['job_listing_columns'] : '1';
 
         // Sanitize filter order
         if (isset($opts['filter_order']) && is_array($opts['filter_order'])) {
@@ -335,5 +348,18 @@ class Settings
         echo '<option value="top" ' . selected($position, 'top', false) . '>' . esc_html__('Top Bar', 'careernest') . '</option>';
         echo '</select>';
         echo '<p class="description">' . esc_html__('Choose where to display the job filters on the listing page.', 'careernest') . '</p>';
+    }
+
+    public function render_job_columns_field(array $args): void
+    {
+        $opts = get_option('careernest_options', []);
+        $columns = isset($opts['job_listing_columns']) ? $opts['job_listing_columns'] : '1';
+
+        echo '<select id="' . esc_attr($args['label_for']) . '" name="careernest_options[job_listing_columns]">';
+        echo '<option value="1" ' . selected($columns, '1', false) . '>' . esc_html__('1 Column', 'careernest') . '</option>';
+        echo '<option value="2" ' . selected($columns, '2', false) . '>' . esc_html__('2 Columns', 'careernest') . '</option>';
+        echo '<option value="3" ' . selected($columns, '3', false) . '>' . esc_html__('3 Columns', 'careernest') . '</option>';
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Number of columns for job listings. Automatically adjusts for mobile devices.', 'careernest') . '</p>';
     }
 }
