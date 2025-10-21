@@ -200,8 +200,17 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                 <label for="job_search" class="cn-filter-label">
                     <?php esc_html_e('Search', 'careernest'); ?>
                 </label>
-                <input type="text" id="job_search" name="job_search" value="<?php echo esc_attr($GLOBALS['search_query']); ?>"
-                    placeholder="<?php esc_attr_e('Job title, keywords...', 'careernest'); ?>" class="cn-filter-input" />
+                <div class="cn-input-with-icon">
+                    <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M17.5 17.5L13.875 13.875M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <input type="text" id="job_search" name="job_search" value="<?php echo esc_attr($GLOBALS['search_query']); ?>"
+                        placeholder="<?php esc_attr_e('Job title, keywords...', 'careernest'); ?>"
+                        class="cn-filter-input cn-input-with-icon-field" />
+                </div>
             </div>
             <?php
             break;
@@ -262,9 +271,19 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                     <label for="job_location" class="cn-filter-label">
                         <?php esc_html_e('Location', 'careernest'); ?>
                     </label>
-                    <input type="text" id="job_location" name="job_location"
-                        value="<?php echo esc_attr($GLOBALS['selected_location']); ?>"
-                        placeholder="<?php esc_attr_e('City, state, or region...', 'careernest'); ?>" class="cn-filter-input" />
+                    <div class="cn-input-with-icon">
+                        <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 20 21" fill="none"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z"
+                                stroke="currentColor" stroke-width="1.5" />
+                            <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                        <input type="text" id="job_location" name="job_location"
+                            value="<?php echo esc_attr($GLOBALS['selected_location']); ?>"
+                            placeholder="<?php esc_attr_e('City, state, or region...', 'careernest'); ?>"
+                            class="cn-filter-input cn-input-with-icon-field" />
+                    </div>
                 </div>
             <?php
             endif;
@@ -784,6 +803,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         border-radius: 4px;
         font-size: 0.9rem;
         transition: border-color 0.2s;
+        box-sizing: border-box;
     }
 
     .cn-filter-input:focus,
@@ -798,6 +818,28 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         flex-direction: column;
         gap: 0.5rem;
         margin-top: 1.5rem;
+    }
+
+    /* Input with Icon */
+    .cn-input-with-icon {
+        position: relative;
+        width: 100%;
+    }
+
+    .cn-input-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #4a5568;
+        pointer-events: none;
+        flex-shrink: 0;
+    }
+
+    .cn-input-with-icon-field {
+        padding-left: 2.5rem !important;
+        min-height: 42px;
+        box-sizing: border-box;
     }
 
     /* Salary Range Slider */
