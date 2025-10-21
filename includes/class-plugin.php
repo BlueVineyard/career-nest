@@ -438,6 +438,28 @@ class Plugin
 
         // Check if we're on the jobs listing page
         if ($jobs_page_id && is_page($jobs_page_id)) {
+            // Enqueue Google Maps API if key is configured
+            $options = get_option('careernest_options', []);
+            $maps_api_key = isset($options['maps_api_key']) ? trim((string) $options['maps_api_key']) : '';
+            if ($maps_api_key !== '') {
+                wp_enqueue_script(
+                    'google-maps',
+                    'https://maps.googleapis.com/maps/api/js?key=' . urlencode($maps_api_key) . '&libraries=places',
+                    [],
+                    null,
+                    false
+                );
+
+                // Enqueue maps script
+                wp_enqueue_script(
+                    'careernest-maps',
+                    CAREERNEST_URL . 'assets/js/maps.js',
+                    ['google-maps'],
+                    CAREERNEST_VERSION,
+                    true
+                );
+            }
+
             // Enqueue custom dropdown styles
             wp_enqueue_style(
                 'careernest-custom-dropdown',
