@@ -75,6 +75,7 @@
       // Radius slider
       $("#search_radius").on("input", function () {
         self.updateRadiusDisplay();
+        self.updateRadiusBadge();
       });
 
       $("#search_radius").on("change", function () {
@@ -85,6 +86,40 @@
       $(document).on("click", ".cn-get-location-btn", function (e) {
         e.preventDefault();
         self.getUserLocation();
+      });
+
+      // Radius badge click to expand filter
+      $(document).on("click", ".cn-radius-badge-indicator", function (e) {
+        e.stopPropagation();
+        $(".cn-radius-filter").slideDown(300);
+        $(this).fadeOut(200);
+      });
+
+      // Hide radius filter on blur, show badge if distance is set
+      $(document).on(
+        "blur",
+        "#job_location, .cn-get-location-btn",
+        function (e) {
+          setTimeout(function () {
+            // Check if focus moved to radius slider
+            if (
+              !$(".cn-radius-filter").is(":focus-within") &&
+              !$(":focus").closest(".cn-radius-filter").length
+            ) {
+              const radius = parseInt($("#search_radius").val()) || 0;
+              if (radius > 0) {
+                $(".cn-radius-filter").slideUp(300, function () {
+                  $(".cn-radius-badge-indicator").fadeIn(200);
+                });
+              }
+            }
+          }, 200);
+        }
+      );
+
+      // Keep radius filter open when interacting with it
+      $(document).on("focus", ".cn-radius-filter input", function () {
+        $(".cn-radius-badge-indicator").fadeOut(200);
       });
 
       // Pagination clicks (delegated)
@@ -228,6 +263,7 @@
       this.userLng = null;
       this.updateSalaryDisplay();
       this.updateRadiusDisplay();
+      this.updateRadiusBadge();
       this.updateLocationStatus(false);
       this.reinitializeDropdowns();
       this.loadJobs(1);
@@ -304,6 +340,28 @@
         $("#radius-display").text("Any distance");
       } else {
         $("#radius-display").text(radius + " km");
+      }
+    },
+
+    updateRadiusBadge: function () {
+      const radius = parseInt($("#search_radius").val()) || 0;
+      let badge = $(".cn-radius-badge-indicator");
+
+      if (radius > 0) {
+        if (!badge.length) {
+          // Create badge if it doesn't exist
+          $("#job_location").after(
+            '<span class="cn-radius-badge-indicator" title="Click to adjust distance">' +
+              radius +
+              " km</span>"
+          );
+        } else {
+          // Update existing badge
+          badge.text(radius + " km");
+        }
+      } else {
+        // Remove badge if radius is 0
+        badge.remove();
       }
     },
 
@@ -432,6 +490,7 @@
 
         // Show radius filter with slide down animation
         if (radiusFilter.length && radiusFilter.is(":hidden")) {
+          $(".cn-radius-badge-indicator").fadeOut(200);
           radiusFilter.slideDown(300);
         }
       } else {
@@ -440,10 +499,12 @@
           .attr("title", "Use my current location");
 
         // Hide radius filter and reset value
-        if (radiusFilter.length && radiusFilter.is(":visible")) {
+        if (radiusFilter.length) {
           $("#search_radius").val(0);
           this.updateRadiusDisplay();
+          this.updateRadiusBadge();
           radiusFilter.slideUp(300);
+          $(".cn-radius-badge-indicator").remove();
         }
       }
     },

@@ -1147,14 +1147,38 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        position: relative;
     }
 
     .cn-location-input-wrapper .cn-input-with-icon {
         flex: 1;
+        position: relative;
     }
 
     .cn-input-with-button {
         padding-right: 2.5rem !important;
+    }
+
+    .cn-radius-badge-indicator {
+        position: absolute;
+        right: 52px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #bee3f8;
+        color: #2c5282;
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 1;
+        display: none;
+        transition: all 0.2s;
+    }
+
+    .cn-radius-badge-indicator:hover {
+        background: #90cdf4;
+        color: #2a4365;
     }
 
     .cn-get-location-btn {
