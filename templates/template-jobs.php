@@ -296,21 +296,20 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                             </svg>
                         </button>
                     </div>
-                </div>
 
-                <!-- Radius Filter -->
-                <div class="cn-filter-group">
-                    <label for="search_radius" class="cn-filter-label">
-                        <?php esc_html_e('Distance', 'careernest'); ?>
-                        <span id="radius-display" class="cn-radius-display">Any distance</span>
-                    </label>
-                    <input type="range" id="search_radius" name="search_radius" min="0" max="100" step="5" value="0"
-                        class="cn-range-slider" />
-                    <div class="cn-range-labels">
-                        <span><?php esc_html_e('Any', 'careernest'); ?></span>
-                        <span><?php esc_html_e('100 km', 'careernest'); ?></span>
+                    <!-- Radius Filter (hidden by default, shown when location is set) -->
+                    <div class="cn-radius-filter" style="display: none; margin-top: 1rem;">
+                        <label for="search_radius" class="cn-filter-label">
+                            <?php esc_html_e('Distance', 'careernest'); ?>
+                            <span id="radius-display" class="cn-radius-display">Any distance</span>
+                        </label>
+                        <input type="range" id="search_radius" name="search_radius" min="0" max="100" step="5" value="0"
+                            class="cn-range-slider" />
+                        <div class="cn-range-labels">
+                            <span><?php esc_html_e('Any', 'careernest'); ?></span>
+                            <span><?php esc_html_e('100 km', 'careernest'); ?></span>
+                        </div>
                     </div>
-                    <p class="cn-filter-hint"><?php esc_html_e('Set location first, then select distance', 'careernest'); ?></p>
                 </div>
             <?php
             endif;

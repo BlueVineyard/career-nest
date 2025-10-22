@@ -260,9 +260,11 @@
       if (data.sort && data.sort !== "date_desc") params.set("sort", data.sort);
       if (data.paged && data.paged > 1) params.set("paged", data.paged);
 
+      // Use current page path, removing any existing query string
+      const currentPath = window.location.pathname;
       const newURL = params.toString()
-        ? window.location.pathname + "?" + params.toString()
-        : window.location.pathname;
+        ? currentPath + "?" + params.toString()
+        : currentPath;
 
       window.history.pushState({}, "", newURL);
     },
@@ -421,14 +423,28 @@
 
     updateLocationStatus: function (hasLocation) {
       const btn = $(".cn-get-location-btn");
+      const radiusFilter = $(".cn-radius-filter");
+
       if (hasLocation) {
         btn
           .addClass("cn-location-active")
           .attr("title", "Location set - click to refresh");
+
+        // Show radius filter with slide down animation
+        if (radiusFilter.length && radiusFilter.is(":hidden")) {
+          radiusFilter.slideDown(300);
+        }
       } else {
         btn
           .removeClass("cn-location-active")
           .attr("title", "Use my current location");
+
+        // Hide radius filter and reset value
+        if (radiusFilter.length && radiusFilter.is(":visible")) {
+          $("#search_radius").val(0);
+          this.updateRadiusDisplay();
+          radiusFilter.slideUp(300);
+        }
       }
     },
   };

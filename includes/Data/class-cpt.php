@@ -41,8 +41,8 @@ class CPT
             'show_ui'            => true,
             'show_in_menu'       => false,
             'show_in_rest'       => true,
-            'has_archive'        => true,
-            'rewrite'            => ['slug' => 'jobs', 'with_front' => false],
+            'has_archive'        => false, // Disabled - using custom page at /jobs/
+            'rewrite'            => ['slug' => 'job', 'with_front' => false], // Changed to avoid conflict
             'supports'           => ['title'],
             'menu_position'      => 26,
             'menu_icon'          => 'dashicons-portfolio',
