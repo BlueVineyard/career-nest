@@ -192,7 +192,7 @@ $default_order = ['search', 'filter_category', 'filter_job_type', 'filter_locati
 $filter_order = isset($filter_settings['filter_order']) && is_array($filter_settings['filter_order']) ? $filter_settings['filter_order'] : $default_order;
 
 // Helper function to render each filter
-$render_filter = function ($filter_key) use ($show_category, $show_job_type, $show_location, $show_employer, $show_salary, $show_date_posted, $show_sort, $job_categories, $job_types, $selected_category, $selected_type, $selected_location, $selected_employer, $min_salary, $max_salary, $date_posted, $sort_by) {
+$render_filter = function ($filter_key) use ($show_category, $show_job_type, $show_location, $show_employer, $show_salary, $show_date_posted, $show_sort, $job_categories, $job_types, $selected_category, $selected_type, $selected_location, $selected_employer, $min_salary, $max_salary, $date_posted, $sort_by, $search_query) {
     switch ($filter_key) {
         case 'search':
 ?>
@@ -208,7 +208,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                             d="M17.5 17.5L13.875 13.875M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <input type="text" id="job_search" name="job_search" value="<?php echo esc_attr($GLOBALS['search_query']); ?>"
+                    <input type="text" id="job_search" name="job_search" value="<?php echo esc_attr($search_query); ?>"
                         placeholder="<?php esc_attr_e('Job title, keywords...', 'careernest'); ?>"
                         class="cn-filter-input cn-input-with-icon-field" />
                 </div>
@@ -281,10 +281,18 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                                     stroke="currentColor" stroke-width="1.5" />
                                 <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1.5" />
                             </svg>
-                            <input type="text" id="job_location" name="job_location"
-                                value="<?php echo esc_attr($GLOBALS['selected_location']); ?>"
+                            <input type="text" id="job_location" name="job_location" value="<?php echo esc_attr($selected_location); ?>"
                                 placeholder="<?php esc_attr_e('City, state, or region...', 'careernest'); ?>"
-                                class="cn-filter-input cn-input-with-icon-field cn-input-with-button" />
+                                class="cn-filter-input cn-input-with-icon-field cn-input-with-chips" />
+                            <!-- Distance chip (shown when radius > 0) -->
+                            <span class="cn-distance-chip" style="display: none;">
+                                <span class="cn-distance-chip-text"></span>
+                                <svg class="cn-distance-chip-close" width="12" height="12" viewBox="0 0 20 20" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </span>
                         </div>
                         <button type="button" class="cn-get-location-btn"
                             title="<?php esc_attr_e('Use my current location', 'careernest'); ?>"
@@ -297,7 +305,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                         </button>
                     </div>
 
-                    <!-- Radius Filter (hidden by default, shown when location is set) -->
+                    <!-- Radius Filter (collapsible) -->
                     <div class="cn-radius-filter" style="display: none; margin-top: 1rem;">
                         <label for="search_radius" class="cn-filter-label">
                             <?php esc_html_e('Distance', 'careernest'); ?>
@@ -466,6 +474,40 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
             <?php endif; ?>
         </header>
 
+        <!-- View Toggle -->
+        <div class="cn-view-toggle">
+            <button type="button" class="cn-view-toggle-btn cn-view-toggle-list active" data-view="list"
+                aria-label="<?php esc_attr_e('List View', 'careernest'); ?>">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 6H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M8 12H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M8 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M3 6H3.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M3 12H3.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M3 18H3.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span><?php esc_html_e('List', 'careernest'); ?></span>
+            </button>
+            <button type="button" class="cn-view-toggle-btn cn-view-toggle-map" data-view="map"
+                aria-label="<?php esc_attr_e('Map View', 'careernest'); ?>">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 6L9 2L1 6V20L9 16L15 20L23 16V2L15 6Z" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M9 2V16" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <path d="M15 6V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span><?php esc_html_e('Map', 'careernest'); ?></span>
+            </button>
+        </div>
+
         <div class="cn-jobs-layout cn-filter-position-<?php echo esc_attr($filter_position); ?>">
             <!-- Sidebar Filters -->
             <aside class="cn-jobs-sidebar cn-filters-<?php echo esc_attr($filter_position); ?>">
@@ -508,242 +550,252 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
 
             <!-- Job Listings -->
             <div class="cn-jobs-main">
-                <?php if ($jobs_query->have_posts()): ?>
-                    <div class="cn-jobs-list cn-jobs-columns-<?php echo esc_attr($job_columns); ?>">
-                        <?php while ($jobs_query->have_posts()): $jobs_query->the_post();
-                            $job_id = get_the_ID();
-                            $employer_id = get_post_meta($job_id, '_employer_id', true);
-                            $employer_id = $employer_id ? (int) $employer_id : 0;
+                <!-- Map View Container (hidden by default) -->
+                <div class="cn-jobs-map-container" style="display: none;">
+                    <div id="cn-jobs-map" class="cn-jobs-map"></div>
+                </div>
 
-                            // Get company info with validation
-                            $company_name = '';
-                            $employer_logo = '';
-                            if ($employer_id && get_post_status($employer_id)) {
-                                $company_name = get_the_title($employer_id);
-                                $employer_logo = get_the_post_thumbnail_url($employer_id, 'thumbnail');
-                            }
+                <!-- List View Container -->
+                <div class="cn-jobs-list-container">
+                    <?php if ($jobs_query->have_posts()): ?>
+                        <div class="cn-jobs-list cn-jobs-columns-<?php echo esc_attr($job_columns); ?>">
+                            <?php while ($jobs_query->have_posts()): $jobs_query->the_post();
+                                $job_id = get_the_ID();
+                                $employer_id = get_post_meta($job_id, '_employer_id', true);
+                                $employer_id = $employer_id ? (int) $employer_id : 0;
 
-                            $location = get_post_meta($job_id, '_job_location', true);
-                            $remote_position = get_post_meta($job_id, '_remote_position', true);
-                            $salary_mode = get_post_meta($job_id, '_salary_mode', true);
-                            $salary_range = get_post_meta($job_id, '_salary_range', true);
-                            $salary_numeric = get_post_meta($job_id, '_salary', true);
-                            $closing_date = get_post_meta($job_id, '_closing_date', true);
-                            $position_filled = get_post_meta($job_id, '_position_filled', true);
-
-                            // Get job type terms
-                            $job_types_terms = get_the_terms($job_id, 'job_type');
-
-                            // Calculate days until closing
-                            $expiry_text = '';
-                            $expiry_class = '';
-                            if ($closing_date) {
-                                $closing_timestamp = strtotime($closing_date . ' 23:59:59');
-                                $current_timestamp = current_time('timestamp');
-                                $days_diff = ceil(($closing_timestamp - $current_timestamp) / DAY_IN_SECONDS);
-
-                                if ($days_diff > 7) {
-                                    $expiry_text = 'Expires in ' . $days_diff . ' days';
-                                    $expiry_class = 'cn-expiry-normal';
-                                } elseif ($days_diff > 0) {
-                                    $expiry_text = 'Expires in ' . $days_diff . ' day' . ($days_diff > 1 ? 's' : '');
-                                    $expiry_class = 'cn-expiry-warning';
-                                } elseif ($days_diff === 0) {
-                                    $expiry_text = 'Expires today';
-                                    $expiry_class = 'cn-expiry-urgent';
-                                } else {
-                                    $expiry_text = 'Expired';
-                                    $expiry_class = 'cn-expiry-expired';
+                                // Get company info with validation
+                                $company_name = '';
+                                $employer_logo = '';
+                                if ($employer_id && get_post_status($employer_id)) {
+                                    $company_name = get_the_title($employer_id);
+                                    $employer_logo = get_the_post_thumbnail_url($employer_id, 'thumbnail');
                                 }
-                            }
-                        ?>
-                            <article class="cn-job-card <?php echo $position_filled ? 'cn-job-filled' : ''; ?>">
-                                <div class="cn-job-card-header">
-                                    <?php if ($employer_logo): ?>
-                                        <img src="<?php echo esc_url($employer_logo); ?>"
-                                            alt="<?php echo esc_attr($company_name); ?>" class="cn-job-logo">
-                                    <?php else: ?>
-                                        <div class="cn-job-logo-placeholder">
-                                            <span><?php echo esc_html(substr($company_name ?: get_the_title(), 0, 1)); ?></span>
+
+                                $location = get_post_meta($job_id, '_job_location', true);
+                                $remote_position = get_post_meta($job_id, '_remote_position', true);
+                                $salary_mode = get_post_meta($job_id, '_salary_mode', true);
+                                $salary_range = get_post_meta($job_id, '_salary_range', true);
+                                $salary_numeric = get_post_meta($job_id, '_salary', true);
+                                $closing_date = get_post_meta($job_id, '_closing_date', true);
+                                $position_filled = get_post_meta($job_id, '_position_filled', true);
+
+                                // Get job type terms
+                                $job_types_terms = get_the_terms($job_id, 'job_type');
+
+                                // Calculate days until closing
+                                $expiry_text = '';
+                                $expiry_class = '';
+                                if ($closing_date) {
+                                    $closing_timestamp = strtotime($closing_date . ' 23:59:59');
+                                    $current_timestamp = current_time('timestamp');
+                                    $days_diff = ceil(($closing_timestamp - $current_timestamp) / DAY_IN_SECONDS);
+
+                                    if ($days_diff > 7) {
+                                        $expiry_text = 'Expires in ' . $days_diff . ' days';
+                                        $expiry_class = 'cn-expiry-normal';
+                                    } elseif ($days_diff > 0) {
+                                        $expiry_text = 'Expires in ' . $days_diff . ' day' . ($days_diff > 1 ? 's' : '');
+                                        $expiry_class = 'cn-expiry-warning';
+                                    } elseif ($days_diff === 0) {
+                                        $expiry_text = 'Expires today';
+                                        $expiry_class = 'cn-expiry-urgent';
+                                    } else {
+                                        $expiry_text = 'Expired';
+                                        $expiry_class = 'cn-expiry-expired';
+                                    }
+                                }
+                            ?>
+                                <article class="cn-job-card <?php echo $position_filled ? 'cn-job-filled' : ''; ?>">
+                                    <div class="cn-job-card-header">
+                                        <?php if ($employer_logo): ?>
+                                            <img src="<?php echo esc_url($employer_logo); ?>"
+                                                alt="<?php echo esc_attr($company_name); ?>" class="cn-job-logo">
+                                        <?php else: ?>
+                                            <div class="cn-job-logo-placeholder">
+                                                <span><?php echo esc_html(substr($company_name ?: get_the_title(), 0, 1)); ?></span>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <div class="cn-job-header-content">
+                                            <h2 class="cn-job-title">
+                                                <a href="<?php echo esc_url(get_permalink()); ?>">
+                                                    <?php echo esc_html(get_the_title()); ?>
+                                                </a>
+                                            </h2>
+
+                                            <?php if ($company_name): ?>
+                                                <p class="cn-job-company"><?php echo esc_html($company_name); ?></p>
+                                            <?php endif; ?>
                                         </div>
-                                    <?php endif; ?>
 
-                                    <div class="cn-job-header-content">
-                                        <h2 class="cn-job-title">
-                                            <a href="<?php echo esc_url(get_permalink()); ?>">
-                                                <?php echo esc_html(get_the_title()); ?>
-                                            </a>
-                                        </h2>
-
-                                        <?php if ($company_name): ?>
-                                            <p class="cn-job-company"><?php echo esc_html($company_name); ?></p>
+                                        <?php if ($position_filled): ?>
+                                            <span class="cn-job-status-badge cn-status-filled">
+                                                <?php esc_html_e('Filled', 'careernest'); ?>
+                                            </span>
                                         <?php endif; ?>
                                     </div>
 
-                                    <?php if ($position_filled): ?>
-                                        <span class="cn-job-status-badge cn-status-filled">
-                                            <?php esc_html_e('Filled', 'careernest'); ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
+                                    <div class="cn-job-card-meta">
+                                        <?php if ($location): ?>
+                                            <span class="cn-job-meta-item">
+                                                <svg width="16" height="16" viewBox="0 0 20 21" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path
+                                                        d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z"
+                                                        stroke="currentColor" stroke-width="1.5" />
+                                                    <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor"
+                                                        stroke-width="1.5" />
+                                                </svg>
+                                                <?php echo esc_html($location); ?>
+                                                <?php if ($remote_position): ?>
+                                                    <span class="cn-remote-badge"><?php esc_html_e('Remote', 'careernest'); ?></span>
+                                                <?php endif; ?>
+                                            </span>
+                                        <?php endif; ?>
 
-                                <div class="cn-job-card-meta">
-                                    <?php if ($location): ?>
-                                        <span class="cn-job-meta-item">
-                                            <svg width="16" height="16" viewBox="0 0 20 21" fill="none"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path
-                                                    d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z"
-                                                    stroke="currentColor" stroke-width="1.5" />
-                                                <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor"
-                                                    stroke-width="1.5" />
-                                            </svg>
-                                            <?php echo esc_html($location); ?>
-                                            <?php if ($remote_position): ?>
-                                                <span class="cn-remote-badge"><?php esc_html_e('Remote', 'careernest'); ?></span>
-                                            <?php endif; ?>
-                                        </span>
-                                    <?php endif; ?>
+                                        <?php if ($job_types_terms && !is_wp_error($job_types_terms)): ?>
+                                            <span class="cn-job-meta-item">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path
+                                                        d="M4.97883 9.68508C2.99294 8.89073 2 8.49355 2 8C2 7.50645 2.99294 7.10927 4.97883 6.31492L7.7873 5.19153C9.77318 4.39718 10.7661 4 12 4C13.2339 4 14.2268 4.39718 16.2127 5.19153L19.0212 6.31492C21.0071 7.10927 22 7.50645 22 8C22 8.49355 21.0071 8.89073 19.0212 9.68508L16.2127 10.8085C14.2268 11.6028 13.2339 12 12 12C10.7661 12 9.77318 11.6028 7.7873 10.8085L4.97883 9.68508Z"
+                                                        stroke="currentColor" stroke-width="1.5" />
+                                                </svg>
+                                                <?php echo esc_html($job_types_terms[0]->name); ?>
+                                            </span>
+                                        <?php endif; ?>
 
-                                    <?php if ($job_types_terms && !is_wp_error($job_types_terms)): ?>
-                                        <span class="cn-job-meta-item">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path
-                                                    d="M4.97883 9.68508C2.99294 8.89073 2 8.49355 2 8C2 7.50645 2.99294 7.10927 4.97883 6.31492L7.7873 5.19153C9.77318 4.39718 10.7661 4 12 4C13.2339 4 14.2268 4.39718 16.2127 5.19153L19.0212 6.31492C21.0071 7.10927 22 7.50645 22 8C22 8.49355 21.0071 8.89073 19.0212 9.68508L16.2127 10.8085C14.2268 11.6028 13.2339 12 12 12C10.7661 12 9.77318 11.6028 7.7873 10.8085L4.97883 9.68508Z"
-                                                    stroke="currentColor" stroke-width="1.5" />
-                                            </svg>
-                                            <?php echo esc_html($job_types_terms[0]->name); ?>
-                                        </span>
-                                    <?php endif; ?>
-
-                                    <?php if ($salary_mode === 'numeric' && $salary_numeric): ?>
-                                        <span class="cn-job-meta-item cn-salary">
-                                            <svg width="16" height="16" viewBox="0 0 20 21" fill="none"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <circle cx="10" cy="10.5" r="8.33333" stroke="currentColor" stroke-width="1.5" />
-                                                <path d="M10 5.5V15.5" stroke="currentColor" stroke-width="1.5"
-                                                    stroke-linecap="round" />
-                                                <path
-                                                    d="M12.5 8.41683C12.5 7.26624 11.3807 6.3335 10 6.3335C8.61929 6.3335 7.5 7.26624 7.5 8.41683C7.5 9.56742 8.61929 10.5002 10 10.5002C11.3807 10.5002 12.5 11.4329 12.5 12.5835C12.5 13.7341 11.3807 14.6668 10 14.6668C8.61929 14.6668 7.5 13.7341 7.5 12.5835"
-                                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                                            </svg>
-                                            $<?php echo esc_html(number_format($salary_numeric)); ?>
-                                        </span>
-                                    <?php elseif ($salary_range): ?>
-                                        <span class="cn-job-meta-item cn-salary">
-                                            <svg width="16" height="16" viewBox="0 0 20 21" fill="none"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <circle cx="10" cy="10.5" r="8.33333" stroke="currentColor" stroke-width="1.5" />
-                                                <path d="M10 5.5V15.5" stroke="currentColor" stroke-width="1.5"
-                                                    stroke-linecap="round" />
-                                                <path
-                                                    d="M12.5 8.41683C12.5 7.26624 11.3807 6.3335 10 6.3335C8.61929 6.3335 7.5 7.26624 7.5 8.41683C7.5 9.56742 8.61929 10.5002 10 10.5002C11.3807 10.5002 12.5 11.4329 12.5 12.5835C12.5 13.7341 11.3807 14.6668 10 14.6668C8.61929 14.6668 7.5 13.7341 7.5 12.5835"
-                                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                                            </svg>
-                                            <?php echo esc_html($salary_range); ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-
-                                <?php if (!empty(get_the_excerpt())): ?>
-                                    <div class="cn-job-excerpt">
-                                        <?php echo wp_kses_post(wp_trim_words(get_the_excerpt(), 30, '...')); ?>
+                                        <?php if ($salary_mode === 'numeric' && $salary_numeric): ?>
+                                            <span class="cn-job-meta-item cn-salary">
+                                                <svg width="16" height="16" viewBox="0 0 20 21" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <circle cx="10" cy="10.5" r="8.33333" stroke="currentColor"
+                                                        stroke-width="1.5" />
+                                                    <path d="M10 5.5V15.5" stroke="currentColor" stroke-width="1.5"
+                                                        stroke-linecap="round" />
+                                                    <path
+                                                        d="M12.5 8.41683C12.5 7.26624 11.3807 6.3335 10 6.3335C8.61929 6.3335 7.5 7.26624 7.5 8.41683C7.5 9.56742 8.61929 10.5002 10 10.5002C11.3807 10.5002 12.5 11.4329 12.5 12.5835C12.5 13.7341 11.3807 14.6668 10 14.6668C8.61929 14.6668 7.5 13.7341 7.5 12.5835"
+                                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                                </svg>
+                                                $<?php echo esc_html(number_format($salary_numeric)); ?>
+                                            </span>
+                                        <?php elseif ($salary_range): ?>
+                                            <span class="cn-job-meta-item cn-salary">
+                                                <svg width="16" height="16" viewBox="0 0 20 21" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <circle cx="10" cy="10.5" r="8.33333" stroke="currentColor"
+                                                        stroke-width="1.5" />
+                                                    <path d="M10 5.5V15.5" stroke="currentColor" stroke-width="1.5"
+                                                        stroke-linecap="round" />
+                                                    <path
+                                                        d="M12.5 8.41683C12.5 7.26624 11.3807 6.3335 10 6.3335C8.61929 6.3335 7.5 7.26624 7.5 8.41683C7.5 9.56742 8.61929 10.5002 10 10.5002C11.3807 10.5002 12.5 11.4329 12.5 12.5835C12.5 13.7341 11.3807 14.6668 10 14.6668C8.61929 14.6668 7.5 13.7341 7.5 12.5835"
+                                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                                </svg>
+                                                <?php echo esc_html($salary_range); ?>
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
-                                <?php endif; ?>
 
-                                <div class="cn-job-card-footer">
-                                    <?php if ($expiry_text): ?>
-                                        <span class="cn-job-expiry <?php echo esc_attr($expiry_class); ?>">
-                                            <svg width="14" height="14" viewBox="0 0 20 21" fill="none"
+                                    <?php if (!empty(get_the_excerpt())): ?>
+                                        <div class="cn-job-excerpt">
+                                            <?php echo wp_kses_post(wp_trim_words(get_the_excerpt(), 30, '...')); ?>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div class="cn-job-card-footer">
+                                        <?php if ($expiry_text): ?>
+                                            <span class="cn-job-expiry <?php echo esc_attr($expiry_class); ?>">
+                                                <svg width="14" height="14" viewBox="0 0 20 21" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path
+                                                        d="M1.66659 10.5C1.66659 15.1024 5.39755 18.8333 9.99992 18.8333C14.6023 18.8333 18.3333 15.1024 18.3333 10.5C18.3333 5.89763 14.6023 2.16667 9.99992 2.16667"
+                                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                                    <path d="M10 8V11.3333H13.3333" stroke="currentColor" stroke-width="1.5"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                                <?php echo esc_html($expiry_text); ?>
+                                            </span>
+                                        <?php endif; ?>
+
+                                        <a href="<?php echo esc_url(get_permalink()); ?>" class="cn-btn cn-btn-view-job">
+                                            <?php esc_html_e('View Details', 'careernest'); ?>
+                                            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"
                                                 xmlns="http://www.w3.org/2000/svg">
-                                                <path
-                                                    d="M1.66659 10.5C1.66659 15.1024 5.39755 18.8333 9.99992 18.8333C14.6023 18.8333 18.3333 15.1024 18.3333 10.5C18.3333 5.89763 14.6023 2.16667 9.99992 2.16667"
-                                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                                                <path d="M10 8V11.3333H13.3333" stroke="currentColor" stroke-width="1.5"
+                                                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2"
                                                     stroke-linecap="round" stroke-linejoin="round" />
                                             </svg>
-                                            <?php echo esc_html($expiry_text); ?>
-                                        </span>
-                                    <?php endif; ?>
-
-                                    <a href="<?php echo esc_url(get_permalink()); ?>" class="cn-btn cn-btn-view-job">
-                                        <?php esc_html_e('View Details', 'careernest'); ?>
-                                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </article>
-                        <?php endwhile; ?>
-                    </div>
-
-                    <!-- Pagination -->
-                    <?php if ($jobs_query->max_num_pages > 1): ?>
-                        <nav class="cn-pagination">
-                            <?php
-                            $big = 999999999;
-                            echo paginate_links([
-                                'base' => str_replace($big, '%#%', esc_url(get_pagenum_link($big))),
-                                'format' => '?paged=%#%',
-                                'current' => max(1, $paged),
-                                'total' => $jobs_query->max_num_pages,
-                                'prev_text' => '&laquo; ' . __('Previous', 'careernest'),
-                                'next_text' => __('Next', 'careernest') . ' &raquo;',
-                                'type' => 'list',
-                                'end_size' => 2,
-                                'mid_size' => 2,
-                            ]);
-                            ?>
-                        </nav>
-                    <?php endif; ?>
-
-                <?php else: ?>
-                    <!-- Empty State -->
-                    <div class="cn-jobs-empty">
-                        <div class="cn-empty-icon">
-                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z"
-                                    stroke="#CCCCCC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M12 6V18" stroke="#CCCCCC" stroke-width="2" stroke-linecap="round" />
-                            </svg>
+                                        </a>
+                                    </div>
+                                </article>
+                            <?php endwhile; ?>
                         </div>
 
-                        <h2 class="cn-empty-title">
-                            <?php
-                            if ($active_filters > 0) {
-                                esc_html_e('No Jobs Found', 'careernest');
-                            } else {
-                                esc_html_e('No Jobs Available', 'careernest');
-                            }
-                            ?>
-                        </h2>
-
-                        <p class="cn-empty-message">
-                            <?php
-                            if ($active_filters > 0) {
-                                esc_html_e('No jobs match your current filters. Try adjusting your search criteria or clearing filters.', 'careernest');
-                            } else {
-                                esc_html_e('There are currently no job listings available. Please check back later.', 'careernest');
-                            }
-                            ?>
-                        </p>
-
-                        <?php if ($active_filters > 0): ?>
-                            <a href="<?php echo esc_url(get_permalink()); ?>" class="cn-btn cn-btn-primary">
-                                <?php esc_html_e('Clear All Filters', 'careernest'); ?>
-                            </a>
+                        <!-- Pagination -->
+                        <?php if ($jobs_query->max_num_pages > 1): ?>
+                            <nav class="cn-pagination">
+                                <?php
+                                $big = 999999999;
+                                echo paginate_links([
+                                    'base' => str_replace($big, '%#%', esc_url(get_pagenum_link($big))),
+                                    'format' => '?paged=%#%',
+                                    'current' => max(1, $paged),
+                                    'total' => $jobs_query->max_num_pages,
+                                    'prev_text' => '&laquo; ' . __('Previous', 'careernest'),
+                                    'next_text' => __('Next', 'careernest') . ' &raquo;',
+                                    'type' => 'list',
+                                    'end_size' => 2,
+                                    'mid_size' => 2,
+                                ]);
+                                ?>
+                            </nav>
                         <?php endif; ?>
-                    </div>
-                <?php endif; ?>
 
-                <?php wp_reset_postdata(); ?>
+                    <?php else: ?>
+                        <!-- Empty State -->
+                        <div class="cn-jobs-empty">
+                            <div class="cn-empty-icon">
+                                <svg width="80" height="80" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z"
+                                        stroke="#CCCCCC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M12 6V18" stroke="#CCCCCC" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </div>
+
+                            <h2 class="cn-empty-title">
+                                <?php
+                                if ($active_filters > 0) {
+                                    esc_html_e('No Jobs Found', 'careernest');
+                                } else {
+                                    esc_html_e('No Jobs Available', 'careernest');
+                                }
+                                ?>
+                            </h2>
+
+                            <p class="cn-empty-message">
+                                <?php
+                                if ($active_filters > 0) {
+                                    esc_html_e('No jobs match your current filters. Try adjusting your search criteria or clearing filters.', 'careernest');
+                                } else {
+                                    esc_html_e('There are currently no job listings available. Please check back later.', 'careernest');
+                                }
+                                ?>
+                            </p>
+
+                            <?php if ($active_filters > 0): ?>
+                                <a href="<?php echo esc_url(get_permalink()); ?>" class="cn-btn cn-btn-primary">
+                                    <?php esc_html_e('Clear All Filters', 'careernest'); ?>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php wp_reset_postdata(); ?>
+                </div>
             </div>
         </div>
-    </div>
 </main>
 
 <style>
@@ -1155,30 +1207,50 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         position: relative;
     }
 
-    .cn-input-with-button {
-        padding-right: 2.5rem !important;
+    .cn-input-with-chips {
+        padding-right: 3.5rem !important;
     }
 
-    .cn-radius-badge-indicator {
+    /* Distance Chip inside location input */
+    .cn-distance-chip {
         position: absolute;
-        right: 52px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
         background: #bee3f8;
         color: #2c5282;
         padding: 0.25rem 0.5rem;
-        border-radius: 3px;
+        border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 600;
         cursor: pointer;
         z-index: 1;
-        display: none;
         transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
     }
 
-    .cn-radius-badge-indicator:hover {
+    .cn-distance-chip:hover {
         background: #90cdf4;
         color: #2a4365;
+    }
+
+    .cn-distance-chip-text {
+        display: inline-block;
+    }
+
+    .cn-distance-chip-close {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 0.125rem;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+
+    .cn-distance-chip-close:hover {
+        opacity: 1;
     }
 
     .cn-get-location-btn {
@@ -1385,6 +1457,158 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
 
     .cn-ajax-error strong {
         font-weight: 600;
+    }
+
+    /* View Toggle */
+    .cn-view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        justify-content: flex-end;
+    }
+
+    .cn-view-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: white;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+        color: #4a5568;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .cn-view-toggle-btn:hover {
+        background: #f0f8ff;
+        border-color: #0073aa;
+        color: #0073aa;
+    }
+
+    .cn-view-toggle-btn.active {
+        background: #0073aa;
+        border-color: #0073aa;
+        color: white;
+    }
+
+    .cn-view-toggle-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Map View Styles */
+    .cn-jobs-map-container {
+        width: 100%;
+        height: 600px;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .cn-jobs-map {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Map Info Window Styles */
+    .cn-map-info-window {
+        padding: 0.5rem;
+        max-width: 300px;
+    }
+
+    .cn-map-info-header {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .cn-map-info-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .cn-map-info-logo-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        background: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1rem;
+        color: #4a5568;
+        flex-shrink: 0;
+    }
+
+    .cn-map-info-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .cn-map-info-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
+        color: #1a202c;
+        line-height: 1.3;
+    }
+
+    .cn-map-info-company {
+        font-size: 0.875rem;
+        color: #718096;
+        margin: 0;
+    }
+
+    .cn-map-info-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+        color: #4a5568;
+    }
+
+    .cn-map-info-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .cn-map-info-meta-item svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+
+    .cn-map-info-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        background: #0073aa;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+
+    .cn-map-info-link:hover {
+        background: #005a87;
+        color: white;
+    }
+
+    .cn-map-info-link svg {
+        width: 12px;
+        height: 12px;
     }
 
     /* Jobs Main Container Position */

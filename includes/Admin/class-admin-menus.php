@@ -41,6 +41,8 @@ class Admin_Menus
         // Section: Employers (heading)
         add_submenu_page('careernest', __('Employers', 'careernest'), __('Employers', 'careernest'), 'manage_careernest', 'careernest-section-employers', '__return_null');
         add_submenu_page('careernest', __('All Employers', 'careernest'), __('All Employers', 'careernest'), 'manage_careernest', 'edit.php?post_type=employer');
+        add_submenu_page('careernest', __('Account Requests', 'careernest'), __('Account Requests', 'careernest'), 'manage_options', 'employer-requests', ['\CareerNest\Admin\Employer_Requests', 'render_requests_page_static']);
+        add_submenu_page('careernest', __('Employee Requests', 'careernest'), __('Employee Requests', 'careernest'), 'manage_options', 'employee-requests', ['\CareerNest\Admin\Employee_Requests', 'render_requests_page_static']);
 
         // Section: Applicants (heading)
         add_submenu_page('careernest', __('Applicants', 'careernest'), __('Applicants', 'careernest'), 'manage_careernest', 'careernest-section-applicants', '__return_null');

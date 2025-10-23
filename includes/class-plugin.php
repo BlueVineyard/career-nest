@@ -19,6 +19,9 @@ class Plugin
             \CareerNest\Data\Taxonomies::register();
         }, 5);
 
+        // Register shortcodes
+        add_action('init', [$this, 'register_shortcodes'], 5);
+
         // Force classic editor for CareerNest CPTs (disable block editor).
         add_filter('use_block_editor_for_post_type', [$this, 'disable_block_editor'], 10, 2);
 
@@ -42,6 +45,21 @@ class Plugin
 
         // Enqueue frontend assets for specific pages
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
+
+        // Handle login redirects
+        add_filter('login_redirect', ['\CareerNest\Shortcodes\Login', 'login_redirect'], 10, 3);
+
+        // Handle AJAX login
+        add_action('wp_ajax_nopriv_careernest_login', ['\CareerNest\Shortcodes\Login', 'ajax_login']);
+    }
+
+    /**
+     * Register all shortcodes
+     */
+    public function register_shortcodes(): void
+    {
+        // Register Login shortcode
+        \CareerNest\Shortcodes\Login::register();
     }
 
     public function hide_managed_pages_in_admin(\WP_Query $query): void
@@ -231,6 +249,7 @@ class Plugin
                 'employer-dashboard' => 'template-employer-dashboard.php',
                 'applicant-dashboard' => 'template-applicant-dashboard.php',
                 'register-employer' => 'template-register-employer.php',
+                'register-employee' => 'template-register-employee.php',
                 'register-applicant' => 'template-register-applicant.php',
                 'apply-job' => 'template-apply-job.php',
             ];

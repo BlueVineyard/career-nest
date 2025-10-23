@@ -298,12 +298,47 @@ class Ajax_Handler
         $jobs_html = ob_get_clean();
         wp_reset_postdata();
 
+        // Build marker data for map view
+        $markers = [];
+        if ($jobs_query->have_posts()) {
+            foreach ($jobs_query->posts as $post) {
+                $job_lat = get_post_meta($post->ID, '_job_location_lat', true);
+                $job_lng = get_post_meta($post->ID, '_job_location_lng', true);
+
+                // Only include jobs with coordinates
+                if (!empty($job_lat) && !empty($job_lng)) {
+                    $employer_id = get_post_meta($post->ID, '_employer_id', true);
+                    $employer_logo = $employer_id ? get_the_post_thumbnail_url($employer_id, 'thumbnail') : '';
+                    $company_name = $employer_id ? get_the_title($employer_id) : '';
+
+                    $job_types_terms = get_the_terms($post->ID, 'job_type');
+                    $job_type = ($job_types_terms && !is_wp_error($job_types_terms)) ? $job_types_terms[0]->name : '';
+
+                    $markers[] = [
+                        'id' => $post->ID,
+                        'title' => get_the_title($post->ID),
+                        'company' => $company_name,
+                        'logo' => $employer_logo,
+                        'location' => get_post_meta($post->ID, '_job_location', true),
+                        'job_type' => $job_type,
+                        'lat' => floatval($job_lat),
+                        'lng' => floatval($job_lng),
+                        'distance' => isset($post->distance) ? $post->distance : null,
+                        'permalink' => get_permalink($post->ID),
+                    ];
+                }
+            }
+        }
+
         // Send response
         wp_send_json_success([
             'header_html' => $header_html,
             'jobs_html' => $jobs_html,
             'found_posts' => $jobs_query->found_posts,
             'max_pages' => $jobs_query->max_num_pages,
+            'markers' => $markers,
+            'user_location' => ($user_lat && $user_lng) ? ['lat' => $user_lat, 'lng' => $user_lng] : null,
+            'radius' => $radius,
         ]);
     }
 

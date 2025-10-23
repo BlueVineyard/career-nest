@@ -36,6 +36,9 @@ require_once CAREERNEST_DIR . 'includes/Admin/class-admin-columns.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-users.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-settings.php';
 require_once CAREERNEST_DIR . 'includes/Security/class-caps.php';
+require_once CAREERNEST_DIR . 'includes/Shortcodes/class-login.php';
+require_once CAREERNEST_DIR . 'includes/Admin/class-employer-requests.php';
+require_once CAREERNEST_DIR . 'includes/Admin/class-employee-requests.php';
 
 // Hooks.
 register_activation_hook(__FILE__, ['\\CareerNest\\Activator', 'activate']);
@@ -56,6 +59,8 @@ add_action('plugins_loaded', function () {
     // Hook admin and security subsystems.
     if (is_admin()) {
         (new \CareerNest\Admin\Admin())->hooks();
+        (new \CareerNest\Admin\Employer_Requests())->hooks();
+        (new \CareerNest\Admin\Employee_Requests())->hooks();
     }
     (new \CareerNest\Security\Caps())->hooks();
     \CareerNest\Data\Roles::ensure_caps();

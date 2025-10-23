@@ -12,8 +12,19 @@
       this.userLat = null;
       this.userLng = null;
 
+      // Map view properties
+      this.map = null;
+      this.markers = [];
+      this.infoWindows = [];
+      this.userMarker = null;
+      this.radiusCircle = null;
+      this.markerClusterer = null;
+      this.currentView = "list"; // 'list' or 'map'
+      this.mapData = null; // Store latest map data
+
       this.bindEvents();
       this.initializeRadius();
+      this.initializeViewToggle();
     },
 
     bindEvents: function () {
@@ -38,6 +49,8 @@
       $("#job_category, #job_type, #sort, #employer, #date_posted").on(
         "change",
         function () {
+          // Skip if we're clearing filters
+          if (self.isClearing) return;
           self.loadJobs(1);
         }
       );
@@ -88,38 +101,32 @@
         self.getUserLocation();
       });
 
-      // Radius badge click to expand filter
-      $(document).on("click", ".cn-radius-badge-indicator", function (e) {
+      // Distance chip click to expand radius filter
+      $(document).on("click", ".cn-distance-chip-text", function (e) {
         e.stopPropagation();
         $(".cn-radius-filter").slideDown(300);
-        $(this).fadeOut(200);
       });
 
-      // Hide radius filter on blur, show badge if distance is set
-      $(document).on(
-        "blur",
-        "#job_location, .cn-get-location-btn",
-        function (e) {
-          setTimeout(function () {
-            // Check if focus moved to radius slider
-            if (
-              !$(".cn-radius-filter").is(":focus-within") &&
-              !$(":focus").closest(".cn-radius-filter").length
-            ) {
-              const radius = parseInt($("#search_radius").val()) || 0;
-              if (radius > 0) {
-                $(".cn-radius-filter").slideUp(300, function () {
-                  $(".cn-radius-badge-indicator").fadeIn(200);
-                });
-              }
-            }
-          }, 200);
-        }
-      );
+      // Distance chip close button (X) to clear radius
+      $(document).on("click", ".cn-distance-chip-close", function (e) {
+        e.stopPropagation();
+        $("#search_radius").val(0);
+        self.updateRadiusDisplay();
+        self.updateRadiusBadge();
+        self.loadJobs(1);
+      });
 
-      // Keep radius filter open when interacting with it
-      $(document).on("focus", ".cn-radius-filter input", function () {
-        $(".cn-radius-badge-indicator").fadeOut(200);
+      // Hide radius filter when clicking outside
+      $(document).on("click", function (e) {
+        if (
+          !$(e.target).closest(".cn-radius-filter").length &&
+          !$(e.target).closest(".cn-distance-chip-text").length
+        ) {
+          const radius = parseInt($("#search_radius").val()) || 0;
+          if (radius > 0 && $(".cn-radius-filter").is(":visible")) {
+            $(".cn-radius-filter").slideUp(300);
+          }
+        }
       });
 
       // Pagination clicks (delegated)
@@ -208,19 +215,36 @@
     },
 
     updateResults: function (data) {
-      // Fade out
-      this.jobsContainer.fadeOut(200, () => {
-        // Update header
-        if (data.header_html) {
-          $(".cn-jobs-header").html(data.header_html);
+      // Store map data for later use
+      if (data.markers) {
+        this.mapData = {
+          markers: data.markers,
+          userLocation: data.user_location,
+          radius: data.radius,
+        };
+      }
+
+      // Update header
+      if (data.header_html) {
+        $(".cn-jobs-header").html(data.header_html);
+      }
+
+      // Update the appropriate view
+      if (this.currentView === "map") {
+        // Update list data silently (without showing)
+        $(".cn-jobs-list-container").html(data.jobs_html);
+
+        // Update map view
+        if (this.mapData) {
+          this.updateMapView();
         }
-
-        // Update content
-        this.jobsContainer.html(data.jobs_html);
-
-        // Fade in
-        this.jobsContainer.fadeIn(200);
-      });
+      } else {
+        // Update and show list view
+        $(".cn-jobs-list-container").fadeOut(200, () => {
+          $(".cn-jobs-list-container").html(data.jobs_html);
+          $(".cn-jobs-list-container").fadeIn(200);
+        });
+      }
     },
 
     reinitializeDropdowns: function () {
@@ -249,23 +273,32 @@
     },
 
     clearFilters: function () {
+      // Set flag to prevent change handlers from firing loadJobs
+      this.isClearing = true;
+
+      // Clear all values
       $("#job_search").val("");
-      $("#job_category").val("");
-      $("#job_type").val("");
+      $("#job_category").val("").trigger("change");
+      $("#job_type").val("").trigger("change");
       $("#job_location").val("");
-      $("#employer").val("");
+      $("#employer").val("").trigger("change");
       $("#min_salary").val(0);
       $("#max_salary").val(200000);
-      $("#date_posted").val("");
-      $("#sort").val("date_desc");
+      $("#date_posted").val("").trigger("change");
+      $("#sort").val("date_desc").trigger("change");
       $("#search_radius").val(0);
+
       this.userLat = null;
       this.userLng = null;
       this.updateSalaryDisplay();
       this.updateRadiusDisplay();
       this.updateRadiusBadge();
       this.updateLocationStatus(false);
-      this.reinitializeDropdowns();
+
+      // Clear the flag
+      this.isClearing = false;
+
+      // Now load jobs once
       this.loadJobs(1);
     },
 
@@ -325,6 +358,7 @@
       // Check if radius filter exists
       if ($("#search_radius").length) {
         this.updateRadiusDisplay();
+        this.updateRadiusBadge(); // Initialize chip state
 
         // If location is already in input, try to geocode it
         const locationInput = $("#job_location").val();
@@ -345,23 +379,21 @@
 
     updateRadiusBadge: function () {
       const radius = parseInt($("#search_radius").val()) || 0;
-      let badge = $(".cn-radius-badge-indicator");
+      const chip = $(".cn-distance-chip");
+      const hasLocation = this.userLat && this.userLng;
 
-      if (radius > 0) {
-        if (!badge.length) {
-          // Create badge if it doesn't exist
-          $("#job_location").after(
-            '<span class="cn-radius-badge-indicator" title="Click to adjust distance">' +
-              radius +
-              " km</span>"
-          );
+      // Show chip when location is set
+      if (hasLocation) {
+        if (radius > 0) {
+          chip.find(".cn-distance-chip-text").text(radius + " km");
         } else {
-          // Update existing badge
-          badge.text(radius + " km");
+          chip.find(".cn-distance-chip-text").text("Any distance");
         }
+        chip.show();
       } else {
-        // Remove badge if radius is 0
-        badge.remove();
+        chip.hide();
+        // Hide radius filter when no location
+        $(".cn-radius-filter").slideUp(300);
       }
     },
 
@@ -481,32 +513,279 @@
 
     updateLocationStatus: function (hasLocation) {
       const btn = $(".cn-get-location-btn");
-      const radiusFilter = $(".cn-radius-filter");
 
       if (hasLocation) {
         btn
           .addClass("cn-location-active")
           .attr("title", "Location set - click to refresh");
-
-        // Show radius filter with slide down animation
-        if (radiusFilter.length && radiusFilter.is(":hidden")) {
-          $(".cn-radius-badge-indicator").fadeOut(200);
-          radiusFilter.slideDown(300);
-        }
+        // Show distance chip when location is set
+        this.updateRadiusBadge();
       } else {
         btn
           .removeClass("cn-location-active")
           .attr("title", "Use my current location");
+        // Hide distance chip when location is cleared
+        this.updateRadiusBadge();
+      }
+    },
 
-        // Hide radius filter and reset value
-        if (radiusFilter.length) {
-          $("#search_radius").val(0);
-          this.updateRadiusDisplay();
-          this.updateRadiusBadge();
-          radiusFilter.slideUp(300);
-          $(".cn-radius-badge-indicator").remove();
+    // ===== MAP VIEW METHODS =====
+
+    initializeViewToggle: function () {
+      const self = this;
+
+      // Bind view toggle buttons
+      $(document).on("click", ".cn-view-toggle-btn", function (e) {
+        e.preventDefault();
+        const view = $(this).data("view");
+        self.switchView(view);
+      });
+    },
+
+    switchView: function (view) {
+      if (view === this.currentView) return;
+
+      this.currentView = view;
+
+      // Update button states
+      $(".cn-view-toggle-btn").removeClass("active");
+      $(`.cn-view-toggle-btn[data-view="${view}"]`).addClass("active");
+
+      if (view === "map") {
+        // Switch to map view
+        $(".cn-jobs-list-container").hide();
+        $(".cn-jobs-map-container").show();
+
+        // Initialize map if not already done
+        if (!this.map) {
+          this.initializeMap();
+        }
+
+        // Load jobs if no map data exists yet
+        if (!this.mapData) {
+          this.loadJobs(1);
+        } else {
+          // Update map with current data
+          this.updateMapView();
+        }
+      } else {
+        // Switch to list view
+        $(".cn-jobs-map-container").hide();
+        $(".cn-jobs-list-container").show();
+      }
+    },
+
+    initializeMap: function () {
+      if (typeof google === "undefined" || !google.maps) {
+        this.showError("Google Maps is not available");
+        return;
+      }
+
+      // Default center (will be updated based on markers)
+      const defaultCenter = { lat: 0, lng: 0 };
+
+      this.map = new google.maps.Map(document.getElementById("cn-jobs-map"), {
+        center: defaultCenter,
+        zoom: 10,
+        mapTypeControl: true,
+        streetViewControl: false,
+        fullscreenControl: true,
+      });
+    },
+
+    updateMapView: function () {
+      if (!this.map || !this.mapData) return;
+
+      // Clear existing markers
+      this.clearMarkers();
+
+      const { markers, userLocation, radius } = this.mapData;
+
+      // Create markers for each job
+      if (markers && markers.length > 0) {
+        markers.forEach((job) => {
+          this.createMarker(job);
+        });
+
+        // Fit map to show all markers
+        this.fitMapToMarkers();
+      }
+
+      // Update user location marker
+      if (userLocation && userLocation.lat && userLocation.lng) {
+        this.updateUserMarker(userLocation);
+
+        // Update radius circle
+        if (radius > 0) {
+          this.updateRadiusCircle(userLocation, radius);
         }
       }
+    },
+
+    clearMarkers: function () {
+      // Remove all job markers
+      this.markers.forEach((marker) => marker.setMap(null));
+      this.markers = [];
+
+      // Close all info windows
+      this.infoWindows.forEach((infoWindow) => infoWindow.close());
+      this.infoWindows = [];
+
+      // Remove user marker
+      if (this.userMarker) {
+        this.userMarker.setMap(null);
+        this.userMarker = null;
+      }
+
+      // Remove radius circle
+      if (this.radiusCircle) {
+        this.radiusCircle.setMap(null);
+        this.radiusCircle = null;
+      }
+
+      // Clear marker clusterer
+      if (this.markerClusterer) {
+        this.markerClusterer.clearMarkers();
+        this.markerClusterer = null;
+      }
+    },
+
+    createMarker: function (job) {
+      const marker = new google.maps.Marker({
+        position: { lat: job.lat, lng: job.lng },
+        map: this.map,
+        title: job.title,
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+        },
+      });
+
+      // Create info window
+      const infoWindow = new google.maps.InfoWindow({
+        content: this.buildInfoWindowContent(job),
+      });
+
+      // Add click listener
+      marker.addListener("click", () => {
+        // Close all other info windows
+        this.infoWindows.forEach((iw) => iw.close());
+        // Open this info window
+        infoWindow.open(this.map, marker);
+      });
+
+      this.markers.push(marker);
+      this.infoWindows.push(infoWindow);
+    },
+
+    buildInfoWindowContent: function (job) {
+      const logoHtml = job.logo
+        ? `<img src="${job.logo}" alt="${job.company}" class="cn-map-info-logo">`
+        : `<div class="cn-map-info-logo-placeholder"><span>${
+            job.company ? job.company.charAt(0) : job.title.charAt(0)
+          }</span></div>`;
+
+      const distanceHtml = job.distance
+        ? `<div class="cn-map-info-meta-item">
+             <svg width="14" height="14" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+               <path d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z" stroke="currentColor" stroke-width="1.5"/>
+               <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1.5"/>
+             </svg>
+             ${job.distance} km away
+           </div>`
+        : "";
+
+      return `
+        <div class="cn-map-info-window">
+          <div class="cn-map-info-header">
+            ${logoHtml}
+            <div class="cn-map-info-content">
+              <h3 class="cn-map-info-title">${job.title}</h3>
+              ${
+                job.company
+                  ? `<p class="cn-map-info-company">${job.company}</p>`
+                  : ""
+              }
+            </div>
+          </div>
+          <div class="cn-map-info-meta">
+            ${
+              job.location
+                ? `<div class="cn-map-info-meta-item"><svg width="14" height="14" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z" stroke="currentColor" stroke-width="1.5"/><ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1.5"/></svg>${job.location}</div>`
+                : ""
+            }
+            ${distanceHtml}
+            ${
+              job.job_type
+                ? `<div class="cn-map-info-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.97883 9.68508C2.99294 8.89073 2 8.49355 2 8C2 7.50645 2.99294 7.10927 4.97883 6.31492L7.7873 5.19153C9.77318 4.39718 10.7661 4 12 4C13.2339 4 14.2268 4.39718 16.2127 5.19153L19.0212 6.31492C21.0071 7.10927 22 7.50645 22 8C22 8.49355 21.0071 8.89073 19.0212 9.68508L16.2127 10.8085C14.2268 11.6028 13.2339 12 12 12C10.7661 12 9.77318 11.6028 7.7873 10.8085L4.97883 9.68508Z" stroke="currentColor" stroke-width="1.5"/></svg>${job.job_type}</div>`
+                : ""
+            }
+          </div>
+          <a href="${job.permalink}" class="cn-map-info-link">
+            View Details
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      `;
+    },
+
+    fitMapToMarkers: function () {
+      if (!this.map || this.markers.length === 0) return;
+
+      const bounds = new google.maps.LatLngBounds();
+      this.markers.forEach((marker) => {
+        bounds.extend(marker.getPosition());
+      });
+
+      // Include user marker in bounds if exists
+      if (this.userMarker) {
+        bounds.extend(this.userMarker.getPosition());
+      }
+
+      this.map.fitBounds(bounds);
+
+      // Zoom out a bit if only one marker
+      if (this.markers.length === 1) {
+        const listener = google.maps.event.addListener(this.map, "idle", () => {
+          if (this.map.getZoom() > 15) {
+            this.map.setZoom(15);
+          }
+          google.maps.event.removeListener(listener);
+        });
+      }
+    },
+
+    updateUserMarker: function (userLocation) {
+      if (this.userMarker) {
+        this.userMarker.setMap(null);
+      }
+
+      this.userMarker = new google.maps.Marker({
+        position: { lat: userLocation.lat, lng: userLocation.lng },
+        map: this.map,
+        title: "Your Location",
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+        },
+      });
+    },
+
+    updateRadiusCircle: function (userLocation, radius) {
+      if (this.radiusCircle) {
+        this.radiusCircle.setMap(null);
+      }
+
+      this.radiusCircle = new google.maps.Circle({
+        center: { lat: userLocation.lat, lng: userLocation.lng },
+        radius: radius * 1000, // Convert km to meters
+        map: this.map,
+        strokeColor: "#0073aa",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: "#0073aa",
+        fillOpacity: 0.15,
+      });
     },
   };
 
