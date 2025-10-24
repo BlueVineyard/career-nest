@@ -13,6 +13,24 @@ if (!is_user_logged_in()) {
 
 get_header();
 
+// Handle job deletion
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_job') {
+    if (!wp_verify_nonce($_POST['cn_delete_job_nonce'], 'cn_delete_job')) {
+        wp_die(__('Security check failed.', 'careernest'));
+    }
+
+    $job_id_to_delete = isset($_POST['job_id']) ? (int) $_POST['job_id'] : 0;
+    $current_user = wp_get_current_user();
+    $user_employer_id = (int) get_user_meta($current_user->ID, '_employer_id', true);
+    $job_employer_id = (int) get_post_meta($job_id_to_delete, '_employer_id', true);
+
+    if ($job_id_to_delete && $job_employer_id === $user_employer_id) {
+        wp_trash_post($job_id_to_delete);
+        wp_safe_redirect(remove_query_arg(['action', 'job_id']));
+        exit;
+    }
+}
+
 // Handle profile update
 $profile_updated = false;
 $profile_errors = [];
@@ -90,6 +108,12 @@ function process_employer_profile_update()
     ];
 }
 
+// Get dashboard settings
+$dashboard_settings = get_option('careernest_employer_dashboard', []);
+$recent_jobs_count = isset($dashboard_settings['recent_jobs_count']) ? (int) $dashboard_settings['recent_jobs_count'] : 5;
+$recent_apps_count = isset($dashboard_settings['recent_apps_count']) ? (int) $dashboard_settings['recent_apps_count'] : 5;
+$welcome_message = isset($dashboard_settings['welcome_message']) ? $dashboard_settings['welcome_message'] : '';
+
 // Get current user and employer profile
 $current_user = wp_get_current_user();
 $user_roles = (array) $current_user->roles;
@@ -140,10 +164,10 @@ $personal_job_title = get_user_meta($current_user->ID, '_job_title', true);
 $personal_phone = get_user_meta($current_user->ID, '_personal_phone', true);
 $personal_bio = get_user_meta($current_user->ID, '_bio', true);
 
-// Get employer's jobs
+// Get employer's jobs (including drafts)
 $jobs_query = new WP_Query([
     'post_type' => 'job_listing',
-    'post_status' => 'publish',
+    'post_status' => ['publish', 'draft'],
     'posts_per_page' => -1,
     'meta_query' => [
         [
@@ -240,6 +264,14 @@ if ($applications_query->have_posts()) {
             </div>
         </div>
 
+        <!-- Welcome Message -->
+        <?php if (!empty($welcome_message)): ?>
+            <div class="cn-dashboard-welcome"
+                style="margin: 2rem 0; padding: 1.5rem; background: #f0f9ff; border-left: 4px solid #0073aa; border-radius: 4px;">
+                <?php echo wp_kses_post(wpautop($welcome_message)); ?>
+            </div>
+        <?php endif; ?>
+
         <!-- Dashboard Stats -->
         <div class="cn-dashboard-stats">
             <div class="cn-stat-card">
@@ -267,15 +299,19 @@ if ($applications_query->have_posts()) {
                 <!-- Job Listings -->
                 <div class="cn-dashboard-section">
                     <div class="cn-section-header">
-                        <h2><?php echo esc_html__('Your Job Listings', 'careernest'); ?></h2>
-                        <button type="button" class="cn-btn cn-btn-primary" id="cn-show-job-form">
-                            <?php echo esc_html__('Post New Job', 'careernest'); ?>
-                        </button>
+                        <h2><?php echo esc_html__('Recent Job Listings', 'careernest'); ?></h2>
+                        <a href="<?php echo esc_url(add_query_arg('action', 'manage-jobs', get_permalink())); ?>"
+                            class="cn-btn cn-btn-outline">
+                            <?php echo esc_html__('View All Jobs', 'careernest'); ?>
+                        </a>
                     </div>
 
                     <?php if ($jobs_query->have_posts()): ?>
                         <div class="cn-jobs-list">
-                            <?php while ($jobs_query->have_posts()): $jobs_query->the_post();
+                            <?php
+                            $recent_jobs = array_slice($jobs_query->posts, 0, $recent_jobs_count);
+                            foreach ($recent_jobs as $job):
+                                $jobs_query->the_post();
                                 $job_id = get_the_ID();
                                 $job_location = get_post_meta($job_id, '_job_location', true);
                                 $position_filled = get_post_meta($job_id, '_position_filled', true);
@@ -299,14 +335,20 @@ if ($applications_query->have_posts()) {
                                 wp_reset_postdata();
 
                                 // Determine job status
-                                $job_status = 'active';
-                                $status_color = '#10B981';
-                                if ($position_filled) {
+                                $current_post_status = get_post_status($job_id);
+
+                                if ($current_post_status === 'draft') {
+                                    $job_status = 'draft';
+                                    $status_color = '#f39c12';
+                                } elseif ($position_filled) {
                                     $job_status = 'filled';
                                     $status_color = '#0073aa';
                                 } elseif ($closing_date && strtotime($closing_date) < current_time('timestamp')) {
                                     $job_status = 'expired';
                                     $status_color = '#dc3545';
+                                } else {
+                                    $job_status = 'active';
+                                    $status_color = '#10B981';
                                 }
                             ?>
                                 <div class="cn-job-card">
@@ -339,21 +381,41 @@ if ($applications_query->have_posts()) {
                                     </div>
 
                                     <div class="cn-job-actions">
-                                        <a href="<?php echo esc_url(get_permalink($job_id)); ?>"
-                                            class="cn-btn cn-btn-small cn-btn-outline">View Job</a>
-                                        <button type="button" class="cn-btn cn-btn-small cn-btn-outline cn-edit-job"
-                                            data-job-id="<?php echo esc_attr($job_id); ?>">Edit</button>
-                                        <?php if ($application_count > 0): ?>
-                                            <button type="button" class="cn-btn cn-btn-small cn-btn-primary cn-view-applications"
-                                                data-job-id="<?php echo esc_attr($job_id); ?>">
-                                                View Applications (<?php echo esc_html($application_count); ?>)
-                                            </button>
+                                        <?php if ($current_post_status !== 'draft'): ?>
+                                            <a href="<?php echo esc_url(get_permalink($job_id)); ?>"
+                                                class="cn-btn cn-btn-small cn-btn-outline">View Job</a>
                                         <?php endif; ?>
+                                        <a href="<?php echo esc_url(add_query_arg(['action' => 'edit-job', 'job_id' => $job_id], get_permalink())); ?>"
+                                            class="cn-btn cn-btn-small <?php echo $current_post_status === 'draft' ? 'cn-btn-primary' : 'cn-btn-outline'; ?>">
+                                            <?php echo $current_post_status === 'draft' ? esc_html__('Continue Submission', 'careernest') : esc_html__('Edit', 'careernest'); ?>
+                                        </a>
+                                        <?php if ($application_count > 0 && $current_post_status !== 'draft'): ?>
+                                            <a href="<?php echo esc_url(add_query_arg(['action' => 'view-applications', 'filter_job' => $job_id], get_permalink())); ?>"
+                                                class="cn-btn cn-btn-small cn-btn-primary">
+                                                View Applications (<?php echo esc_html($application_count); ?>)
+                                            </a>
+                                        <?php endif; ?>
+                                        <button type="button" class="cn-btn cn-btn-small cn-btn-danger cn-delete-job"
+                                            data-job-id="<?php echo esc_attr($job_id); ?>"
+                                            data-job-title="<?php echo esc_attr(get_the_title($job_id)); ?>"
+                                            data-nonce="<?php echo esc_attr(wp_create_nonce('cn_delete_job')); ?>">
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
-                            <?php endwhile; ?>
+                            <?php endforeach; ?>
                         </div>
                         <?php wp_reset_postdata(); ?>
+
+                        <?php if ($jobs_query->found_posts > $recent_jobs_count): ?>
+                            <div style="margin-top: 1rem; text-align: center;">
+                                <a href="<?php echo esc_url(add_query_arg('action', 'manage-jobs', get_permalink())); ?>"
+                                    class="cn-btn cn-btn-primary">
+                                    <?php echo esc_html__('View All Jobs', 'careernest'); ?>
+                                    (<?php echo esc_html($jobs_query->found_posts); ?>)
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     <?php else: ?>
                         <div class="cn-empty-state">
                             <div class="cn-empty-icon">
@@ -368,9 +430,10 @@ if ($applications_query->have_posts()) {
                             <h3><?php echo esc_html__('No Job Listings Yet', 'careernest'); ?></h3>
                             <p><?php echo esc_html__('Start by posting your first job listing to attract qualified candidates.', 'careernest'); ?>
                             </p>
-                            <button type="button" class="cn-btn cn-btn-primary" id="cn-show-job-form">
+                            <a href="<?php echo esc_url(add_query_arg('action', 'add-job', get_permalink())); ?>"
+                                class="cn-btn cn-btn-primary">
                                 <?php echo esc_html__('Post Your First Job', 'careernest'); ?>
-                            </button>
+                            </a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -416,14 +479,15 @@ if ($applications_query->have_posts()) {
                     <div class="cn-dashboard-section">
                         <div class="cn-section-header">
                             <h2><?php echo esc_html__('Recent Applications', 'careernest'); ?></h2>
-                            <button type="button" class="cn-btn cn-btn-outline" id="cn-show-all-applications">
+                            <a href="<?php echo esc_url(add_query_arg('action', 'view-applications', get_permalink())); ?>"
+                                class="cn-btn cn-btn-outline">
                                 <?php echo esc_html__('View All Applications', 'careernest'); ?>
-                            </button>
+                            </a>
                         </div>
 
                         <div class="cn-applications-list">
                             <?php
-                            $recent_applications = array_slice($applications_query->posts, 0, 5);
+                            $recent_applications = array_slice($applications_query->posts, 0, $recent_apps_count);
                             foreach ($recent_applications as $app):
                                 $app_id = $app->ID;
                                 $job_id = get_post_meta($app_id, '_job_id', true);
@@ -479,8 +543,8 @@ if ($applications_query->have_posts()) {
                                     </div>
 
                                     <div class="cn-app-actions">
-                                        <button type="button" class="cn-btn cn-btn-small cn-btn-outline cn-review-application"
-                                            data-app-id="<?php echo esc_attr($app_id); ?>">Review Application</button>
+                                        <a href="<?php echo esc_url(add_query_arg(['action' => 'view-applications', 'search' => $applicant_name], get_permalink())); ?>"
+                                            class="cn-btn cn-btn-small cn-btn-outline">View Details</a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -504,42 +568,6 @@ if ($applications_query->have_posts()) {
                         </ul>
                     </div>
                 <?php endif; ?>
-
-                <!-- Personal Profile Display -->
-                <div class="cn-dashboard-section">
-                    <h3><?php echo esc_html__('My Profile', 'careernest'); ?></h3>
-
-                    <div class="cn-profile-item">
-                        <strong><?php echo esc_html__('Name:', 'careernest'); ?></strong>
-                        <span><?php echo esc_html($current_user->display_name); ?></span>
-                    </div>
-
-                    <div class="cn-profile-item">
-                        <strong><?php echo esc_html__('Email:', 'careernest'); ?></strong>
-                        <span><?php echo esc_html($current_user->user_email); ?></span>
-                    </div>
-
-                    <?php if ($personal_job_title): ?>
-                        <div class="cn-profile-item">
-                            <strong><?php echo esc_html__('Job Title:', 'careernest'); ?></strong>
-                            <span><?php echo esc_html($personal_job_title); ?></span>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if ($personal_phone): ?>
-                        <div class="cn-profile-item">
-                            <strong><?php echo esc_html__('Phone:', 'careernest'); ?></strong>
-                            <span><?php echo esc_html($personal_phone); ?></span>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if ($personal_bio): ?>
-                        <div class="cn-profile-item">
-                            <strong><?php echo esc_html__('Bio:', 'careernest'); ?></strong>
-                            <div class="cn-personal-bio"><?php echo wp_kses_post(wpautop($personal_bio)); ?></div>
-                        </div>
-                    <?php endif; ?>
-                </div>
 
                 <!-- Personal Profile Edit Form (Hidden by default) -->
                 <div class="cn-profile-edit-form" id="cn-profile-edit-form" style="display: none;">
@@ -660,15 +688,17 @@ if ($applications_query->have_posts()) {
                 <div class="cn-dashboard-section">
                     <h3><?php echo esc_html__('Quick Actions', 'careernest'); ?></h3>
                     <div class="cn-quick-actions">
-                        <button type="button" class="cn-quick-action" id="cn-show-job-form">
+                        <a href="<?php echo esc_url(add_query_arg('action', 'add-job', get_permalink())); ?>"
+                            class="cn-quick-action">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" />
                             </svg>
                             <?php echo esc_html__('Post New Job', 'careernest'); ?>
-                        </button>
-                        <button type="button" class="cn-quick-action" id="cn-show-job-management">
+                        </a>
+                        <a href="<?php echo esc_url(add_query_arg('action', 'manage-jobs', get_permalink())); ?>"
+                            class="cn-quick-action">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
@@ -678,8 +708,9 @@ if ($applications_query->have_posts()) {
                                     stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <?php echo esc_html__('Manage Jobs', 'careernest'); ?>
-                        </button>
-                        <button type="button" class="cn-quick-action" id="cn-show-all-applications">
+                        </a>
+                        <a href="<?php echo esc_url(add_query_arg('action', 'view-applications', get_permalink())); ?>"
+                            class="cn-quick-action">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
@@ -689,10 +720,116 @@ if ($applications_query->have_posts()) {
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <?php echo esc_html__('View Applications', 'careernest'); ?>
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Job Modal -->
+    <div id="cn-job-modal" class="cn-job-modal" style="display: none;">
+        <div class="cn-job-modal-content" id="cn-job-modal-content">
+            <div class="cn-job-modal-header">
+                <h2 id="cn-job-modal-title">Post New Job</h2>
+                <button type="button" class="cn-job-modal-close">&times;</button>
+            </div>
+
+            <div id="cn-job-form-errors" class="cn-job-form-errors cn-error" style="display: none;"></div>
+
+            <form id="cn-job-form" class="cn-job-form">
+                <!-- Basic Information -->
+                <div class="cn-job-form-section">
+                    <h3>Basic Information</h3>
+
+                    <div class="cn-form-field">
+                        <label for="cn-job-title">Job Title <span class="required">*</span></label>
+                        <input type="text" id="cn-job-title" name="job_title" required class="cn-input"
+                            placeholder="e.g., Senior Software Engineer">
+                    </div>
+
+                    <div class="cn-form-row">
+                        <div class="cn-form-field">
+                            <label for="cn-job-location">Location</label>
+                            <input type="text" id="cn-job-location" name="job_location" class="cn-input"
+                                placeholder="e.g., Melbourne, VIC">
+                        </div>
+
+                        <div class="cn-form-field">
+                            <label>
+                                <input type="checkbox" id="cn-job-remote" name="remote_position" value="1">
+                                Remote Position
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="cn-form-row">
+                        <div class="cn-form-field">
+                            <label for="cn-job-opening-date">Opening Date</label>
+                            <input type="date" id="cn-job-opening-date" name="opening_date" class="cn-input">
+                        </div>
+
+                        <div class="cn-form-field">
+                            <label for="cn-job-closing-date">Closing Date</label>
+                            <input type="date" id="cn-job-closing-date" name="closing_date" class="cn-input">
+                        </div>
+                    </div>
+
+                    <div class="cn-form-field">
+                        <label for="cn-job-salary-range">Salary Range</label>
+                        <input type="text" id="cn-job-salary-range" name="salary_range" class="cn-input"
+                            placeholder="e.g., $80,000 - $120,000 per year">
+                    </div>
+
+                    <div class="cn-form-field">
+                        <label>
+                            <input type="checkbox" id="cn-job-apply-externally" name="apply_externally" value="1">
+                            Applications handled externally
+                        </label>
+                        <div id="cn-external-apply-container" style="display: none; margin-top: 0.5rem;">
+                            <input type="text" id="cn-job-external-apply" name="external_apply" class="cn-input"
+                                placeholder="External URL or email (e.g., jobs@company.com)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Details -->
+                <div class="cn-job-form-section">
+                    <h3>Overview</h3>
+                    <p class="cn-field-description">Provide a high-level summary of the role and its impact.</p>
+                    <textarea id="cn-job-overview" name="overview" rows="4" class="cn-textarea"></textarea>
+                </div>
+
+                <div class="cn-job-form-section">
+                    <h3>Who We Are</h3>
+                    <p class="cn-field-description">Introduce the company, culture, and mission.</p>
+                    <textarea id="cn-job-who-we-are" name="who_we_are" rows="4" class="cn-textarea"></textarea>
+                </div>
+
+                <div class="cn-job-form-section">
+                    <h3>What We Offer</h3>
+                    <p class="cn-field-description">Outline compensation, benefits, growth, and perks.</p>
+                    <textarea id="cn-job-what-we-offer" name="what_we_offer" rows="4" class="cn-textarea"></textarea>
+                </div>
+
+                <div class="cn-job-form-section">
+                    <h3>Key Responsibilities</h3>
+                    <p class="cn-field-description">List main responsibilities and expectations.</p>
+                    <textarea id="cn-job-responsibilities" name="responsibilities" rows="4"
+                        class="cn-textarea"></textarea>
+                </div>
+
+                <div class="cn-job-form-section">
+                    <h3>How to Apply</h3>
+                    <p class="cn-field-description">Explain the application process and required materials.</p>
+                    <textarea id="cn-job-how-to-apply" name="how_to_apply" rows="4" class="cn-textarea"></textarea>
+                </div>
+
+                <div class="cn-job-modal-footer">
+                    <button type="submit" id="cn-job-submit" class="cn-btn cn-btn-primary">Post Job</button>
+                    <button type="button" class="cn-btn cn-btn-outline cn-job-modal-cancel">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 </main>

@@ -107,7 +107,6 @@
 .cn-dashboard-section h3 {
   color: #333;
   font-size: 1.3rem;
-  margin: 0;
   font-weight: 600;
 }
 
@@ -458,6 +457,18 @@
   font-size: 0.8rem;
 }
 
+.cn-btn-danger {
+  background: transparent;
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.cn-btn-danger:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
 /* Error State */
 .cn-dashboard-error {
   text-align: center;
@@ -485,7 +496,205 @@
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Job Modal */
+.cn-job-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.3s ease;
+  overflow-y: auto;
+}
+
+.cn-job-modal-content {
+  background-color: white;
+  margin: 3% auto;
+  padding: 0;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cn-job-modal.cn-loading .cn-job-modal-content {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.cn-job-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #0073aa;
+  background: #f8f9fa;
+}
+
+.cn-job-modal-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.cn-job-modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.cn-job-modal-close:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.cn-job-form {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.cn-job-form-section {
+  padding: 2rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cn-job-form-section:last-of-type {
+  border-bottom: none;
+}
+
+.cn-job-form-section h3 {
+  color: #333;
+  font-size: 1.2rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.cn-field-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+}
+
+.cn-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.cn-form-field {
+  margin-bottom: 1.5rem;
+}
+
+.cn-form-field:last-child {
+  margin-bottom: 0;
+}
+
+.cn-form-field label {
+  display: block;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.cn-form-field label input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+.cn-input,
+.cn-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cn-input:focus,
+.cn-textarea:focus {
+  outline: none;
+  border-color: #0073aa;
+  box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+}
+
+.cn-textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
+
+.cn-job-modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.cn-job-form-errors {
+  margin: 1.5rem 2rem;
+  padding: 1rem;
+  border-radius: 4px;
+  border-left: 4px solid;
+}
+
+.cn-job-form-errors.cn-error {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #721c24;
+}
+
+.cn-job-form-errors.cn-success {
+  background: #d4edda;
+  border-color: #10b981;
+  color: #155724;
+}
+
+.cn-job-form-errors p {
+  margin: 0;
+}
+
 /* Responsive Design */
+@media only screen and (min-width: 768px) {
+  .cn-dashboard-content {
+    align-items: start;
+  }
+
+  .cn-dashboard-content .cn-dashboard-sidebar {
+    position: sticky;
+    top: 20px;
+  }
+}
+
 @media (max-width: 768px) {
   .cn-header-content {
     flex-direction: column;
@@ -545,6 +754,39 @@
   }
 
   .cn-form-actions .cn-btn {
+    text-align: center;
+  }
+
+  /* Job Modal Responsive */
+  .cn-job-modal-content {
+    margin: 2% auto;
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .cn-job-modal-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .cn-job-modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .cn-job-form-section {
+    padding: 1.5rem;
+  }
+
+  .cn-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cn-job-modal-footer {
+    padding: 1rem 1.5rem;
+    flex-direction: column;
+  }
+
+  .cn-job-modal-footer .cn-btn {
+    width: 100%;
     text-align: center;
   }
 }

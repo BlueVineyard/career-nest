@@ -131,12 +131,51 @@ class Admin_Menus
         if (! current_user_can('manage_settings')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'careernest'));
         }
-        echo '<div class="wrap"><h1>' . esc_html__('CareerNest Settings', 'careernest') . '</h1>';
+
+        // Get active tab
+        $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
+
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('CareerNest Settings', 'careernest') . '</h1>';
+
+        // Tabs
+        echo '<h2 class="nav-tab-wrapper">';
+        echo '<a href="?page=careernest-settings&tab=general" class="nav-tab ' . ($active_tab === 'general' ? 'nav-tab-active' : '') . '">' . esc_html__('General', 'careernest') . '</a>';
+        echo '<a href="?page=careernest-settings&tab=email-templates" class="nav-tab ' . ($active_tab === 'email-templates' ? 'nav-tab-active' : '') . '">' . esc_html__('Email Templates', 'careernest') . '</a>';
+        echo '<a href="?page=careernest-settings&tab=appearance" class="nav-tab ' . ($active_tab === 'appearance' ? 'nav-tab-active' : '') . '">' . esc_html__('Appearance', 'careernest') . '</a>';
+        echo '<a href="?page=careernest-settings&tab=employer-dashboard" class="nav-tab ' . ($active_tab === 'employer-dashboard' ? 'nav-tab-active' : '') . '">' . esc_html__('Employer Dashboard', 'careernest') . '</a>';
+        echo '</h2>';
+
         echo '<form method="post" action="options.php">';
-        settings_fields('careernest_options_group');
-        do_settings_sections('careernest_settings');
+
+        if ($active_tab === 'email-templates') {
+            settings_fields('careernest_email_templates_group');
+            do_settings_sections('careernest_email_templates');
+        } elseif ($active_tab === 'employer-dashboard') {
+            settings_fields('careernest_employer_dashboard_group');
+            do_settings_sections('careernest_employer_dashboard');
+        } elseif ($active_tab === 'appearance') {
+            // Enqueue color picker
+            wp_enqueue_style('wp-color-picker');
+            wp_enqueue_script('wp-color-picker');
+
+            settings_fields('careernest_appearance_group');
+            do_settings_sections('careernest_appearance');
+
+            // Initialize color picker
+            echo '<script>
+            jQuery(document).ready(function($) {
+                $(".cn-color-picker").wpColorPicker();
+            });
+            </script>';
+        } else {
+            settings_fields('careernest_options_group');
+            do_settings_sections('careernest_settings');
+        }
+
         submit_button();
-        echo '</form></div>';
+        echo '</form>';
+        echo '</div>';
     }
 
     /**

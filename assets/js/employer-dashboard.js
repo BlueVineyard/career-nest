@@ -70,6 +70,35 @@ document.addEventListener("DOMContentLoaded", function () {
     cancelText.style.display = "none";
   }
 
+  // Delete job button handler
+  jQuery(".cn-delete-job").on("click", function (e) {
+    e.preventDefault();
+    const jobId = jQuery(this).data("job-id");
+    const jobTitle = jQuery(this).data("job-title");
+
+    if (
+      confirm(
+        'Are you sure you want to delete "' +
+          jobTitle +
+          '"? This will move it to trash.'
+      )
+    ) {
+      // Create form and submit
+      const form = jQuery(
+        '<form method="post" action="' + window.location.href + '"></form>'
+      );
+      form.append('<input type="hidden" name="action" value="delete_job">');
+      form.append('<input type="hidden" name="job_id" value="' + jobId + '">');
+      // Generate nonce by reading from a data attribute on the button
+      const nonce = jQuery(this).data("nonce") || "";
+      form.append(
+        '<input type="hidden" name="cn_delete_job_nonce" value="' + nonce + '">'
+      );
+      jQuery("body").append(form);
+      form.submit();
+    }
+  });
+
   // Auto-hide success message after 5 seconds
   const successMessage = document.querySelector(".cn-profile-success");
   if (successMessage) {

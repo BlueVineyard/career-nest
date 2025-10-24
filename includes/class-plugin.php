@@ -46,6 +46,9 @@ class Plugin
         // Enqueue frontend assets for specific pages
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
 
+        // Output custom appearance CSS
+        add_action('wp_head', [$this, 'output_custom_css'], 99);
+
         // Handle login redirects
         add_filter('login_redirect', ['\CareerNest\Shortcodes\Login', 'login_redirect'], 10, 3);
 
@@ -243,6 +246,36 @@ class Plugin
             $page_id = get_queried_object_id();
             $pages = get_option('careernest_pages', []);
 
+            // Check for employer dashboard with special actions
+            $employer_dashboard_id = isset($pages['employer-dashboard']) ? (int) $pages['employer-dashboard'] : 0;
+            if ($employer_dashboard_id && $page_id === $employer_dashboard_id) {
+                $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
+
+                // Job management pages
+                if (in_array($action, ['add-job', 'edit-job'], true)) {
+                    $plugin_template = $this->locate_template('template-employer-job-form.php');
+                    if ($plugin_template) {
+                        return $plugin_template;
+                    }
+                }
+
+                // Applications management page
+                if ($action === 'view-applications') {
+                    $plugin_template = $this->locate_template('template-employer-applications.php');
+                    if ($plugin_template) {
+                        return $plugin_template;
+                    }
+                }
+
+                // Jobs management page
+                if ($action === 'manage-jobs') {
+                    $plugin_template = $this->locate_template('template-employer-jobs-management.php');
+                    if ($plugin_template) {
+                        return $plugin_template;
+                    }
+                }
+            }
+
             // Map page IDs to template files
             $page_templates = [
                 'jobs' => 'template-jobs.php',
@@ -438,21 +471,82 @@ class Plugin
 
         // Check if we're on the employer dashboard page
         if ($employer_dashboard_id && is_page($employer_dashboard_id)) {
-            // Enqueue employer dashboard specific assets
-            wp_enqueue_style(
-                'careernest-employer-dashboard',
-                CAREERNEST_URL . 'assets/css/employer-dashboard.css',
-                [],
-                CAREERNEST_VERSION
-            );
+            $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
 
-            wp_enqueue_script(
-                'careernest-employer-dashboard',
-                CAREERNEST_URL . 'assets/js/employer-dashboard.js',
-                ['jquery'],
-                CAREERNEST_VERSION,
-                true
-            );
+            if (in_array($action, ['add-job', 'edit-job'], true)) {
+                // Enqueue job form specific assets
+                wp_enqueue_style(
+                    'careernest-job-form',
+                    CAREERNEST_URL . 'assets/css/employer-job-form.css',
+                    [],
+                    CAREERNEST_VERSION
+                );
+
+                // Enqueue Google Maps if API key configured
+                $options = get_option('careernest_options', []);
+                $maps_api_key = isset($options['maps_api_key']) ? trim((string) $options['maps_api_key']) : '';
+                if ($maps_api_key !== '') {
+                    wp_enqueue_script(
+                        'google-maps-job-form',
+                        'https://maps.googleapis.com/maps/api/js?key=' . urlencode($maps_api_key) . '&libraries=places',
+                        [],
+                        null,
+                        false
+                    );
+                }
+
+                wp_enqueue_script(
+                    'careernest-job-form',
+                    CAREERNEST_URL . 'assets/js/employer-job-form.js',
+                    ['jquery'],
+                    CAREERNEST_VERSION,
+                    true
+                );
+            } elseif (in_array($action, ['view-applications', 'manage-jobs'], true)) {
+                // Enqueue applications/jobs management assets (shared styles)
+                wp_enqueue_style(
+                    'careernest-applications',
+                    CAREERNEST_URL . 'assets/css/employer-applications.css',
+                    [],
+                    CAREERNEST_VERSION
+                );
+
+                if ($action === 'view-applications') {
+                    wp_enqueue_script(
+                        'careernest-applications',
+                        CAREERNEST_URL . 'assets/js/employer-applications.js',
+                        ['jquery'],
+                        CAREERNEST_VERSION,
+                        true
+                    );
+
+                    // Localize script
+                    wp_localize_script(
+                        'careernest-applications',
+                        'careerNestApp',
+                        [
+                            'ajaxurl' => admin_url('admin-ajax.php'),
+                            'nonce' => wp_create_nonce('careernest_app_nonce'),
+                        ]
+                    );
+                }
+            } else {
+                // Enqueue employer dashboard specific assets
+                wp_enqueue_style(
+                    'careernest-employer-dashboard',
+                    CAREERNEST_URL . 'assets/css/employer-dashboard.css',
+                    [],
+                    CAREERNEST_VERSION
+                );
+
+                wp_enqueue_script(
+                    'careernest-employer-dashboard',
+                    CAREERNEST_URL . 'assets/js/employer-dashboard.js',
+                    ['jquery'],
+                    CAREERNEST_VERSION,
+                    true
+                );
+            }
         }
 
         // Check if we're on the jobs listing page
@@ -523,5 +617,236 @@ class Plugin
                 ]
             );
         }
+    }
+
+    /**
+     * Output custom CSS based on appearance settings
+     */
+    public function output_custom_css(): void
+    {
+        // Only output on CareerNest pages
+        if (!$this->is_careernest_page()) {
+            return;
+        }
+
+        $appearance = get_option('careernest_appearance', []);
+
+        // Get all color settings with defaults
+        $primary_btn = isset($appearance['primary_btn_color']) ? $appearance['primary_btn_color'] : '#0073aa';
+        $secondary_btn = isset($appearance['secondary_btn_color']) ? $appearance['secondary_btn_color'] : '#6c757d';
+        $primary_text = isset($appearance['primary_text_color']) ? $appearance['primary_text_color'] : '#333333';
+        $secondary_text = isset($appearance['secondary_text_color']) ? $appearance['secondary_text_color'] : '#666666';
+        $success_badge = isset($appearance['success_badge_color']) ? $appearance['success_badge_color'] : '#10B981';
+        $warning_badge = isset($appearance['warning_badge_color']) ? $appearance['warning_badge_color'] : '#f39c12';
+        $danger_badge = isset($appearance['danger_badge_color']) ? $appearance['danger_badge_color'] : '#dc3545';
+        $container_width = isset($appearance['container_width']) ? $appearance['container_width'] : '1200';
+
+        // Convert container width
+        $width_value = $container_width === '100' ? '100%' : $container_width . 'px';
+
+        echo '<style id="careernest-custom-css">
+        :root {
+            --cn-primary-btn: ' . esc_attr($primary_btn) . ';
+            --cn-secondary-btn: ' . esc_attr($secondary_btn) . ';
+            --cn-primary-text: ' . esc_attr($primary_text) . ';
+            --cn-secondary-text: ' . esc_attr($secondary_text) . ';
+            --cn-success: ' . esc_attr($success_badge) . ';
+            --cn-warning: ' . esc_attr($warning_badge) . ';
+            --cn-danger: ' . esc_attr($danger_badge) . ';
+            --cn-container-width: ' . esc_attr($width_value) . ';
+        }
+
+        /* Primary Button */
+        .cn-btn-primary {
+            background-color: var(--cn-primary-btn) !important;
+            border-color: var(--cn-primary-btn) !important;
+            color: white !important;
+        }
+
+        .cn-btn-primary:hover {
+            background-color: ' . esc_attr($this->adjust_brightness($primary_btn, -20)) . ' !important;
+            border-color: ' . esc_attr($this->adjust_brightness($primary_btn, -20)) . ' !important;
+        }
+
+        /* Secondary Button */
+        .cn-btn-secondary {
+            background-color: var(--cn-secondary-btn) !important;
+            border-color: var(--cn-secondary-btn) !important;
+            color: white !important;
+        }
+
+        .cn-btn-secondary:hover {
+            background-color: ' . esc_attr($this->adjust_brightness($secondary_btn, -20)) . ' !important;
+        }
+
+        /* Danger Button */
+        .cn-btn-danger {
+            border-color: var(--cn-danger) !important;
+            color: var(--cn-danger) !important;
+        }
+
+        .cn-btn-danger:hover {
+            background-color: var(--cn-danger) !important;
+            color: white !important;
+        }
+
+        /* Outline Buttons */
+        .cn-btn-outline {
+            border-color: var(--cn-primary-btn) !important;
+            color: var(--cn-primary-btn) !important;
+        }
+
+        .cn-btn-outline:hover {
+            background-color: var(--cn-primary-btn) !important;
+            color: white !important;
+        }
+
+        /* Text Colors */
+        .cn-dashboard-header h1,
+        .cn-form-card-title,
+        .cn-applications-header h1,
+        .cn-app-info h3,
+        h1, h2, h3, h4 {
+            color: var(--cn-primary-text) !important;
+        }
+
+        .cn-field-description,
+        .cn-app-email,
+        .cn-app-job-title,
+        .cn-job-meta,
+        .cn-app-date {
+            color: var(--cn-secondary-text) !important;
+        }
+
+        /* Links */
+        .cn-back-btn,
+        .cn-company-name,
+        .cn-profile-item a,
+        .cn-app-resume,
+        .cn-job-info h3 a:hover {
+            color: var(--cn-primary-btn) !important;
+        }
+
+        /* Borders & Accents */
+        .cn-dashboard-header,
+        .cn-form-card-title,
+        .cn-company-info-display,
+        .cn-cover-letter {
+            border-color: var(--cn-primary-btn) !important;
+        }
+
+        /* Badge Colors - Override inline styles */
+        .cn-job-card .cn-status-badge[style*="10B981"],
+        .cn-job-card .cn-status-badge[style*="10b981"],
+        .cn-application-card .cn-status-badge[style*="10B981"],
+        .cn-application-card .cn-status-badge[style*="10b981"],
+        .cn-application-item .cn-status-badge[style*="10B981"],
+        .cn-application-item .cn-status-badge[style*="10b981"] {
+            background-color: var(--cn-success) !important;
+        }
+
+        .cn-job-card .cn-status-badge[style*="f39c12"],
+        .cn-application-card .cn-status-badge[style*="f39c12"],
+        .cn-application-item .cn-status-badge[style*="f39c12"] {
+            background-color: var(--cn-warning) !important;
+        }
+
+        .cn-job-card .cn-status-badge[style*="dc3545"],
+        .cn-application-card .cn-status-badge[style*="dc3545"],
+        .cn-application-item .cn-status-badge[style*="dc3545"] {
+            background-color: var(--cn-danger) !important;
+        }
+
+        /* Application status specific colors */
+        .cn-application-card .cn-status-badge[style*="0073aa"],
+        .cn-application-item .cn-status-badge[style*="0073aa"] {
+            background-color: var(--cn-primary-btn) !important;
+        }
+
+        .cn-application-card .cn-status-badge[style*="e67e22"],
+        .cn-application-item .cn-status-badge[style*="e67e22"] {
+            background-color: var(--cn-warning) !important;
+        }
+
+        .cn-application-card .cn-status-badge[style*="27ae60"],
+        .cn-application-item .cn-status-badge[style*="27ae60"] {
+            background-color: var(--cn-success) !important;
+        }
+
+        .cn-application-card .cn-status-badge[style*="e74c3c"],
+        .cn-application-item .cn-status-badge[style*="e74c3c"] {
+            background-color: var(--cn-danger) !important;
+        }
+
+        /* Container Width */
+        .site-main,
+        .cn-job-form-container,
+        .cn-applications-container,
+        .cn-applications-page .site-main,
+        .cn-employer-dashboard-container {
+            max-width: var(--cn-container-width) !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+        /* Input Focus */
+        .cn-input:focus,
+        .cn-textarea:focus,
+        .wp-editor-container:focus-within {
+            border-color: var(--cn-primary-btn) !important;
+            box-shadow: 0 0 0 3px ' . esc_attr($primary_btn) . '33 !important;
+        }
+
+        /* Quick Actions Hover */
+        .cn-quick-action:hover {
+            border-color: var(--cn-primary-btn) !important;
+            color: var(--cn-primary-btn) !important;
+        }
+
+        /* Nav Active State */
+        .cn-job-nav-link.active,
+        .cn-job-nav-link:hover {
+            color: var(--cn-primary-btn) !important;
+            border-left-color: var(--cn-primary-btn) !important;
+        }
+        </style>';
+    }
+
+    /**
+     * Adjust color brightness
+     */
+    private function adjust_brightness(string $hex, int $percent): string
+    {
+        $hex = str_replace('#', '', $hex);
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+
+        $r = max(0, min(255, $r + (($r * $percent) / 100)));
+        $g = max(0, min(255, $g + (($g * $percent) / 100)));
+        $b = max(0, min(255, $b + (($b * $percent) / 100)));
+
+        return '#' . str_pad(dechex($r), 2, '0', STR_PAD_LEFT) . str_pad(dechex($g), 2, '0', STR_PAD_LEFT) . str_pad(dechex($b), 2, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Check if current page is a CareerNest page
+     */
+    private function is_careernest_page(): bool
+    {
+        // Check if on CareerNest managed pages
+        $pages = get_option('careernest_pages', []);
+        $page_ids = array_values($pages);
+
+        if (is_page($page_ids)) {
+            return true;
+        }
+
+        // Check if on CareerNest CPT pages
+        if (is_singular(['job_listing', 'employer', 'applicant'])) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -114,15 +114,10 @@ function process_applicant_registration()
         update_post_meta($applicant_id, '_available_for_work', true);
     }
 
-    // Send welcome email
-    $subject = 'Welcome to CareerNest!';
-    $message = "Hi {$full_name},\n\n";
-    $message .= "Welcome to CareerNest! Your applicant account has been created successfully.\n\n";
-    $message .= "You can now:\n";
-    $message .= "- Apply for jobs\n";
-    $message .= "- Track your applications\n";
-    $message .= "- Update your profile\n";
-    $message .= "- Upload your resume\n\n";
+    // Send welcome email using HTML template
+    $pages = get_option('careernest_pages', []);
+    $dashboard_id = isset($pages['applicant-dashboard']) ? (int) $pages['applicant-dashboard'] : 0;
+    $dashboard_url = ($dashboard_id && get_post_status($dashboard_id) === 'publish') ? get_permalink($dashboard_id) : home_url();
 
     // Check for existing guest applications
     $guest_apps = new \WP_Query([
@@ -138,20 +133,17 @@ function process_applicant_registration()
         ]
     ]);
 
+    $guest_applications_message = '';
     if ($guest_apps->have_posts()) {
         $app_count = $guest_apps->found_posts;
-        $message .= "We found {$app_count} previous application" . ($app_count > 1 ? 's' : '') . " associated with your email and have linked them to your account.\n\n";
+        $guest_applications_message = "We found {$app_count} previous application" . ($app_count > 1 ? 's' : '') . " associated with your email and have linked them to your account.";
     }
 
-    $pages = get_option('careernest_pages', []);
-    $dashboard_id = isset($pages['applicant-dashboard']) ? (int) $pages['applicant-dashboard'] : 0;
-    if ($dashboard_id && get_post_status($dashboard_id) === 'publish') {
-        $message .= "Access your dashboard: " . get_permalink($dashboard_id) . "\n\n";
-    }
-
-    $message .= "Thank you for joining CareerNest!";
-
-    wp_mail($email, $subject, $message);
+    \CareerNest\Email\Mailer::send($email, 'applicant_welcome', [
+        'user_name' => $full_name,
+        'dashboard_url' => $dashboard_url,
+        'guest_applications_message' => $guest_applications_message,
+    ]);
 
     // Note: The user_register hook will automatically trigger the guest application linking
 

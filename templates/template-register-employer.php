@@ -118,28 +118,24 @@ function process_employer_registration()
     update_post_meta($employer_id, '_request_status', 'pending'); // Custom status
     update_post_meta($employer_id, '_request_date', current_time('mysql'));
 
-    // Send confirmation email to requester
-    $subject = 'CareerNest - Employer Account Request Received';
-    $message = "Hi {$contact_name},\n\n";
-    $message .= "Thank you for your interest in CareerNest!\n\n";
-    $message .= "We have received your employer account request for {$company_name}.\n\n";
-    $message .= "Our team will review your request and get back to you within 2-3 business days.\n\n";
-    $message .= "If you have any questions, please feel free to contact us.\n\n";
-    $message .= "Thank you,\nThe CareerNest Team";
+    // Send confirmation email to requester using HTML template
+    \CareerNest\Email\Mailer::send($email, 'employer_request_confirmation', [
+        'user_name' => $contact_name,
+        'company_name' => $company_name,
+    ]);
 
-    wp_mail($email, $subject, $message);
-
-    // Notify admin
-    $admin_email = get_option('admin_email');
-    $admin_subject = 'New Employer Account Request - ' . $company_name;
+    // Notify admin using HTML template
     $admin_message = "A new employer account request has been submitted:\n\n";
-    $admin_message .= "Company: {$company_name}\n";
-    $admin_message .= "Contact: {$contact_name}\n";
-    $admin_message .= "Email: {$email}\n";
-    $admin_message .= "Location: {$company_location}\n\n";
+    $admin_message .= "<strong>Company:</strong> {$company_name}<br>";
+    $admin_message .= "<strong>Contact:</strong> {$contact_name}<br>";
+    $admin_message .= "<strong>Email:</strong> {$email}<br>";
+    $admin_message .= "<strong>Location:</strong> {$company_location}<br><br>";
     $admin_message .= "Review this request in the admin panel under Employers > Account Requests.";
 
-    wp_mail($admin_email, $admin_subject, $admin_message);
+    \CareerNest\Email\Mailer::send_admin_notification(
+        'New Employer Account Request - ' . $company_name,
+        $admin_message
+    );
 
     return [
         'success' => true,

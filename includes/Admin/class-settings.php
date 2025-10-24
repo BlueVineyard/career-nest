@@ -17,6 +17,9 @@ class Settings
     public function register_settings(): void
     {
         register_setting('careernest_options_group', 'careernest_options', [$this, 'sanitize_options']);
+        register_setting('careernest_email_templates_group', 'careernest_email_templates', [$this, 'sanitize_email_templates']);
+        register_setting('careernest_appearance_group', 'careernest_appearance', [$this, 'sanitize_appearance']);
+        register_setting('careernest_employer_dashboard_group', 'careernest_employer_dashboard', [$this, 'sanitize_employer_dashboard']);
 
         // General Section
         add_settings_section(
@@ -75,6 +78,164 @@ class Settings
             'careernest_settings',
             'careernest_filters_section',
             ['label_for' => 'careernest_filters_order']
+        );
+
+        // Email Templates Section
+        add_settings_section(
+            'careernest_email_section',
+            __('Email Templates', 'careernest'),
+            function () {
+                echo '<p class="description">' . esc_html__('Customize email templates sent by CareerNest. Use template variables like {{user_name}}, {{company_name}}, etc.', 'careernest') . '</p>';
+            },
+            'careernest_email_templates'
+        );
+
+        // Get all email templates
+        $templates = new \CareerNest\Email\Templates();
+        $all_templates = $templates->get_all_templates();
+
+        foreach ($all_templates as $template_key => $template_data) {
+            add_settings_field(
+                'email_template_' . $template_key,
+                $template_data['name'],
+                [$this, 'render_email_template_field'],
+                'careernest_email_templates',
+                'careernest_email_section',
+                [
+                    'template_key' => $template_key,
+                    'template_data' => $template_data,
+                ]
+            );
+        }
+
+        // Appearance Settings Section
+        add_settings_section(
+            'careernest_appearance_section',
+            __('Appearance & Branding', 'careernest'),
+            function () {
+                echo '<p class="description">' . esc_html__('Customize the look and feel of CareerNest pages.', 'careernest') . '</p>';
+            },
+            'careernest_appearance'
+        );
+
+        // Primary Button Color
+        add_settings_field(
+            'primary_btn_color',
+            __('Primary Button Color', 'careernest'),
+            [$this, 'render_color_field'],
+            'careernest_appearance',
+            'careernest_appearance_section',
+            ['option_key' => 'primary_btn_color', 'default' => '#0073aa', 'label_for' => 'careernest_primary_btn_color', 'description' => 'Main action buttons (Post Job, Publish, etc.)']
+        );
+
+        // Secondary Button Color
+        add_settings_field(
+            'secondary_btn_color',
+            __('Secondary Button Color', 'careernest'),
+            [$this, 'render_color_field'],
+            'careernest_appearance',
+            'careernest_appearance_section',
+            ['option_key' => 'secondary_btn_color', 'default' => '#6c757d', 'label_for' => 'careernest_secondary_btn_color', 'description' => 'Secondary action buttons (Save Draft, Cancel, etc.)']
+        );
+
+        // Primary Text Color
+        add_settings_field(
+            'primary_text_color',
+            __('Primary Text Color', 'careernest'),
+            [$this, 'render_color_field'],
+            'careernest_appearance',
+            'careernest_appearance_section',
+            ['option_key' => 'primary_text_color', 'default' => '#333333', 'label_for' => 'careernest_primary_text_color', 'description' => 'Main text color (headings, labels, etc.)']
+        );
+
+        // Secondary Text Color  
+        add_settings_field(
+            'secondary_text_color',
+            __('Secondary Text Color', 'careernest'),
+            [$this, 'render_color_field'],
+            'careernest_appearance',
+            'careernest_appearance_section',
+            ['option_key' => 'secondary_text_color', 'default' => '#666666', 'label_for' => 'careernest_secondary_text_color', 'description' => 'Secondary text (descriptions, meta info, etc.)']
+        );
+
+        // Success Badge Color
+        add_settings_field(
+            'success_badge_color',
+            __('Success Badge Color', 'careernest'),
+            [$this, 'render_color_field'],
+            'careernest_appearance',
+            'careernest_appearance_section',
+            ['option_key' => 'success_badge_color', 'default' => '#10B981', 'label_for' => 'careernest_success_badge_color', 'description' => 'Active jobs, hired status, success messages']
+        );
+
+        // Warning Badge Color
+        add_settings_field(
+            'warning_badge_color',
+            __('Warning Badge Color', 'careernest'),
+            [$this, 'render_color_field'],
+            'careernest_appearance',
+            'careernest_appearance_section',
+            ['option_key' => 'warning_badge_color', 'default' => '#f39c12', 'label_for' => 'careernest_warning_badge_color', 'description' => 'Draft jobs, reviewed applications, warnings']
+        );
+
+        // Danger Badge Color
+        add_settings_field(
+            'danger_badge_color',
+            __('Danger Badge Color', 'careernest'),
+            [$this, 'render_color_field'],
+            'careernest_appearance',
+            'careernest_appearance_section',
+            ['option_key' => 'danger_badge_color', 'default' => '#dc3545', 'label_for' => 'careernest_danger_badge_color', 'description' => 'Expired jobs, rejected applications, delete buttons']
+        );
+
+        // Container Width
+        add_settings_field(
+            'container_width',
+            __('Container Width', 'careernest'),
+            [$this, 'render_container_width_field'],
+            'careernest_appearance',
+            'careernest_appearance_section',
+            ['label_for' => 'careernest_container_width']
+        );
+
+        // Employer Dashboard Settings Section
+        add_settings_section(
+            'careernest_employer_dash_section',
+            __('Employer Dashboard Configuration', 'careernest'),
+            function () {
+                echo '<p class="description">' . esc_html__('Configure employer dashboard display options and behavior.', 'careernest') . '</p>';
+            },
+            'careernest_employer_dashboard'
+        );
+
+        // Recent Jobs Count
+        add_settings_field(
+            'recent_jobs_count',
+            __('Recent Jobs to Display', 'careernest'),
+            [$this, 'render_number_field'],
+            'careernest_employer_dashboard',
+            'careernest_employer_dash_section',
+            ['option_key' => 'recent_jobs_count', 'default' => '5', 'min' => '3', 'max' => '20', 'label_for' => 'recent_jobs_count', 'description' => 'Number of recent jobs to show on dashboard (3-20)']
+        );
+
+        // Recent Applications Count
+        add_settings_field(
+            'recent_apps_count',
+            __('Recent Applications to Display', 'careernest'),
+            [$this, 'render_number_field'],
+            'careernest_employer_dashboard',
+            'careernest_employer_dash_section',
+            ['option_key' => 'recent_apps_count', 'default' => '5', 'min' => '3', 'max' => '20', 'label_for' => 'recent_apps_count', 'description' => 'Number of recent applications to show on dashboard (3-20)']
+        );
+
+        // Welcome Message
+        add_settings_field(
+            'welcome_message',
+            __('Dashboard Welcome Message', 'careernest'),
+            [$this, 'render_textarea_field'],
+            'careernest_employer_dashboard',
+            'careernest_employer_dash_section',
+            ['option_key' => 'welcome_message', 'label_for' => 'welcome_message', 'description' => 'Custom message shown at top of employer dashboard (leave empty for default)']
         );
     }
 
@@ -361,5 +522,233 @@ class Settings
         echo '<option value="3" ' . selected($columns, '3', false) . '>' . esc_html__('3 Columns', 'careernest') . '</option>';
         echo '</select>';
         echo '<p class="description">' . esc_html__('Number of columns for job listings. Automatically adjusts for mobile devices.', 'careernest') . '</p>';
+    }
+
+    /**
+     * Render email template field
+     */
+    public function render_email_template_field(array $args): void
+    {
+        $template_key = $args['template_key'];
+        $template_data = $args['template_data'];
+
+        $templates = new \CareerNest\Email\Templates();
+        $current_template = $templates->get_template($template_key);
+
+        $subject = $current_template['subject'] ?? '';
+        $body = $current_template['body'] ?? '';
+
+        echo '<div class="cn-email-template-editor" style="margin-bottom: 2rem;">';
+
+        // Subject field
+        echo '<div style="margin-bottom: 1rem;">';
+        echo '<label style="display: block; margin-bottom: 0.5rem;"><strong>' . esc_html__('Subject:', 'careernest') . '</strong></label>';
+        echo '<input type="text" name="careernest_email_templates[' . esc_attr($template_key) . '][subject]" value="' . esc_attr($subject) . '" class="large-text" style="width: 100%;" />';
+        echo '</div>';
+
+        // Body field
+        echo '<div style="margin-bottom: 1rem;">';
+        echo '<label style="display: block; margin-bottom: 0.5rem;"><strong>' . esc_html__('Email Body:', 'careernest') . '</strong></label>';
+        wp_editor(
+            $body,
+            'careernest_email_template_' . $template_key,
+            [
+                'textarea_name' => 'careernest_email_templates[' . $template_key . '][body]',
+                'textarea_rows' => 12,
+                'media_buttons' => false,
+                'teeny' => true,
+                'quicktags' => true,
+            ]
+        );
+        echo '</div>';
+
+        // Available variables
+        if (!empty($template_data['variables'])) {
+            echo '<div style="margin-bottom: 1rem;">';
+            echo '<p class="description"><strong>' . esc_html__('Available Variables:', 'careernest') . '</strong> ';
+            $vars = array_map(function ($var) {
+                return '{{' . $var . '}}';
+            }, $template_data['variables']);
+            echo esc_html(implode(', ', $vars));
+            echo '</p>';
+        }
+
+        // Reset button
+        echo '<p>';
+        echo '<button type="button" class="button cn-reset-template" data-template="' . esc_attr($template_key) . '">';
+        echo esc_html__('Reset to Default', 'careernest');
+        echo '</button>';
+        echo '</p>';
+
+        echo '</div>';
+    }
+
+    /**
+     * Sanitize email templates
+     */
+    public function sanitize_email_templates($input)
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        $sanitized = [];
+
+        foreach ($input as $template_key => $template) {
+            if (!is_array($template)) {
+                continue;
+            }
+
+            $sanitized[$template_key] = [
+                'subject' => isset($template['subject']) ? sanitize_text_field($template['subject']) : '',
+                'body' => isset($template['body']) ? wp_kses_post($template['body']) : '',
+            ];
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Render color picker field
+     */
+    public function render_color_field(array $args): void
+    {
+        $opts = get_option('careernest_appearance', []);
+        $key = $args['option_key'];
+        $default = $args['default'] ?? '#0073aa';
+        $description = $args['description'] ?? '';
+        $value = isset($opts[$key]) ? $opts[$key] : $default;
+
+        echo '<input type="text" id="' . esc_attr($args['label_for']) . '" name="careernest_appearance[' . esc_attr($key) . ']" value="' . esc_attr($value) . '" class="cn-color-picker" data-default-color="' . esc_attr($default) . '" />';
+        if ($description) {
+            echo '<p class="description">' . esc_html($description) . '</p>';
+        }
+    }
+
+    /**
+     * Render container width field
+     */
+    public function render_container_width_field(array $args): void
+    {
+        $opts = get_option('careernest_appearance', []);
+        $width = isset($opts['container_width']) ? $opts['container_width'] : '1200';
+
+        echo '<select id="' . esc_attr($args['label_for']) . '" name="careernest_appearance[container_width]">';
+        echo '<option value="1140" ' . selected($width, '1140', false) . '>1140px (Bootstrap Default)</option>';
+        echo '<option value="1200" ' . selected($width, '1200', false) . '>1200px (Recommended)</option>';
+        echo '<option value="1320" ' . selected($width, '1320', false) . '>1320px (Wide)</option>';
+        echo '<option value="1400" ' . selected($width, '1400', false) . '>1400px (Extra Wide)</option>';
+        echo '<option value="100" ' . selected($width, '100', false) . '>100% (Full Width)</option>';
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Maximum width for CareerNest pages and dashboards.', 'careernest') . '</p>';
+    }
+
+    /**
+     * Sanitize appearance settings
+     */
+    public function sanitize_appearance($input)
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        $sanitized = [];
+
+        // Color fields with defaults
+        $color_fields = [
+            'primary_btn_color' => '#0073aa',
+            'secondary_btn_color' => '#6c757d',
+            'primary_text_color' => '#333333',
+            'secondary_text_color' => '#666666',
+            'success_badge_color' => '#10B981',
+            'warning_badge_color' => '#f39c12',
+            'danger_badge_color' => '#dc3545',
+        ];
+
+        foreach ($color_fields as $field => $default) {
+            if (isset($input[$field])) {
+                $color = sanitize_text_field($input[$field]);
+                // Validate hex color
+                if (preg_match('/^#[a-f0-9]{6}$/i', $color)) {
+                    $sanitized[$field] = $color;
+                } else {
+                    $sanitized[$field] = $default;
+                }
+            }
+        }
+
+        // Sanitize container width
+        if (isset($input['container_width'])) {
+            $width = sanitize_text_field($input['container_width']);
+            $allowed = ['1140', '1200', '1320', '1400', '100'];
+            $sanitized['container_width'] = in_array($width, $allowed, true) ? $width : '1200';
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Render number input field
+     */
+    public function render_number_field(array $args): void
+    {
+        $opts = get_option('careernest_employer_dashboard', []);
+        $key = $args['option_key'];
+        $default = $args['default'] ?? '5';
+        $min = $args['min'] ?? '1';
+        $max = $args['max'] ?? '99';
+        $description = $args['description'] ?? '';
+        $value = isset($opts[$key]) ? $opts[$key] : $default;
+
+        echo '<input type="number" id="' . esc_attr($args['label_for']) . '" name="careernest_employer_dashboard[' . esc_attr($key) . ']" value="' . esc_attr($value) . '" min="' . esc_attr($min) . '" max="' . esc_attr($max) . '" class="small-text" />';
+        if ($description) {
+            echo '<p class="description">' . esc_html($description) . '</p>';
+        }
+    }
+
+    /**
+     * Render textarea field
+     */
+    public function render_textarea_field(array $args): void
+    {
+        $opts = get_option('careernest_employer_dashboard', []);
+        $key = $args['option_key'];
+        $description = $args['description'] ?? '';
+        $value = isset($opts[$key]) ? $opts[$key] : '';
+
+        echo '<textarea id="' . esc_attr($args['label_for']) . '" name="careernest_employer_dashboard[' . esc_attr($key) . ']" rows="4" class="large-text">' . esc_textarea($value) . '</textarea>';
+        if ($description) {
+            echo '<p class="description">' . esc_html($description) . '</p>';
+        }
+    }
+
+    /**
+     * Sanitize employer dashboard settings
+     */
+    public function sanitize_employer_dashboard($input)
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        $sanitized = [];
+
+        // Sanitize number fields
+        if (isset($input['recent_jobs_count'])) {
+            $count = (int) $input['recent_jobs_count'];
+            $sanitized['recent_jobs_count'] = max(3, min(20, $count));
+        }
+
+        if (isset($input['recent_apps_count'])) {
+            $count = (int) $input['recent_apps_count'];
+            $sanitized['recent_apps_count'] = max(3, min(20, $count));
+        }
+
+        // Sanitize welcome message
+        if (isset($input['welcome_message'])) {
+            $sanitized['welcome_message'] = wp_kses_post($input['welcome_message']);
+        }
+
+        return $sanitized;
     }
 }

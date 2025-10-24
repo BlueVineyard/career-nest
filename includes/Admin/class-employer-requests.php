@@ -372,29 +372,18 @@ class Employer_Requests
         update_post_meta($request_id, '_request_status', 'approved');
         update_post_meta($request_id, '_approved_date', current_time('mysql'));
 
-        // Send welcome email with credentials
-        $subject = 'CareerNest - Employer Account Approved!';
-        $message = "Hi {$contact_name},\n\n";
-        $message .= "Great news! Your employer account for {$company_name} has been approved.\n\n";
-        $message .= "Your Login Credentials:\n";
-        $message .= "Username: {$contact_email}\n";
-        $message .= "Password: {$password}\n\n";
-        $message .= "You can now:\n";
-        $message .= "- Post job listings\n";
-        $message .= "- Manage your company profile\n";
-        $message .= "- Review applications\n";
-        $message .= "- Track your job postings\n\n";
-
+        // Send welcome email with credentials using HTML template
         $pages = get_option('careernest_pages', []);
         $dashboard_id = isset($pages['employer-dashboard']) ? (int) $pages['employer-dashboard'] : 0;
-        if ($dashboard_id && get_post_status($dashboard_id) === 'publish') {
-            $message .= "Access your dashboard: " . get_permalink($dashboard_id) . "\n\n";
-        }
+        $dashboard_url = ($dashboard_id && get_post_status($dashboard_id) === 'publish') ? get_permalink($dashboard_id) : home_url();
 
-        $message .= "We recommend changing your password after your first login.\n\n";
-        $message .= "Welcome to CareerNest!\nThe CareerNest Team";
-
-        wp_mail($contact_email, $subject, $message);
+        \CareerNest\Email\Mailer::send($contact_email, 'employer_approved', [
+            'user_name' => $contact_name,
+            'company_name' => $company_name,
+            'user_email' => $contact_email,
+            'password' => $password,
+            'dashboard_url' => $dashboard_url,
+        ]);
 
         // Redirect back with success message
         wp_redirect(add_query_arg([
@@ -440,20 +429,12 @@ class Employer_Requests
         // Delete the request post
         wp_delete_post($request_id, true);
 
-        // Send decline email
-        $subject = 'CareerNest - Employer Account Request Update';
-        $message = "Hi {$contact_name},\n\n";
-        $message .= "Thank you for your interest in CareerNest.\n\n";
-        $message .= "After reviewing your employer account request for {$company_name}, we are unable to approve it at this time.\n\n";
-
-        if ($decline_reason) {
-            $message .= "Reason: {$decline_reason}\n\n";
-        }
-
-        $message .= "If you have any questions or would like to discuss this further, please feel free to contact us.\n\n";
-        $message .= "Thank you,\nThe CareerNest Team";
-
-        wp_mail($contact_email, $subject, $message);
+        // Send decline email using HTML template
+        \CareerNest\Email\Mailer::send($contact_email, 'employer_declined', [
+            'user_name' => $contact_name,
+            'company_name' => $company_name,
+            'reason' => $decline_reason ?: 'Not specified',
+        ]);
 
         // Redirect back with success message
         wp_redirect(add_query_arg([
@@ -496,16 +477,12 @@ class Employer_Requests
         update_post_meta($request_id, '_info_request_message', $info_message);
         update_post_meta($request_id, '_info_requested_date', current_time('mysql'));
 
-        // Send info request email
-        $subject = 'CareerNest - Additional Information Needed';
-        $message = "Hi {$contact_name},\n\n";
-        $message .= "Thank you for submitting an employer account request for {$company_name}.\n\n";
-        $message .= "To proceed with your request, we need some additional information:\n\n";
-        $message .= $info_message . "\n\n";
-        $message .= "Please reply to this email with the requested information.\n\n";
-        $message .= "Thank you,\nThe CareerNest Team";
-
-        wp_mail($contact_email, $subject, $message);
+        // Send info request email using HTML template
+        \CareerNest\Email\Mailer::send($contact_email, 'employer_info_request', [
+            'user_name' => $contact_name,
+            'company_name' => $company_name,
+            'message' => $info_message,
+        ]);
 
         // Redirect back with success message
         wp_redirect(add_query_arg([

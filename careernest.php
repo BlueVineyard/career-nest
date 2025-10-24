@@ -39,6 +39,9 @@ require_once CAREERNEST_DIR . 'includes/Security/class-caps.php';
 require_once CAREERNEST_DIR . 'includes/Shortcodes/class-login.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employer-requests.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employee-requests.php';
+require_once CAREERNEST_DIR . 'includes/Email/class-mailer.php';
+require_once CAREERNEST_DIR . 'includes/Email/class-templates.php';
+require_once CAREERNEST_DIR . 'includes/class-job-ajax-handler.php';
 
 // Hooks.
 register_activation_hook(__FILE__, ['\\CareerNest\\Activator', 'activate']);
@@ -54,6 +57,11 @@ add_action('plugins_loaded', function () {
     // Initialize AJAX handler
     if (class_exists('\\CareerNest\\Ajax_Handler')) {
         new \CareerNest\Ajax_Handler();
+    }
+
+    // Initialize Job AJAX handler
+    if (class_exists('\\CareerNest\\Job_Ajax_Handler')) {
+        new \CareerNest\Job_Ajax_Handler();
     }
 
     // Hook admin and security subsystems.
