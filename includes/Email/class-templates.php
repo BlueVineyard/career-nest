@@ -234,6 +234,102 @@ Thank you for your understanding.',
                 'body' => '{{message}}',
                 'variables' => ['subject_text', 'message'],
             ],
+
+            'team_member_added' => [
+                'name' => 'Team Member Added',
+                'subject' => 'Welcome to {{company_name}} Team!',
+                'body' => 'Hi {{user_name}},
+
+You have been added as a team member to <strong>{{company_name}}</strong> on {{site_name}}.
+
+<div class="credentials-box">
+<strong>Your Login Credentials:</strong>
+<p><strong>Username:</strong> {{user_email}}</p>
+<p><strong>Password:</strong> {{password}}</p>
+</div>
+
+<strong>You can now:</strong>
+<ul>
+<li>Access the employer dashboard</li>
+<li>Manage job postings for {{company_name}}</li>
+<li>Review and manage applications</li>
+<li>Collaborate with other team members</li>
+</ul>
+
+<a href="{{dashboard_url}}" class="email-button">Access Your Dashboard</a>
+
+<em>We recommend changing your password after your first login for security.</em>
+
+Welcome to the team!',
+                'variables' => ['user_name', 'company_name', 'user_email', 'password', 'dashboard_url'],
+            ],
+
+            'team_member_removed' => [
+                'name' => 'Team Member Removed',
+                'subject' => 'Team Access Update - {{company_name}}',
+                'body' => 'Hi {{user_name}},
+
+Your access to <strong>{{company_name}}</strong> team on {{site_name}} has been removed.
+
+You will no longer be able to:
+<ul>
+<li>Access the employer dashboard</li>
+<li>Manage job postings</li>
+<li>View or manage applications</li>
+</ul>
+
+If you believe this was done in error, please contact the company administrator or reach out to us at {{contact_email}}.
+
+Thank you for your contribution to the team.',
+                'variables' => ['user_name', 'company_name', 'contact_email'],
+            ],
+
+            'ownership_transferred_from' => [
+                'name' => 'Ownership Transferred (From Previous Owner)',
+                'subject' => 'Company Ownership Transfer - {{company_name}}',
+                'body' => 'Hi {{user_name}},
+
+This is to notify you that ownership of <strong>{{company_name}}</strong> has been transferred to <strong>{{new_owner_name}}</strong>.
+
+<strong>What this means:</strong>
+<ul>
+<li>{{new_owner_name}} is now the company owner</li>
+<li>They have full team management access</li>
+<li>You remain a team member with regular access</li>
+<li>You can still manage jobs and applications</li>
+</ul>
+
+You will continue to have access to the employer dashboard, but team management functions are now managed by the new owner.
+
+If you have any questions, please contact {{new_owner_name}} or reach out to us at {{contact_email}}.',
+                'variables' => ['user_name', 'company_name', 'new_owner_name', 'contact_email'],
+            ],
+
+            'ownership_transferred_to' => [
+                'name' => 'Ownership Transferred (To New Owner)',
+                'subject' => 'You are now the owner of {{company_name}}',
+                'body' => 'Hi {{user_name}},
+
+Congratulations! You have been assigned as the owner of <strong>{{company_name}}</strong> on {{site_name}}.
+
+<strong>As the company owner, you can now:</strong>
+<ul>
+<li>Manage all team members</li>
+<li>Add new team members to the company</li>
+<li>Remove team members</li>
+<li>Full access to all company jobs and applications</li>
+<li>Manage company profile and settings</li>
+</ul>
+
+<a href="{{dashboard_url}}" class="email-button">Access Your Dashboard</a>
+
+<strong>Important:</strong> With great power comes great responsibility! Please manage your team carefully and ensure all team members have appropriate access.
+
+If you have any questions about your new role, please contact us at {{contact_email}}.
+
+Welcome to your new role!',
+                'variables' => ['user_name', 'company_name', 'dashboard_url', 'contact_email'],
+            ],
         ];
     }
 
