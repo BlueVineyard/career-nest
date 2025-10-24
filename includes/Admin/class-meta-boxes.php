@@ -961,6 +961,15 @@ class Meta_Boxes
             'number'     => 200,
         ]);
 
+        // Get current owner
+        $current_owner_id = (int) get_post_meta($post->ID, '_user_id', true);
+
+        // If only one team member and no owner set, auto-assign
+        if (count($linked) === 1 && !$current_owner_id) {
+            $current_owner_id = (int) $linked[0]->ID;
+            update_post_meta($post->ID, '_user_id', $current_owner_id);
+        }
+
         if (empty($linked)) {
             echo '<p>' . esc_html__('No team members linked yet.', 'careernest') . '</p>';
         } else {
@@ -970,14 +979,23 @@ class Meta_Boxes
                 $name  = $u->display_name;
                 $email = $u->user_email;
                 $edit  = esc_url(admin_url('user-edit.php?user_id=' . $uid));
-                echo '<li style="margin:0 0 8px;">';
-                echo '<a href="' . $edit . '"><strong>' . esc_html($name) . '</strong></a><br />';
+                $is_owner = ($uid === $current_owner_id);
+
+                echo '<li style="margin:0 0 12px; padding:8px; background:' . ($is_owner ? '#e7f3ff' : '#f9f9f9') . '; border-radius:4px;">';
+                echo '<a href="' . $edit . '"><strong>' . esc_html($name) . '</strong></a>';
+                if ($is_owner) {
+                    echo ' <span style="background:#0073aa; color:white; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500; margin-left:5px;">' . esc_html__('OWNER', 'careernest') . '</span>';
+                }
+                echo '<br />';
                 echo '<a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a>';
-                echo '<div><label><input type="checkbox" name="careernest_unlink_users[]" value="' . esc_attr((string) $uid) . '" /> ' . esc_html__('Unlink', 'careernest') . '</label></div>';
+                echo '<div style="margin-top:6px;">';
+                echo '<label style="margin-right:15px;"><input type="radio" name="careernest_owner_user_id" value="' . esc_attr((string) $uid) . '" ' . checked($is_owner, true, false) . ' /> ' . esc_html__('Owner', 'careernest') . '</label>';
+                echo '<label><input type="checkbox" name="careernest_unlink_users[]" value="' . esc_attr((string) $uid) . '" /> ' . esc_html__('Unlink', 'careernest') . '</label>';
+                echo '</div>';
                 echo '</li>';
             }
             echo '</ul>';
-            echo '<p class="description" style="margin-top:6px">' . esc_html__('Check “Unlink” and click Update to remove selected members from this employer.', 'careernest') . '</p>';
+            echo '<p class="description" style="margin-top:6px">' . esc_html__('Select one owner (required). Check "Unlink" to remove members.', 'careernest') . '</p>';
         }
 
         echo '<hr style="margin:10px 0" />';
@@ -1344,6 +1362,18 @@ class Meta_Boxes
             }
         }
 
+        // Save owner designation
+        if (isset($_POST['careernest_owner_user_id'])) {
+            $new_owner_id = absint($_POST['careernest_owner_user_id']);
+            if ($new_owner_id > 0) {
+                // Verify the user is linked to this employer
+                $user_employer_id = (int) get_user_meta($new_owner_id, '_employer_id', true);
+                if ($user_employer_id === (int) $post_id) {
+                    update_post_meta($post_id, '_user_id', $new_owner_id);
+                }
+            }
+        }
+
         // Inline unlink: remove selected team members from this employer
         if (! empty($_POST['careernest_unlink_users']) && is_array($_POST['careernest_unlink_users'])) {
             $to_unlink = array_map('absint', (array) $_POST['careernest_unlink_users']);
@@ -1357,6 +1387,11 @@ class Meta_Boxes
                 $curr = (int) get_user_meta($uid, '_employer_id', true);
                 if ($curr === (int) $post_id) {
                     delete_user_meta($uid, '_employer_id');
+                    // If unlinking the owner, clear owner designation
+                    $current_owner = (int) get_post_meta($post_id, '_user_id', true);
+                    if ($current_owner === $uid) {
+                        delete_post_meta($post_id, '_user_id');
+                    }
                 }
             }
         }
