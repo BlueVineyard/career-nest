@@ -42,7 +42,6 @@ require_once CAREERNEST_DIR . 'includes/Admin/class-employee-requests.php';
 require_once CAREERNEST_DIR . 'includes/Email/class-mailer.php';
 require_once CAREERNEST_DIR . 'includes/Email/class-templates.php';
 require_once CAREERNEST_DIR . 'includes/class-job-ajax-handler.php';
-require_once CAREERNEST_DIR . 'includes/class-team-manager.php';
 
 // Hooks.
 register_activation_hook(__FILE__, ['\\CareerNest\\Activator', 'activate']);
@@ -65,8 +64,6 @@ add_action('plugins_loaded', function () {
         new \CareerNest\Job_Ajax_Handler();
     }
 
-    // Initialize Team AJAX handler
-    if (class_exists('\\CareerNest\\Team_Ajax_Handler')) {
     // Hook admin and security subsystems.
     if (is_admin()) {
         (new \CareerNest\Admin\Admin())->hooks();
