@@ -31,6 +31,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Handle job duplication
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'duplicate_job') {
+    if (!wp_verify_nonce($_POST['cn_duplicate_job_nonce'], 'cn_duplicate_job')) {
+        wp_die(__('Security check failed.', 'careernest'));
+    }
+
+    $job_id_to_duplicate = isset($_POST['job_id']) ? (int) $_POST['job_id'] : 0;
+    $current_user = wp_get_current_user();
+    $user_employer_id = (int) get_user_meta($current_user->ID, '_employer_id', true);
+    $job_employer_id = (int) get_post_meta($job_id_to_duplicate, '_employer_id', true);
+
+    if ($job_id_to_duplicate && $job_employer_id === $user_employer_id) {
+        // Get original job
+        $original_job = get_post($job_id_to_duplicate);
+
+        if ($original_job) {
+            // Create duplicate
+            $new_job_data = [
+                'post_title' => $original_job->post_title . ' (Copy)',
+                'post_content' => $original_job->post_content,
+                'post_status' => 'draft',
+                'post_type' => 'job_listing',
+                'post_author' => $current_user->ID,
+            ];
+
+            $new_job_id = wp_insert_post($new_job_data);
+
+            if ($new_job_id && !is_wp_error($new_job_id)) {
+                // Copy all meta fields
+                $meta_fields = [
+                    '_employer_id',
+                    '_job_location',
+                    '_remote_position',
+                    '_opening_date',
+                    '_closing_date',
+                    '_salary_range',
+                    '_apply_externally',
+                    '_external_apply',
+                    '_overview',
+                    '_who_we_are',
+                    '_what_we_offer',
+                    '_responsibilities',
+                    '_how_to_apply'
+                ];
+
+                foreach ($meta_fields as $meta_key) {
+                    $meta_value = get_post_meta($job_id_to_duplicate, $meta_key, true);
+                    if ($meta_value !== '') {
+                        update_post_meta($new_job_id, $meta_key, $meta_value);
+                    }
+                }
+
+                // Copy taxonomies
+                $taxonomies = ['job_category', 'job_type'];
+                foreach ($taxonomies as $taxonomy) {
+                    $terms = wp_get_object_terms($job_id_to_duplicate, $taxonomy, ['fields' => 'ids']);
+                    if (!is_wp_error($terms) && !empty($terms)) {
+                        wp_set_object_terms($new_job_id, $terms, $taxonomy);
+                    }
+                }
+
+                // Redirect to edit page
+                wp_safe_redirect(add_query_arg(['action' => 'edit-job', 'job_id' => $new_job_id], get_permalink()));
+                exit;
+            }
+        }
+    }
+}
+
 // Handle profile update
 $profile_updated = false;
 $profile_errors = [];
@@ -404,6 +473,12 @@ if ($applications_query->have_posts()) {
                                             class="cn-btn cn-btn-small <?php echo $current_post_status === 'draft' ? 'cn-btn-primary' : 'cn-btn-outline'; ?>">
                                             <?php echo $current_post_status === 'draft' ? esc_html__('Continue Submission', 'careernest') : esc_html__('Edit', 'careernest'); ?>
                                         </a>
+                                        <button type="button" class="cn-btn cn-btn-small cn-btn-outline cn-duplicate-job"
+                                            data-job-id="<?php echo esc_attr($job_id); ?>"
+                                            data-job-title="<?php echo esc_attr(get_the_title($job_id)); ?>"
+                                            data-nonce="<?php echo esc_attr(wp_create_nonce('cn_duplicate_job')); ?>">
+                                            Duplicate
+                                        </button>
                                         <?php if ($application_count > 0 && $current_post_status !== 'draft'): ?>
                                             <a href="<?php echo esc_url(add_query_arg(['action' => 'view-applications', 'filter_job' => $job_id], get_permalink())); ?>"
                                                 class="cn-btn cn-btn-small cn-btn-primary">

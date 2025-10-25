@@ -99,6 +99,36 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Duplicate job button handler
+  jQuery(".cn-duplicate-job").on("click", function (e) {
+    e.preventDefault();
+    const jobId = jQuery(this).data("job-id");
+    const jobTitle = jQuery(this).data("job-title");
+
+    if (
+      confirm(
+        'Duplicate "' +
+          jobTitle +
+          '"?\n\nThis will create a draft copy that you can edit and publish.'
+      )
+    ) {
+      // Create form and submit
+      const form = jQuery(
+        '<form method="post" action="' + window.location.href + '"></form>'
+      );
+      form.append('<input type="hidden" name="action" value="duplicate_job">');
+      form.append('<input type="hidden" name="job_id" value="' + jobId + '">');
+      const nonce = jQuery(this).data("nonce") || "";
+      form.append(
+        '<input type="hidden" name="cn_duplicate_job_nonce" value="' +
+          nonce +
+          '">'
+      );
+      jQuery("body").append(form);
+      form.submit();
+    }
+  });
+
   // Auto-hide success message after 5 seconds
   const successMessage = document.querySelector(".cn-profile-success");
   if (successMessage) {

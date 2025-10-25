@@ -837,6 +837,146 @@
 
 /* Dashboard Overview Enhancements */
 
+/* Top Row: Branding Preview & Setup Checklist */
+.cn-dashboard-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+/* Branding Preview */
+.cn-branding-preview {
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cn-branding-preview h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2327;
+}
+
+.cn-logo-display {
+  text-align: center;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.cn-logo-display img {
+  max-width: 120px;
+  max-height: 60px;
+  display: inline-block;
+}
+
+.cn-platform-info {
+  text-align: center;
+}
+
+.cn-platform-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d2327;
+  margin-bottom: 12px;
+}
+
+.cn-platform-info .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cn-platform-info .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Setup Checklist */
+.cn-setup-checklist {
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cn-setup-checklist h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d2327;
+}
+
+.cn-checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cn-checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.cn-checklist-item.cn-check-complete {
+  background: #e8f7ee;
+  border: 1px solid #cbead7;
+}
+
+.cn-checklist-item.cn-check-incomplete {
+  background: #fff8e1;
+  border: 1px solid #ffe0b2;
+}
+
+.cn-check-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.cn-check-complete .cn-check-icon {
+  color: #10b981;
+}
+
+.cn-check-incomplete .cn-check-icon {
+  color: #f39c12;
+}
+
+.cn-check-text {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1d2327;
+}
+
+.cn-check-text a {
+  color: #2271b1;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.cn-check-text a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1024px) {
+  .cn-dashboard-top-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Pending Requests Banner */
 .cn-pending-requests-banner {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

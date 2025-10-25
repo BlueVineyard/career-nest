@@ -333,32 +333,44 @@ get_header();
                             const form = document.getElementById('cn-job-submit-form');
                             if (form) {
                                 form.addEventListener('submit', function(e) {
-                                    // Get TinyMCE content
+                                    // First, trigger TinyMCE to save content to textarea
                                     if (typeof tinymce !== 'undefined') {
-                                        const editor = tinymce.get('overview');
-                                        if (editor) {
-                                            const content = editor.getContent({
-                                                format: 'text'
-                                            }).trim();
-                                            if (content === '') {
-                                                e.preventDefault();
-                                                alert(
-                                                    'Overview is required. Please provide a job overview.'
-                                                );
-                                                // Focus the editor
-                                                editor.focus();
-                                                return false;
-                                            }
-                                        }
+                                        tinymce.triggerSave();
                                     }
-                                    // Also check textarea fallback
+
+                                    // Now check the textarea value (which TinyMCE has updated)
                                     const overviewTextarea = document.querySelector(
                                         'textarea[name="overview"]');
-                                    if (overviewTextarea && overviewTextarea.value.trim() === '') {
-                                        e.preventDefault();
-                                        alert('Overview is required. Please provide a job overview.');
-                                        overviewTextarea.focus();
-                                        return false;
+                                    if (overviewTextarea) {
+                                        const content = overviewTextarea.value.trim();
+                                        // Check if it's truly empty (strip HTML tags for check)
+                                        const tempDiv = document.createElement('div');
+                                        tempDiv.innerHTML = content;
+                                        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+                                        if (textContent.trim() === '') {
+                                            e.preventDefault();
+                                            alert('Overview is required. Please provide a job overview.');
+
+                                            // Focus TinyMCE editor if available
+                                            if (typeof tinymce !== 'undefined') {
+                                                const editor = tinymce.get('overview');
+                                                if (editor) {
+                                                    editor.focus();
+                                                }
+                                            } else {
+                                                overviewTextarea.focus();
+                                            }
+
+                                            // Re-enable submit buttons
+                                            const submitButtons = form.querySelectorAll(
+                                                'button[type="submit"]');
+                                            submitButtons.forEach(btn => {
+                                                btn.disabled = false;
+                                                btn.style.opacity = '1';
+                                            });
+                                            return false;
+                                        }
                                     }
                                 });
                             }
@@ -515,8 +527,16 @@ get_header();
                     ?>
                         <button type="submit" class="cn-btn cn-btn-secondary cn-save-draft">Save Draft</button>
                     <?php endif; ?>
-                    <button type="submit"
-                        class="cn-btn cn-btn-primary cn-publish"><?php echo $is_edit ? esc_html__('Update', 'careernest') : esc_html__('Publish', 'careernest'); ?></button>
+                    <button type="submit" class="cn-btn cn-btn-primary cn-publish">
+                        <?php
+                        // Show "Publish" for new jobs or drafts, "Update" for published jobs
+                        if (!$is_edit || $current_status === 'draft') {
+                            echo esc_html__('Publish', 'careernest');
+                        } else {
+                            echo esc_html__('Update', 'careernest');
+                        }
+                        ?>
+                    </button>
                 </div>
             </form>
 

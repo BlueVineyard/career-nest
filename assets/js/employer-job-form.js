@@ -91,12 +91,17 @@
 
     // Form validation before submit
     $("#cn-job-submit-form").on("submit", function (e) {
+      const $form = $(this);
+      const $submitButtons = $form.find('button[type="submit"]');
+
       const jobTitle = $("#job_title").val().trim();
 
       if (!jobTitle) {
         e.preventDefault();
         alert("Job title is required.");
         $("#job_title").focus();
+        // Re-enable buttons
+        $submitButtons.prop("disabled", false).css("opacity", "1");
         return false;
       }
 
@@ -108,15 +113,19 @@
           e.preventDefault();
           alert("Please provide an external application URL or email address.");
           $("#external_apply").focus();
+          // Re-enable buttons
+          $submitButtons.prop("disabled", false).css("opacity", "1");
           return false;
         }
       }
 
       // Disable submit buttons to prevent double submission
-      $(this)
-        .find('button[type="submit"]')
-        .prop("disabled", true)
-        .css("opacity", "0.6");
+      $submitButtons.prop("disabled", true).css("opacity", "0.6");
+
+      // Re-enable buttons after 3 seconds in case of validation error
+      setTimeout(function () {
+        $submitButtons.prop("disabled", false).css("opacity", "1");
+      }, 3000);
     });
 
     // Auto-save to localStorage (optional enhancement)

@@ -66,6 +66,95 @@ class Admin_Menus
         echo '<div class="wrap careernest-dashboard">';
         echo '<h1>' . esc_html($platform_name) . ' ' . esc_html__('Overview', 'careernest') . '</h1>';
 
+        // Branding Preview & Setup Checklist
+        echo '<div class="cn-dashboard-top-row">';
+
+        // Branding Preview
+        echo '<div class="cn-branding-preview">';
+        echo '<h3>' . esc_html__('Your Platform', 'careernest') . '</h3>';
+
+        $branding = get_option('careernest_branding', []);
+        $logo_id = isset($branding['platform_logo']) ? (int) $branding['platform_logo'] : 0;
+        $logo_url = $logo_id ? wp_get_attachment_image_url($logo_id, 'thumbnail') : '';
+
+        if ($logo_url) {
+            echo '<div class="cn-logo-display">';
+            echo '<img src="' . esc_url($logo_url) . '" alt="' . esc_attr($platform_name) . '" />';
+            echo '</div>';
+        }
+
+        echo '<div class="cn-platform-info">';
+        echo '<div class="cn-platform-name">' . esc_html($platform_name) . '</div>';
+        echo '<a href="' . esc_url(admin_url('admin.php?page=careernest-settings&tab=branding')) . '" class="button button-secondary">';
+        echo '<span class="dashicons dashicons-edit"></span> ' . esc_html__('Edit Branding', 'careernest');
+        echo '</a>';
+        echo '</div>';
+        echo '</div>';
+
+        // Setup Checklist
+        echo '<div class="cn-setup-checklist">';
+        echo '<h3>' . esc_html__('Setup Status', 'careernest') . '</h3>';
+
+        // Check branding
+        $has_custom_name = !empty($branding['platform_name']) && $branding['platform_name'] !== 'CareerNest';
+        $has_logo = !empty($branding['platform_logo']);
+        $branding_configured = $has_custom_name || $has_logo;
+
+        // Check Google Maps
+        $options = get_option('careernest_options', []);
+        $maps_key = isset($options['maps_api_key']) ? trim($options['maps_api_key']) : '';
+        $maps_configured = !empty($maps_key);
+
+        // Check email templates
+        $email_templates = get_option('careernest_email_templates', []);
+        $templates_customized = !empty($email_templates);
+
+        echo '<div class="cn-checklist-items">';
+
+        // Branding item
+        echo '<div class="cn-checklist-item ' . ($branding_configured ? 'cn-check-complete' : 'cn-check-incomplete') . '">';
+        echo '<span class="cn-check-icon dashicons ' . ($branding_configured ? 'dashicons-yes-alt' : 'dashicons-warning') . '"></span>';
+        echo '<span class="cn-check-text">';
+        if ($branding_configured) {
+            echo esc_html__('Branding configured', 'careernest');
+        } else {
+            echo esc_html__('Branding not customized', 'careernest');
+            echo ' <a href="' . esc_url(admin_url('admin.php?page=careernest-settings&tab=branding')) . '">' . esc_html__('Configure now', 'careernest') . '</a>';
+        }
+        echo '</span>';
+        echo '</div>';
+
+        // Google Maps item
+        echo '<div class="cn-checklist-item ' . ($maps_configured ? 'cn-check-complete' : 'cn-check-incomplete') . '">';
+        echo '<span class="cn-check-icon dashicons ' . ($maps_configured ? 'dashicons-yes-alt' : 'dashicons-warning') . '"></span>';
+        echo '<span class="cn-check-text">';
+        if ($maps_configured) {
+            echo esc_html__('Google Maps API configured', 'careernest');
+        } else {
+            echo esc_html__('Google Maps not set up', 'careernest');
+            echo ' <a href="' . esc_url(admin_url('admin.php?page=careernest-settings&tab=general')) . '">' . esc_html__('Add API key', 'careernest') . '</a>';
+        }
+        echo '</span>';
+        echo '</div>';
+
+        // Email templates item
+        echo '<div class="cn-checklist-item ' . ($templates_customized ? 'cn-check-complete' : 'cn-check-incomplete') . '">';
+        echo '<span class="cn-check-icon dashicons ' . ($templates_customized ? 'dashicons-yes-alt' : 'dashicons-warning') . '"></span>';
+        echo '<span class="cn-check-text">';
+        if ($templates_customized) {
+            echo esc_html__('Email templates customized', 'careernest');
+        } else {
+            echo esc_html__('Using default email templates', 'careernest');
+            echo ' <a href="' . esc_url(admin_url('admin.php?page=careernest-settings&tab=email-templates')) . '">' . esc_html__('Customize', 'careernest') . '</a>';
+        }
+        echo '</span>';
+        echo '</div>';
+
+        echo '</div>';
+        echo '</div>';
+
+        echo '</div>';
+
         // Get pending request counts
         $pending_employers = $this->get_pending_employer_requests();
         $pending_employees = $this->get_pending_employee_requests();
