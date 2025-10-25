@@ -23,8 +23,44 @@
 .cn-header-content {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 2rem;
+}
+
+/* User Profile Section (Avatar + Info) */
+.cn-user-profile-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* User Avatar */
+.cn-user-avatar {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+.cn-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #0073aa;
+}
+
+.cn-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #0073aa;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  border: 3px solid #0073aa;
 }
 
 .cn-user-info h1 {
@@ -865,6 +901,157 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Profile Completeness Widget */
+.cn-profile-completeness {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.cn-completeness-meter {
+  margin: 1rem 0;
+}
+
+.cn-meter-bar {
+  width: 100%;
+  height: 12px;
+  background-color: #f0f0f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.cn-meter-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.cn-meter-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.cn-percentage {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.cn-status {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.cn-profile-tips {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.cn-tips-header {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+  margin: 0 0 0.5rem 0;
+}
+
+.cn-missing-fields {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.cn-missing-fields li {
+  padding: 0.25rem 0;
+}
+
+.cn-profile-complete {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 4px;
+  color: #155724;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Withdraw Button */
+.cn-btn-danger {
+  background: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+}
+
+.cn-btn-danger:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.cn-btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Profile Picture Upload */
+.cn-profile-picture-upload {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.cn-picture-preview {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.cn-preview-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #0073aa;
+}
+
+.cn-preview-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #0073aa;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 700;
+  border: 3px solid #0073aa;
+}
+
+.cn-picture-upload-field {
+  flex: 1;
+}
+
+.cn-picture-upload-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.cn-file-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 /* Responsive Design */

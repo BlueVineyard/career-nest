@@ -24,12 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cn_update_profile_non
     } else {
         $result = process_profile_update();
         if ($result['success']) {
-            $profile_updated = true;
-            $profile_success = $result['message'];
+            // Redirect to prevent form resubmission on refresh
+            wp_safe_redirect(add_query_arg('profile_updated', '1', get_permalink()));
+            exit;
         } else {
             $profile_errors = $result['errors'];
         }
     }
+}
+
+// Check if redirected after successful update
+if (isset($_GET['profile_updated']) && $_GET['profile_updated'] === '1') {
+    $profile_updated = true;
+    $profile_success = 'Your profile has been updated successfully!';
 }
 
 /**
@@ -167,6 +174,66 @@ function process_profile_update()
         'post_content' => $personal_summary
     ]);
 
+    // Handle profile picture upload (priority over removal)
+    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+        $file = $_FILES['profile_picture'];
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $max_size = 5 * 1024 * 1024; // 5MB
+
+        // Validate file type
+        if (!in_array($file['type'], $allowed_types)) {
+            $errors[] = 'Invalid file type. Please upload a JPG, PNG, or GIF image.';
+        }
+        // Validate file size
+        elseif ($file['size'] > $max_size) {
+            $errors[] = 'File size exceeds 5MB limit. Please upload a smaller image.';
+        }
+        // Process upload
+        else {
+            $upload = wp_handle_upload($file, ['test_form' => false]);
+
+            if (isset($upload['error'])) {
+                $errors[] = 'Upload failed: ' . $upload['error'];
+            } else {
+                $attachment_id = wp_insert_attachment([
+                    'post_title' => sanitize_file_name(pathinfo($file['name'], PATHINFO_FILENAME)),
+                    'post_content' => '',
+                    'post_status' => 'inherit',
+                    'post_mime_type' => $upload['type'],
+                ], $upload['file']);
+
+                if (is_wp_error($attachment_id)) {
+                    $errors[] = 'Failed to create attachment.';
+                } else {
+                    // Generate image metadata
+                    $attach_data = wp_generate_attachment_metadata($attachment_id, $upload['file']);
+                    wp_update_attachment_metadata($attachment_id, $attach_data);
+
+                    // Delete old profile picture if exists
+                    $old_picture_id = get_post_thumbnail_id($applicant_id);
+                    if ($old_picture_id) {
+                        wp_delete_attachment($old_picture_id, true);
+                    }
+
+                    // Set as featured image
+                    set_post_thumbnail($applicant_id, $attachment_id);
+                }
+            }
+        }
+    }
+    // Handle profile picture removal (only if no new file uploaded)
+    elseif (isset($_POST['remove_profile_picture']) && $_POST['remove_profile_picture'] == '1') {
+        $old_picture_id = get_post_thumbnail_id($applicant_id);
+        if ($old_picture_id) {
+            wp_delete_attachment($old_picture_id, true);
+            delete_post_thumbnail($applicant_id);
+        }
+    }
+
     // Update meta fields
     update_post_meta($applicant_id, '_professional_title', $professional_title);
     update_post_meta($applicant_id, '_phone', $phone);
@@ -187,6 +254,11 @@ function process_profile_update()
             return !empty($skill);
         });
         update_post_meta($applicant_id, '_skills', $skills);
+    }
+
+    // Return errors if any occurred during image upload
+    if (!empty($errors)) {
+        return ['success' => false, 'errors' => $errors];
     }
 
     return [
@@ -232,6 +304,12 @@ $applicant_id = 0;
 if ($applicant_query->have_posts()) {
     $applicant_profile = $applicant_query->posts[0];
     $applicant_id = $applicant_profile->ID;
+}
+
+// Calculate profile completeness
+$profile_completeness = ['percentage' => 0, 'missing_fields' => []];
+if ($applicant_id) {
+    $profile_completeness = \CareerNest\Profile_Helper::calculate_completeness($applicant_id);
 }
 
 // Get applicant data
@@ -321,15 +399,31 @@ if ($applicant_id && ($skills || $work_types)) {
         <!-- Dashboard Header -->
         <div class="cn-dashboard-header">
             <div class="cn-header-content">
-                <div class="cn-user-info">
-                    <h1><?php echo esc_html__('Welcome back,', 'careernest'); ?>
-                        <?php echo esc_html($current_user->display_name); ?>!</h1>
-                    <?php if ($prof_title): ?>
-                        <p class="cn-user-title"><?php echo esc_html($prof_title); ?></p>
-                    <?php endif; ?>
-                    <?php if ($location): ?>
-                        <p class="cn-user-location">📍 <?php echo esc_html($location); ?></p>
-                    <?php endif; ?>
+                <div class="cn-user-profile-section">
+                    <?php
+                    // Get profile picture (featured image)
+                    $profile_picture_id = $applicant_id ? get_post_thumbnail_id($applicant_id) : 0;
+                    $profile_picture_url = $profile_picture_id ? wp_get_attachment_url($profile_picture_id) : '';
+                    $first_letter = strtoupper(substr($current_user->display_name, 0, 1));
+                    ?>
+                    <div class="cn-user-avatar">
+                        <?php if ($profile_picture_url): ?>
+                            <img src="<?php echo esc_url($profile_picture_url); ?>"
+                                alt="<?php echo esc_attr($current_user->display_name); ?>" class="cn-avatar-img">
+                        <?php else: ?>
+                            <div class="cn-avatar-fallback"><?php echo esc_html($first_letter); ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="cn-user-info">
+                        <h1><?php echo esc_html__('Welcome back,', 'careernest'); ?>
+                            <?php echo esc_html($current_user->display_name); ?>!</h1>
+                        <?php if ($prof_title): ?>
+                            <p class="cn-user-title"><?php echo esc_html($prof_title); ?></p>
+                        <?php endif; ?>
+                        <?php if ($location): ?>
+                            <p class="cn-user-location">📍 <?php echo esc_html($location); ?></p>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <div class="cn-header-actions">
                     <?php if ($applicant_id): ?>
@@ -368,6 +462,23 @@ if ($applicant_id && ($skills || $work_types)) {
             </div>
         </div>
 
+        <!-- Success/Error Messages -->
+        <?php if ($profile_updated): ?>
+            <div class="cn-profile-success">
+                <p><?php echo esc_html($profile_success); ?></p>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($profile_errors)): ?>
+            <div class="cn-profile-errors">
+                <ul>
+                    <?php foreach ($profile_errors as $error): ?>
+                        <li><?php echo esc_html($error); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
         <!-- Dashboard Content -->
         <div class="cn-dashboard-content">
             <!-- Left Column -->
@@ -405,7 +516,8 @@ if ($applicant_id && ($skills || $work_types)) {
                                     'offer_extended' => 'Offer Extended',
                                     'hired' => 'Hired',
                                     'rejected' => 'Rejected',
-                                    'archived' => 'Archived'
+                                    'archived' => 'Archived',
+                                    'withdrawn' => 'Withdrawn'
                                 ];
 
                                 $status_colors = [
@@ -414,7 +526,8 @@ if ($applicant_id && ($skills || $work_types)) {
                                     'offer_extended' => '#27ae60',
                                     'hired' => '#10B981',
                                     'rejected' => '#e74c3c',
-                                    'archived' => '#95a5a6'
+                                    'archived' => '#95a5a6',
+                                    'withdrawn' => '#6c757d'
                                 ];
                             ?>
                                 <div class="cn-application-card">
@@ -453,6 +566,16 @@ if ($applicant_id && ($skills || $work_types)) {
                                         <?php if (current_user_can('edit_post', $app_id)): ?>
                                             <a href="<?php echo esc_url(get_edit_post_link($app_id)); ?>"
                                                 class="cn-btn cn-btn-small cn-btn-outline">View Details</a>
+                                        <?php endif; ?>
+                                        <?php
+                                        // Allow withdrawal for applications that haven't been hired or rejected
+                                        if (!in_array($app_status, ['hired', 'rejected', 'withdrawn'])):
+                                        ?>
+                                            <button type="button" class="cn-btn cn-btn-small cn-btn-danger cn-withdraw-btn"
+                                                data-application-id="<?php echo esc_attr($app_id); ?>"
+                                                data-job-title="<?php echo esc_attr($job_title); ?>">
+                                                Withdraw
+                                            </button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -614,27 +737,46 @@ if ($applicant_id && ($skills || $work_types)) {
                     </div>
                 <?php endif; ?>
 
-                <!-- Success/Error Messages -->
-                <?php if ($profile_updated): ?>
-                    <div class="cn-profile-success">
-                        <p><?php echo esc_html($profile_success); ?></p>
-                    </div>
-                <?php endif; ?>
-
-                <?php if (!empty($profile_errors)): ?>
-                    <div class="cn-profile-errors">
-                        <ul>
-                            <?php foreach ($profile_errors as $error): ?>
-                                <li><?php echo esc_html($error); ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php endif; ?>
-
                 <!-- Profile Edit Form (Hidden by default) -->
                 <div class="cn-profile-edit-form" id="cn-profile-edit-form" style="display: none;">
-                    <form method="post" class="cn-profile-form">
+                    <form method="post" class="cn-profile-form" enctype="multipart/form-data">
                         <?php wp_nonce_field('cn_update_profile', 'cn_update_profile_nonce'); ?>
+
+                        <!-- Profile Picture Section -->
+                        <div class="cn-dashboard-section">
+                            <h3><?php echo esc_html__('Profile Picture', 'careernest'); ?></h3>
+
+                            <div class="cn-profile-picture-upload">
+                                <?php
+                                $current_picture_id = $applicant_id ? get_post_thumbnail_id($applicant_id) : 0;
+                                $current_picture_url = $current_picture_id ? wp_get_attachment_url($current_picture_id) : '';
+                                $avatar_letter = strtoupper(substr($current_user->display_name, 0, 1));
+                                ?>
+                                <div class="cn-picture-preview">
+                                    <?php if ($current_picture_url): ?>
+                                        <img src="<?php echo esc_url($current_picture_url); ?>" alt="Profile Picture"
+                                            class="cn-preview-img">
+                                    <?php else: ?>
+                                        <div class="cn-preview-avatar"><?php echo esc_html($avatar_letter); ?></div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="cn-picture-upload-field">
+                                    <label
+                                        for="profile_picture"><?php echo esc_html__('Upload New Picture', 'careernest'); ?></label>
+                                    <input type="file" id="profile_picture" name="profile_picture" accept="image/*"
+                                        class="cn-file-input">
+                                    <p class="cn-field-help">
+                                        <?php echo esc_html__('JPG, PNG, or GIF. Max 5MB.', 'careernest'); ?></p>
+                                    <?php if ($current_picture_id): ?>
+                                        <label class="cn-checkbox-label" style="margin-top: 0.5rem;">
+                                            <input type="checkbox" name="remove_profile_picture" value="1"
+                                                class="cn-checkbox">
+                                            <span><?php echo esc_html__('Remove current picture', 'careernest'); ?></span>
+                                        </label>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Basic Profile Fields -->
                         <div class="cn-dashboard-section">
@@ -1027,6 +1169,47 @@ if ($applicant_id && ($skills || $work_types)) {
 
             <!-- Right Sidebar -->
             <div class="cn-dashboard-sidebar">
+                <!-- Profile Completeness -->
+                <?php if ($applicant_id): ?>
+                    <div class="cn-dashboard-section cn-profile-completeness">
+                        <h3><?php echo esc_html__('Profile Strength', 'careernest'); ?></h3>
+
+                        <?php
+                        $percentage = $profile_completeness['percentage'];
+                        $color = \CareerNest\Profile_Helper::get_completion_color($percentage);
+                        $status = \CareerNest\Profile_Helper::get_completion_status($percentage);
+                        ?>
+
+                        <div class="cn-completeness-meter">
+                            <div class="cn-meter-bar">
+                                <div class="cn-meter-fill"
+                                    style="width: <?php echo esc_attr($percentage); ?>%; background-color: <?php echo esc_attr($color); ?>;">
+                                </div>
+                            </div>
+                            <div class="cn-meter-text">
+                                <span class="cn-percentage"><?php echo esc_html($percentage); ?>%</span>
+                                <span class="cn-status"
+                                    style="color: <?php echo esc_attr($color); ?>;"><?php echo esc_html($status); ?></span>
+                            </div>
+                        </div>
+
+                        <?php if ($percentage < 100): ?>
+                            <div class="cn-profile-tips">
+                                <p class="cn-tips-header"><?php echo esc_html__('Complete your profile:', 'careernest'); ?></p>
+                                <ul class="cn-missing-fields">
+                                    <?php foreach (array_slice($profile_completeness['missing_fields'], 0, 3) as $field): ?>
+                                        <li>• <?php echo esc_html($field); ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        <?php else: ?>
+                            <p class="cn-profile-complete">
+                                ✓ <?php echo esc_html__('Your profile is complete!', 'careernest'); ?>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Work Preferences -->
                 <?php if ($work_types && is_array($work_types) && !empty($work_types)): ?>
                     <div class="cn-dashboard-section">

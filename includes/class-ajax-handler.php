@@ -13,6 +13,34 @@ class Ajax_Handler
     {
         add_action('wp_ajax_careernest_filter_jobs', [$this, 'filter_jobs']);
         add_action('wp_ajax_nopriv_careernest_filter_jobs', [$this, 'filter_jobs']);
+        add_action('wp_ajax_careernest_track_external_click', [$this, 'track_external_click']);
+        add_action('wp_ajax_nopriv_careernest_track_external_click', [$this, 'track_external_click']);
+    }
+
+    /**
+     * Track external application click
+     */
+    public function track_external_click()
+    {
+        check_ajax_referer('careernest_external_click', 'nonce');
+
+        $job_id = isset($_POST['job_id']) ? absint($_POST['job_id']) : 0;
+
+        if (!$job_id) {
+            wp_send_json_error(['message' => 'Invalid job ID']);
+        }
+
+        // Get current count
+        $current_count = get_post_meta($job_id, '_external_application_count', true);
+        $current_count = $current_count ? (int) $current_count : 0;
+
+        // Increment count
+        update_post_meta($job_id, '_external_application_count', $current_count + 1);
+
+        wp_send_json_success([
+            'message' => 'Click tracked',
+            'count' => $current_count + 1
+        ]);
     }
 
     public function filter_jobs()

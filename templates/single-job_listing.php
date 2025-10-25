@@ -1059,5 +1059,44 @@ $job_types = get_the_terms($job_id, 'job_type');
     }
 </style>
 
+<?php if ($apply_externally && $external_apply): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const applyBtn = document.querySelector('.job-apply-btn');
+
+            if (applyBtn) {
+                applyBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const href = this.getAttribute('href');
+
+                    // Track the click via fetch
+                    fetch('<?php echo esc_js(admin_url('admin-ajax.php')); ?>', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: new URLSearchParams({
+                                action: 'careernest_track_external_click',
+                                job_id: '<?php echo (int) $job_id; ?>',
+                                nonce: '<?php echo wp_create_nonce('careernest_external_click'); ?>'
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('External click tracked:', data);
+                            // Redirect to external link
+                            window.location.href = href;
+                        })
+                        .catch(error => {
+                            console.error('Tracking error:', error);
+                            // Still redirect even if tracking fails
+                            window.location.href = href;
+                        });
+                });
+            }
+        });
+    </script>
+<?php endif; ?>
+
 <?php
 get_footer();

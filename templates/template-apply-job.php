@@ -59,6 +59,44 @@ if ($position_filled) {
     }
 }
 
+// Get logged-in user data for pre-filling
+$current_user = wp_get_current_user();
+$is_logged_in = is_user_logged_in();
+$prefill_data = [
+    'name' => '',
+    'email' => '',
+    'phone' => ''
+];
+
+if ($is_logged_in) {
+    // Get user's basic info
+    $prefill_data['name'] = $current_user->display_name;
+    $prefill_data['email'] = $current_user->user_email;
+
+    // Try to get applicant profile data
+    $applicant_query = new WP_Query([
+        'post_type' => 'applicant',
+        'post_status' => 'publish',
+        'posts_per_page' => 1,
+        'meta_query' => [
+            [
+                'key' => '_user_id',
+                'value' => $current_user->ID,
+                'compare' => '='
+            ]
+        ]
+    ]);
+
+    if ($applicant_query->have_posts()) {
+        $applicant_id = $applicant_query->posts[0]->ID;
+        $phone = get_post_meta($applicant_id, '_phone', true);
+        if ($phone) {
+            $prefill_data['phone'] = $phone;
+        }
+    }
+    wp_reset_postdata();
+}
+
 // Handle form submission
 $form_submitted = false;
 $form_errors = [];
@@ -461,21 +499,29 @@ function send_application_notifications($application_id, $job_id, $applicant_ema
                     <div class="cn-form-section">
                         <h3><?php echo esc_html__('Personal Information', 'careernest'); ?></h3>
 
+                        <?php if ($is_logged_in): ?>
+                            <div class="cn-logged-in-notice">
+                                <p>✓ <?php echo esc_html__('Logged in as', 'careernest'); ?>
+                                    <strong><?php echo esc_html($current_user->display_name); ?></strong>
+                                </p>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="cn-form-row">
                             <div class="cn-form-field">
                                 <label for="applicant_name"><?php echo esc_html__('Full Name', 'careernest'); ?> <span
                                         class="required">*</span></label>
                                 <input type="text" id="applicant_name" name="applicant_name"
-                                    value="<?php echo esc_attr($_POST['applicant_name'] ?? ''); ?>" required
-                                    class="cn-input">
+                                    value="<?php echo esc_attr($_POST['applicant_name'] ?? $prefill_data['name']); ?>"
+                                    required class="cn-input" <?php echo $is_logged_in ? 'readonly' : ''; ?>>
                             </div>
 
                             <div class="cn-form-field">
                                 <label for="applicant_email"><?php echo esc_html__('Email Address', 'careernest'); ?> <span
                                         class="required">*</span></label>
                                 <input type="email" id="applicant_email" name="applicant_email"
-                                    value="<?php echo esc_attr($_POST['applicant_email'] ?? ''); ?>" required
-                                    class="cn-input">
+                                    value="<?php echo esc_attr($_POST['applicant_email'] ?? $prefill_data['email']); ?>"
+                                    required class="cn-input" <?php echo $is_logged_in ? 'readonly' : ''; ?>>
                             </div>
                         </div>
 
@@ -483,7 +529,8 @@ function send_application_notifications($application_id, $job_id, $applicant_ema
                             <div class="cn-form-field">
                                 <label for="applicant_phone"><?php echo esc_html__('Phone Number', 'careernest'); ?></label>
                                 <input type="tel" id="applicant_phone" name="applicant_phone"
-                                    value="<?php echo esc_attr($_POST['applicant_phone'] ?? ''); ?>" class="cn-input">
+                                    value="<?php echo esc_attr($_POST['applicant_phone'] ?? $prefill_data['phone']); ?>"
+                                    class="cn-input">
                             </div>
                         </div>
                     </div>
@@ -646,6 +693,25 @@ function send_application_notifications($application_id, $job_id, $applicant_ema
         color: #666;
         font-size: 0.85rem;
         margin: 0.5rem 0 0 0;
+    }
+
+    .cn-logged-in-notice {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 4px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .cn-logged-in-notice p {
+        color: #155724;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .cn-input[readonly] {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
     }
 
     /* Buttons */

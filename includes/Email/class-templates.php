@@ -330,6 +330,55 @@ If you have any questions about your new role, please contact us at {{contact_em
 Welcome to your new role!',
                 'variables' => ['user_name', 'company_name', 'dashboard_url', 'contact_email'],
             ],
+
+            'application_status_change' => [
+                'name' => 'Application Status Change',
+                'subject' => 'Application Update: {{job_title}} at {{company_name}}',
+                'body' => 'Hi {{user_name}},
+
+Your application for <strong>{{job_title}}</strong> at <strong>{{company_name}}</strong> has been updated.
+
+<strong>New Status:</strong> {{status_label}}
+
+{{status_message}}
+
+<a href="{{dashboard_url}}" class="email-button">View Application</a>
+
+<strong>Application Details:</strong>
+<ul>
+<li><strong>Job Title:</strong> {{job_title}}</li>
+<li><strong>Company:</strong> {{company_name}}</li>
+<li><strong>Applied:</strong> {{application_date}}</li>
+<li><strong>Status:</strong> {{status_label}}</li>
+</ul>
+
+Good luck with your job search!',
+                'variables' => ['user_name', 'job_title', 'company_name', 'status_label', 'status_message', 'dashboard_url', 'application_date'],
+            ],
+
+            'application_withdrawn' => [
+                'name' => 'Application Withdrawn Confirmation',
+                'subject' => 'Application Withdrawn: {{job_title}}',
+                'body' => 'Hi {{user_name}},
+
+This confirms that you have withdrawn your application for <strong>{{job_title}}</strong> at <strong>{{company_name}}</strong>.
+
+Your application has been removed from consideration for this position. The employer will be notified of your withdrawal.
+
+<a href="{{dashboard_url}}" class="email-button">View Your Applications</a>
+
+<strong>Continue Your Job Search:</strong>
+<ul>
+<li>Browse available job listings</li>
+<li>Update your profile and resume</li>
+<li>Apply for positions that match your goals</li>
+</ul>
+
+<a href="{{jobs_url}}" class="email-button">Browse Jobs</a>
+
+Thank you for using {{site_name}}!',
+                'variables' => ['user_name', 'job_title', 'company_name', 'dashboard_url', 'jobs_url'],
+            ],
         ];
     }
 

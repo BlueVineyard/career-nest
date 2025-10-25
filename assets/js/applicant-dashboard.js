@@ -113,7 +113,79 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Current job checkbox functionality
   initializeCurrentJobCheckboxes();
+
+  // Application withdrawal functionality
+  initializeWithdrawalButtons();
 });
+
+/**
+ * Initialize withdrawal button functionality
+ */
+function initializeWithdrawalButtons() {
+  const withdrawButtons = document.querySelectorAll(".cn-withdraw-btn");
+
+  withdrawButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const applicationId = this.getAttribute("data-application-id");
+      const jobTitle = this.getAttribute("data-job-title");
+
+      if (!applicationId) {
+        return;
+      }
+
+      // Confirm withdrawal
+      if (
+        !confirm(
+          `Are you sure you want to withdraw your application for "${jobTitle}"?\n\nThis action cannot be undone.`
+        )
+      ) {
+        return;
+      }
+
+      // Disable button during request
+      button.disabled = true;
+      button.textContent = "Withdrawing...";
+
+      // Send AJAX request
+      fetch(careerNestWithdraw.ajaxurl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          action: "cn_withdraw_application",
+          application_id: applicationId,
+          nonce: careerNestWithdraw.nonce,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            // Show success message
+            alert(data.data.message || "Application withdrawn successfully.");
+            // Reload page to update application list
+            window.location.reload();
+          } else {
+            // Show error message
+            alert(
+              data.data.message ||
+                "Failed to withdraw application. Please try again."
+            );
+            // Re-enable button
+            button.disabled = false;
+            button.textContent = "Withdraw";
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred. Please try again.");
+          // Re-enable button
+          button.disabled = false;
+          button.textContent = "Withdraw";
+        });
+    });
+  });
+}
 
 /**
  * Initialize repeater field functionality (add/remove items)

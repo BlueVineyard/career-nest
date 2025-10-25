@@ -418,6 +418,10 @@ if ($applications_query->have_posts()) {
                                 $application_count = $job_applications->found_posts;
                                 wp_reset_postdata();
 
+                                // Get external application count
+                                $external_count = (int) get_post_meta($job_id, '_external_application_count', true);
+                                $total_apps = $application_count + $external_count;
+
                                 // Determine job status
                                 $current_post_status = get_post_status($job_id);
 
@@ -460,8 +464,17 @@ if ($applications_query->have_posts()) {
                                             <span class="cn-job-closing">Closes:
                                                 <?php echo esc_html(date('F j, Y', strtotime($closing_date))); ?></span>
                                         <?php endif; ?>
-                                        <span class="cn-job-applications"><?php echo esc_html($application_count); ?>
-                                            applications</span>
+                                        <span class="cn-job-applications">
+                                            <?php echo esc_html($total_apps); ?>
+                                            application<?php echo $total_apps != 1 ? 's' : ''; ?>
+                                            <?php if ($external_count > 0): ?>
+                                                <span class="cn-external-indicator"
+                                                    title="<?php echo esc_attr($external_count . ' external'); ?>">
+                                                    (<?php echo esc_html($application_count); ?> internal,
+                                                    <?php echo esc_html($external_count); ?> external)
+                                                </span>
+                                            <?php endif; ?>
+                                        </span>
                                     </div>
 
                                     <div class="cn-job-actions">

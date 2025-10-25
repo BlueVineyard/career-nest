@@ -149,6 +149,8 @@ get_header();
                                 <?php echo esc_html__('Hired', 'careernest'); ?></option>
                             <option value="rejected" <?php selected($filter_status, 'rejected'); ?>>
                                 <?php echo esc_html__('Rejected', 'careernest'); ?></option>
+                            <option value="withdrawn" <?php selected($filter_status, 'withdrawn'); ?>>
+                                <?php echo esc_html__('Withdrawn', 'careernest'); ?></option>
                         </select>
                     </div>
                 </div>
@@ -177,7 +179,8 @@ get_header();
                     'interviewed' => __('Interviewed', 'careernest'),
                     'offer_extended' => __('Offer Extended', 'careernest'),
                     'hired' => __('Hired', 'careernest'),
-                    'rejected' => __('Rejected', 'careernest')
+                    'rejected' => __('Rejected', 'careernest'),
+                    'withdrawn' => __('Withdrawn', 'careernest')
                 ];
 
                 $status_colors = [
@@ -186,7 +189,8 @@ get_header();
                     'interviewed' => '#e67e22',
                     'offer_extended' => '#27ae60',
                     'hired' => '#10B981',
-                    'rejected' => '#e74c3c'
+                    'rejected' => '#e74c3c',
+                    'withdrawn' => '#6c757d'
                 ];
 
                 while ($applications_query->have_posts()): $applications_query->the_post();
@@ -246,11 +250,13 @@ get_header();
                                 data-app-id="<?php echo esc_attr($app_id); ?>">
                                 <?php echo esc_html__('View Details', 'careernest'); ?>
                             </button>
-                            <button type="button" class="cn-btn cn-btn-small cn-btn-outline cn-change-status"
-                                data-app-id="<?php echo esc_attr($app_id); ?>"
-                                data-current-status="<?php echo esc_attr($app_status); ?>">
-                                <?php echo esc_html__('Change Status', 'careernest'); ?>
-                            </button>
+                            <?php if ($app_status !== 'withdrawn'): ?>
+                                <button type="button" class="cn-btn cn-btn-small cn-btn-outline cn-change-status"
+                                    data-app-id="<?php echo esc_attr($app_id); ?>"
+                                    data-current-status="<?php echo esc_attr($app_status); ?>">
+                                    <?php echo esc_html__('Change Status', 'careernest'); ?>
+                                </button>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Hidden details panel -->

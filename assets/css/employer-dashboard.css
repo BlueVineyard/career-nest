@@ -1,5 +1,12 @@
 /* CareerNest Employer Dashboard Styles */
 
+/* External Application Indicator */
+.cn-external-indicator {
+  color: #666;
+  font-size: 0.85em;
+  font-weight: normal;
+}
+
 /* Container */
 .site-main {
   max-width: 1200px;

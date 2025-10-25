@@ -1077,7 +1077,8 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         height: 60px;
         flex-shrink: 0;
         border-radius: 6px;
-        object-fit: cover;
+        object-fit: contain;
+        background: #000;
     }
 
     .cn-job-logo-placeholder {

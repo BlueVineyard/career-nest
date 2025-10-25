@@ -41,9 +41,13 @@ require_once CAREERNEST_DIR . 'includes/Shortcodes/class-login.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employer-requests.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employee-requests.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-deletion-requests.php';
+require_once CAREERNEST_DIR . 'includes/Admin/class-import-export.php';
 require_once CAREERNEST_DIR . 'includes/Email/class-mailer.php';
 require_once CAREERNEST_DIR . 'includes/Email/class-templates.php';
 require_once CAREERNEST_DIR . 'includes/class-job-ajax-handler.php';
+require_once CAREERNEST_DIR . 'includes/class-applicant-notifications.php';
+require_once CAREERNEST_DIR . 'includes/class-profile-helper.php';
+require_once CAREERNEST_DIR . 'includes/class-applicant-ajax-handler.php';
 
 // Hooks.
 register_activation_hook(__FILE__, ['\\CareerNest\\Activator', 'activate']);
@@ -66,11 +70,22 @@ add_action('plugins_loaded', function () {
         new \CareerNest\Job_Ajax_Handler();
     }
 
+    // Initialize Applicant Notifications
+    if (class_exists('\\CareerNest\\Applicant_Notifications')) {
+        new \CareerNest\Applicant_Notifications();
+    }
+
+    // Initialize Applicant AJAX Handler
+    if (class_exists('\\CareerNest\\Applicant_Ajax_Handler')) {
+        new \CareerNest\Applicant_Ajax_Handler();
+    }
+
     // Hook admin and security subsystems.
     if (is_admin()) {
         (new \CareerNest\Admin\Admin())->hooks();
         (new \CareerNest\Admin\Employer_Requests())->hooks();
         (new \CareerNest\Admin\Employee_Requests())->hooks();
+        (new \CareerNest\Admin\Import_Export())->hooks();
     }
     (new \CareerNest\Security\Caps())->hooks();
     \CareerNest\Data\Roles::ensure_caps();

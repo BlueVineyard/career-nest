@@ -488,6 +488,16 @@ class Plugin
                 CAREERNEST_VERSION,
                 true
             );
+
+            // Localize script with AJAX URL and nonce
+            wp_localize_script(
+                'careernest-applicant-dashboard',
+                'careerNestWithdraw',
+                [
+                    'ajaxurl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('cn_withdraw_application'),
+                ]
+            );
         }
 
         // Check if we're on the employer dashboard page
