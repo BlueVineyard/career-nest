@@ -211,6 +211,16 @@ class Plugin
 
         // Handle single employer posts
         if (is_singular('employer')) {
+            // Check for edit action
+            $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
+
+            if ($action === 'edit-profile') {
+                $plugin_template = $this->locate_template('template-employer-profile-edit.php');
+                if ($plugin_template) {
+                    return $plugin_template;
+                }
+            }
+
             $plugin_template = $this->locate_template('single-employer.php');
             if ($plugin_template) {
                 $template = $plugin_template;
@@ -435,12 +445,15 @@ class Plugin
             }
 
             // Send notification to user about linked applications
+            $platform_name = cn_get_platform_name();
+            $from_name = cn_get_email_from_name();
+
             $linked_count = count($guest_applications->posts);
             $subject = 'Your Job Applications Have Been Linked';
-            $message = "Welcome to CareerNest!\n\n";
+            $message = "Welcome to {$platform_name}!\n\n";
             $message .= "We found {$linked_count} job application" . ($linked_count > 1 ? 's' : '') . " associated with your email address and have linked them to your new account.\n\n";
             $message .= "You can now view and track your applications by logging into your dashboard.\n\n";
-            $message .= "Thank you for joining CareerNest!";
+            $message .= "Thank you for joining {$platform_name}!\n{$from_name}";
 
             wp_mail($user_email, $subject, $message);
         }
@@ -553,6 +566,20 @@ class Plugin
                     ['jquery'],
                     CAREERNEST_VERSION,
                     true
+                );
+            }
+        }
+
+        // Check if we're on single employer edit page
+        if (is_singular('employer')) {
+            $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
+
+            if ($action === 'edit-profile') {
+                wp_enqueue_style(
+                    'careernest-profile-edit',
+                    CAREERNEST_URL . 'assets/css/employer-profile-edit.css',
+                    [],
+                    CAREERNEST_VERSION
                 );
             }
         }

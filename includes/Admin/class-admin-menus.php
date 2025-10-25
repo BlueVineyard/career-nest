@@ -41,8 +41,9 @@ class Admin_Menus
         // Section: Employers (heading)
         add_submenu_page('careernest', __('Employers', 'careernest'), __('Employers', 'careernest'), 'manage_careernest', 'careernest-section-employers', '__return_null');
         add_submenu_page('careernest', __('All Employers', 'careernest'), __('All Employers', 'careernest'), 'manage_careernest', 'edit.php?post_type=employer');
-        add_submenu_page('careernest', __('Account Requests', 'careernest'), __('Account Requests', 'careernest'), 'manage_options', 'employer-requests', ['\CareerNest\Admin\Employer_Requests', 'render_requests_page_static']);
-        add_submenu_page('careernest', __('Employee Requests', 'careernest'), __('Employee Requests', 'careernest'), 'manage_options', 'employee-requests', ['\CareerNest\Admin\Employee_Requests', 'render_requests_page_static']);
+        add_submenu_page('careernest', __('Account Requests', 'careernest'), __('Account Requests', 'careernest'), 'manage_careernest', 'employer-requests', ['\CareerNest\Admin\Employer_Requests', 'render_requests_page_static']);
+        add_submenu_page('careernest', __('Employee Requests', 'careernest'), __('Employee Requests', 'careernest'), 'manage_careernest', 'employee-requests', ['\CareerNest\Admin\Employee_Requests', 'render_requests_page_static']);
+        add_submenu_page('careernest', __('Deletion Requests', 'careernest'), __('Deletion Requests', 'careernest'), 'manage_careernest', 'deletion-requests', ['\CareerNest\Admin\Deletion_Requests', 'render_requests_page_static']);
 
         // Section: Applicants (heading)
         add_submenu_page('careernest', __('Applicants', 'careernest'), __('Applicants', 'careernest'), 'manage_careernest', 'careernest-section-applicants', '__return_null');
@@ -58,9 +59,54 @@ class Admin_Menus
         if (! current_user_can('manage_careernest')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'careernest'));
         }
-        echo '<div class="wrap careernest-dashboard">';
-        echo '<h1>' . esc_html__('CareerNest Overview', 'careernest') . '</h1>';
 
+        // Get platform branding
+        $platform_name = function_exists('cn_get_platform_name') ? cn_get_platform_name() : 'CareerNest';
+
+        echo '<div class="wrap careernest-dashboard">';
+        echo '<h1>' . esc_html($platform_name) . ' ' . esc_html__('Overview', 'careernest') . '</h1>';
+
+        // Get pending request counts
+        $pending_employers = $this->get_pending_employer_requests();
+        $pending_employees = $this->get_pending_employee_requests();
+        $pending_deletions = $this->get_pending_deletion_requests();
+        $total_pending = $pending_employers + $pending_employees + $pending_deletions;
+
+        // Pending Requests Banner
+        if ($total_pending > 0) {
+            echo '<div class="cn-pending-requests-banner">';
+            echo '<div class="cn-banner-icon"><span class="dashicons dashicons-bell"></span></div>';
+            echo '<div class="cn-banner-content">';
+            echo '<h3>' . esc_html__('Pending Requests Require Attention', 'careernest') . '</h3>';
+            echo '<div class="cn-request-links">';
+
+            if ($pending_employers > 0) {
+                echo '<a href="' . esc_url(admin_url('admin.php?page=employer-requests')) . '" class="cn-request-badge cn-badge-primary">';
+                echo '<span class="cn-badge-count">' . esc_html($pending_employers) . '</span> ';
+                echo esc_html__('Account Request', 'careernest') . ($pending_employers > 1 ? 's' : '');
+                echo '</a>';
+            }
+
+            if ($pending_employees > 0) {
+                echo '<a href="' . esc_url(admin_url('admin.php?page=employee-requests')) . '" class="cn-request-badge cn-badge-warning">';
+                echo '<span class="cn-badge-count">' . esc_html($pending_employees) . '</span> ';
+                echo esc_html__('Employee Request', 'careernest') . ($pending_employees > 1 ? 's' : '');
+                echo '</a>';
+            }
+
+            if ($pending_deletions > 0) {
+                echo '<a href="' . esc_url(admin_url('admin.php?page=deletion-requests')) . '" class="cn-request-badge cn-badge-danger">';
+                echo '<span class="cn-badge-count">' . esc_html($pending_deletions) . '</span> ';
+                echo esc_html__('Deletion Request', 'careernest') . ($pending_deletions > 1 ? 's' : '');
+                echo '</a>';
+            }
+
+            echo '</div>';
+            echo '</div>';
+            echo '</div>';
+        }
+
+        // Main statistics cards
         $cards = [
             [
                 'title' => __('Jobs', 'careernest'),
@@ -108,6 +154,119 @@ class Admin_Menus
             echo '</div>';
         }
         echo '</div>';
+
+        // Platform Statistics Section
+        echo '<div class="cn-dashboard-section">';
+        echo '<h2>' . esc_html__('Platform Statistics', 'careernest') . '</h2>';
+        echo '<div class="cn-stats-grid">';
+
+        // Get statistics
+        $stats = $this->get_platform_statistics();
+
+        echo '<div class="cn-stat-item">';
+        echo '<div class="cn-stat-icon"><span class="dashicons dashicons-yes-alt"></span></div>';
+        echo '<div class="cn-stat-data">';
+        echo '<div class="cn-stat-value">' . esc_html($stats['active_jobs']) . '</div>';
+        echo '<div class="cn-stat-label">' . esc_html__('Active Jobs', 'careernest') . '</div>';
+        echo '</div>';
+        echo '</div>';
+
+        echo '<div class="cn-stat-item">';
+        echo '<div class="cn-stat-icon"><span class="dashicons dashicons-groups"></span></div>';
+        echo '<div class="cn-stat-data">';
+        echo '<div class="cn-stat-value">' . esc_html($stats['new_applications_month']) . '</div>';
+        echo '<div class="cn-stat-label">' . esc_html__('Applications This Month', 'careernest') . '</div>';
+        echo '</div>';
+        echo '</div>';
+
+        echo '<div class="cn-stat-item">';
+        echo '<div class="cn-stat-icon"><span class="dashicons dashicons-businessman"></span></div>';
+        echo '<div class="cn-stat-data">';
+        echo '<div class="cn-stat-value">' . esc_html($stats['new_employers_week']) . '</div>';
+        echo '<div class="cn-stat-label">' . esc_html__('New Employers This Week', 'careernest') . '</div>';
+        echo '</div>';
+        echo '</div>';
+
+        echo '<div class="cn-stat-item">';
+        echo '<div class="cn-stat-icon"><span class="dashicons dashicons-admin-users"></span></div>';
+        echo '<div class="cn-stat-data">';
+        echo '<div class="cn-stat-value">' . esc_html($stats['new_applicants_week']) . '</div>';
+        echo '<div class="cn-stat-label">' . esc_html__('New Applicants This Week', 'careernest') . '</div>';
+        echo '</div>';
+        echo '</div>';
+
+        echo '</div>';
+        echo '</div>';
+
+        // Recent Activity Feed
+        echo '<div class="cn-dashboard-section">';
+        echo '<div class="cn-section-header">';
+        echo '<h2>' . esc_html__('Recent Activity', 'careernest') . '</h2>';
+        echo '<div class="cn-activity-filters">';
+        echo '<button class="cn-filter-btn active" data-filter="all">' . esc_html__('All', 'careernest') . '</button>';
+        echo '<button class="cn-filter-btn" data-filter="jobs">' . esc_html__('Jobs', 'careernest') . '</button>';
+        echo '<button class="cn-filter-btn" data-filter="applications">' . esc_html__('Applications', 'careernest') . '</button>';
+        echo '<button class="cn-filter-btn" data-filter="employers">' . esc_html__('Employers', 'careernest') . '</button>';
+        echo '<button class="cn-filter-btn" data-filter="employees">' . esc_html__('Team', 'careernest') . '</button>';
+        echo '</div>';
+        echo '</div>';
+        echo '<div class="cn-activity-feed">';
+
+        $activities = $this->get_recent_activities(10);
+
+        if (!empty($activities)) {
+            foreach ($activities as $activity) {
+                $activity_type = $activity['type'] ?? 'unknown';
+                echo '<div class="cn-activity-item" data-activity-type="' . esc_attr($activity_type) . '">';
+                echo '<div class="cn-activity-icon" style="background: ' . esc_attr($activity['color']) . '">';
+                echo '<span class="dashicons ' . esc_attr($activity['icon']) . '"></span>';
+                echo '</div>';
+                echo '<div class="cn-activity-content">';
+                echo '<div class="cn-activity-text">' . wp_kses_post($activity['text']) . '</div>';
+                echo '<div class="cn-activity-time">' . esc_html($activity['time']) . '</div>';
+                echo '</div>';
+                echo '</div>';
+            }
+        } else {
+            echo '<p class="cn-no-activity">' . esc_html__('No recent activity to display.', 'careernest') . '</p>';
+        }
+
+        echo '</div>';
+
+        // Add filtering JavaScript
+        echo '<script>
+        jQuery(document).ready(function($) {
+            $(".cn-filter-btn").on("click", function() {
+                const filter = $(this).data("filter");
+                
+                // Update button states
+                $(".cn-filter-btn").removeClass("active");
+                $(this).addClass("active");
+                
+                // Filter activities
+                if (filter === "all") {
+                    $(".cn-activity-item").show();
+                } else {
+                    $(".cn-activity-item").hide();
+                    $(".cn-activity-item[data-activity-type^=\"" + filter + "\"]").show();
+                }
+                
+                // Show/hide no activity message
+                const visibleCount = $(".cn-activity-item:visible").length;
+                if (visibleCount === 0) {
+                    if (!$(".cn-no-filtered").length) {
+                        $(".cn-activity-feed").append("<p class=\"cn-no-activity cn-no-filtered\">" + 
+                            "' . esc_js(__('No activities match this filter.', 'careernest')) . '</p>");
+                    }
+                } else {
+                    $(".cn-no-filtered").remove();
+                }
+            });
+        });
+        </script>';
+
+        echo '</div>';
+
         echo '</div>';
     }
 
@@ -126,6 +285,245 @@ class Admin_Menus
         return $sum;
     }
 
+    /**
+     * Get count of pending employer requests
+     */
+    private function get_pending_employer_requests(): int
+    {
+        $pending = new \WP_Query([
+            'post_type' => 'employer',
+            'post_status' => 'pending',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'no_found_rows' => false,
+        ]);
+        return $pending->found_posts;
+    }
+
+    /**
+     * Get count of pending employee requests
+     */
+    private function get_pending_employee_requests(): int
+    {
+        $pending = get_users([
+            'meta_key' => '_pending_employee_request',
+            'meta_compare' => 'EXISTS',
+            'count_total' => true,
+            'fields' => 'ID',
+        ]);
+        return is_array($pending) ? count($pending) : 0;
+    }
+
+    /**
+     * Get count of pending deletion requests
+     */
+    private function get_pending_deletion_requests(): int
+    {
+        $pending = get_users([
+            'meta_key' => '_pending_deletion_request',
+            'meta_compare' => 'EXISTS',
+            'role' => 'employer_team',
+            'count_total' => true,
+            'fields' => 'ID',
+        ]);
+        return is_array($pending) ? count($pending) : 0;
+    }
+
+    /**
+     * Get platform statistics
+     */
+    private function get_platform_statistics(): array
+    {
+        // Active jobs (published, not expired, not filled)
+        $active_jobs = new \WP_Query([
+            'post_type' => 'job_listing',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key' => '_closing_date',
+                    'compare' => 'NOT EXISTS',
+                ],
+                [
+                    'key' => '_closing_date',
+                    'value' => current_time('Y-m-d'),
+                    'compare' => '>=',
+                    'type' => 'DATE',
+                ],
+            ],
+        ]);
+
+        // Filter out filled positions manually
+        $active_count = 0;
+        if ($active_jobs->have_posts()) {
+            foreach ($active_jobs->posts as $job_id) {
+                $position_filled = get_post_meta($job_id, '_position_filled', true);
+                if (!$position_filled || $position_filled !== '1') {
+                    $active_count++;
+                }
+            }
+        }
+
+        // Applications this month
+        $first_of_month = date('Y-m-01');
+        $apps_month = new \WP_Query([
+            'post_type' => 'job_application',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'date_query' => [
+                [
+                    'after' => $first_of_month,
+                    'inclusive' => true,
+                ],
+            ],
+        ]);
+
+        // New employers this week
+        $week_ago = date('Y-m-d H:i:s', strtotime('-7 days'));
+        $employers_week = new \WP_Query([
+            'post_type' => 'employer',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'date_query' => [
+                [
+                    'after' => $week_ago,
+                    'inclusive' => true,
+                ],
+            ],
+        ]);
+
+        // New applicants this week
+        $applicants_week = new \WP_Query([
+            'post_type' => 'applicant',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'date_query' => [
+                [
+                    'after' => $week_ago,
+                    'inclusive' => true,
+                ],
+            ],
+        ]);
+
+        return [
+            'active_jobs' => $active_count,
+            'new_applications_month' => $apps_month->found_posts,
+            'new_employers_week' => $employers_week->found_posts,
+            'new_applicants_week' => $applicants_week->found_posts,
+        ];
+    }
+
+    /**
+     * Get recent platform activities
+     */
+    private function get_recent_activities(int $limit = 10): array
+    {
+        $activities = [];
+
+        // Get logged activities (employee added/deleted)
+        $logged_activities = get_option('careernest_recent_activity', []);
+        foreach ($logged_activities as $activity) {
+            // Fix legacy type names (migrate old data)
+            if (isset($activity['type'])) {
+                if ($activity['type'] === 'employee_added') {
+                    $activity['type'] = 'employees_added';
+                } elseif ($activity['type'] === 'employee_deleted') {
+                    $activity['type'] = 'employees_deleted';
+                }
+            }
+
+            // Add time formatting
+            $activity['time'] = human_time_diff($activity['timestamp'], current_time('timestamp')) . ' ago';
+            $activities[] = $activity;
+        }
+
+        // Get recent jobs
+        $recent_jobs = new \WP_Query([
+            'post_type' => 'job_listing',
+            'post_status' => 'publish',
+            'posts_per_page' => 3,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        ]);
+
+        if ($recent_jobs->have_posts()) {
+            foreach ($recent_jobs->posts as $job) {
+                $employer_id = get_post_meta($job->ID, '_employer_id', true);
+                $employer_name = $employer_id ? get_the_title($employer_id) : 'Unknown';
+
+                $activities[] = [
+                    'type' => 'jobs',
+                    'text' => '<strong>' . esc_html($employer_name) . '</strong> posted a new job: <strong>' . esc_html($job->post_title) . '</strong>',
+                    'time' => human_time_diff(strtotime($job->post_date), current_time('timestamp')) . ' ago',
+                    'icon' => 'dashicons-portfolio',
+                    'color' => '#0073aa',
+                    'timestamp' => strtotime($job->post_date),
+                ];
+            }
+        }
+
+        // Get recent applications
+        $recent_apps = new \WP_Query([
+            'post_type' => 'job_application',
+            'post_status' => 'publish',
+            'posts_per_page' => 3,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        ]);
+
+        if ($recent_apps->have_posts()) {
+            foreach ($recent_apps->posts as $app) {
+                $job_id = get_post_meta($app->ID, '_job_id', true);
+                $job_title = $job_id ? get_the_title($job_id) : 'Unknown Job';
+                $applicant_name = get_post_meta($app->ID, '_applicant_name', true) ?: 'Applicant';
+
+                $activities[] = [
+                    'type' => 'applications',
+                    'text' => '<strong>' . esc_html($applicant_name) . '</strong> applied for: <strong>' . esc_html($job_title) . '</strong>',
+                    'time' => human_time_diff(strtotime($app->post_date), current_time('timestamp')) . ' ago',
+                    'icon' => 'dashicons-clipboard',
+                    'color' => '#10B981',
+                    'timestamp' => strtotime($app->post_date),
+                ];
+            }
+        }
+
+        // Get recent employers
+        $recent_employers = new \WP_Query([
+            'post_type' => 'employer',
+            'post_status' => 'publish',
+            'posts_per_page' => 2,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        ]);
+
+        if ($recent_employers->have_posts()) {
+            foreach ($recent_employers->posts as $employer) {
+                $activities[] = [
+                    'type' => 'employers',
+                    'text' => 'New employer joined: <strong>' . esc_html($employer->post_title) . '</strong>',
+                    'time' => human_time_diff(strtotime($employer->post_date), current_time('timestamp')) . ' ago',
+                    'icon' => 'dashicons-store',
+                    'color' => '#f39c12',
+                    'timestamp' => strtotime($employer->post_date),
+                ];
+            }
+        }
+
+        // Sort by timestamp descending
+        usort($activities, function ($a, $b) {
+            return $b['timestamp'] - $a['timestamp'];
+        });
+
+        // Limit to requested number
+        return array_slice($activities, 0, $limit);
+    }
+
     public function render_settings_placeholder(): void
     {
         if (! current_user_can('manage_settings')) {
@@ -141,14 +539,21 @@ class Admin_Menus
         // Tabs
         echo '<h2 class="nav-tab-wrapper">';
         echo '<a href="?page=careernest-settings&tab=general" class="nav-tab ' . ($active_tab === 'general' ? 'nav-tab-active' : '') . '">' . esc_html__('General', 'careernest') . '</a>';
-        echo '<a href="?page=careernest-settings&tab=email-templates" class="nav-tab ' . ($active_tab === 'email-templates' ? 'nav-tab-active' : '') . '">' . esc_html__('Email Templates', 'careernest') . '</a>';
+        echo '<a href="?page=careernest-settings&tab=branding" class="nav-tab ' . ($active_tab === 'branding' ? 'nav-tab-active' : '') . '">' . esc_html__('Branding', 'careernest') . '</a>';
         echo '<a href="?page=careernest-settings&tab=appearance" class="nav-tab ' . ($active_tab === 'appearance' ? 'nav-tab-active' : '') . '">' . esc_html__('Appearance', 'careernest') . '</a>';
+        echo '<a href="?page=careernest-settings&tab=email-templates" class="nav-tab ' . ($active_tab === 'email-templates' ? 'nav-tab-active' : '') . '">' . esc_html__('Email Templates', 'careernest') . '</a>';
         echo '<a href="?page=careernest-settings&tab=employer-dashboard" class="nav-tab ' . ($active_tab === 'employer-dashboard' ? 'nav-tab-active' : '') . '">' . esc_html__('Employer Dashboard', 'careernest') . '</a>';
         echo '</h2>';
 
         echo '<form method="post" action="options.php">';
 
-        if ($active_tab === 'email-templates') {
+        if ($active_tab === 'branding') {
+            // Enqueue media scripts for logo upload
+            wp_enqueue_media();
+
+            settings_fields('careernest_branding_group');
+            do_settings_sections('careernest_branding');
+        } elseif ($active_tab === 'email-templates') {
             settings_fields('careernest_email_templates_group');
             do_settings_sections('careernest_email_templates');
         } elseif ($active_tab === 'employer-dashboard') {

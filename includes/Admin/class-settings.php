@@ -12,14 +12,48 @@ class Settings
     public function hooks(): void
     {
         add_action('admin_init', [$this, 'register_settings']);
+        add_filter('option_page_capability_careernest_options_group', [$this, 'set_custom_capability']);
+        add_filter('option_page_capability_careernest_email_templates_group', [$this, 'set_custom_capability']);
+        add_filter('option_page_capability_careernest_appearance_group', [$this, 'set_custom_capability']);
+        add_filter('option_page_capability_careernest_employer_dashboard_group', [$this, 'set_custom_capability']);
+        add_filter('option_page_capability_careernest_branding_group', [$this, 'set_custom_capability']);
+    }
+
+    /**
+     * Set custom capability for settings pages
+     */
+    public function set_custom_capability(string $capability): string
+    {
+        return 'manage_careernest';
     }
 
     public function register_settings(): void
     {
-        register_setting('careernest_options_group', 'careernest_options', [$this, 'sanitize_options']);
-        register_setting('careernest_email_templates_group', 'careernest_email_templates', [$this, 'sanitize_email_templates']);
-        register_setting('careernest_appearance_group', 'careernest_appearance', [$this, 'sanitize_appearance']);
-        register_setting('careernest_employer_dashboard_group', 'careernest_employer_dashboard', [$this, 'sanitize_employer_dashboard']);
+        // Register settings with custom capability (manage_careernest instead of default manage_options)
+        register_setting('careernest_options_group', 'careernest_options', [
+            'sanitize_callback' => [$this, 'sanitize_options'],
+            'capability' => 'manage_careernest',
+        ]);
+
+        register_setting('careernest_email_templates_group', 'careernest_email_templates', [
+            'sanitize_callback' => [$this, 'sanitize_email_templates'],
+            'capability' => 'manage_careernest',
+        ]);
+
+        register_setting('careernest_appearance_group', 'careernest_appearance', [
+            'sanitize_callback' => [$this, 'sanitize_appearance'],
+            'capability' => 'manage_careernest',
+        ]);
+
+        register_setting('careernest_employer_dashboard_group', 'careernest_employer_dashboard', [
+            'sanitize_callback' => [$this, 'sanitize_employer_dashboard'],
+            'capability' => 'manage_careernest',
+        ]);
+
+        register_setting('careernest_branding_group', 'careernest_branding', [
+            'sanitize_callback' => [$this, 'sanitize_branding'],
+            'capability' => 'manage_careernest',
+        ]);
 
         // General Section
         add_settings_section(
@@ -196,6 +230,66 @@ class Settings
             'careernest_appearance',
             'careernest_appearance_section',
             ['label_for' => 'careernest_container_width']
+        );
+
+        // Branding Settings Section
+        add_settings_section(
+            'careernest_branding_section',
+            __('White-Label Branding', 'careernest'),
+            function () {
+                echo '<p class="description">' . esc_html__('Customize platform branding to match your business identity. All settings apply site-wide.', 'careernest') . '</p>';
+            },
+            'careernest_branding'
+        );
+
+        // Platform Name
+        add_settings_field(
+            'platform_name',
+            __('Platform Name', 'careernest'),
+            [$this, 'render_text_field'],
+            'careernest_branding',
+            'careernest_branding_section',
+            ['option_group' => 'careernest_branding', 'option_key' => 'platform_name', 'default' => 'CareerNest', 'label_for' => 'platform_name', 'description' => 'Your platform name (e.g., "Blue Vineyard Careers"). This replaces "CareerNest" throughout the platform.', 'placeholder' => 'CareerNest']
+        );
+
+        // Platform Logo
+        add_settings_field(
+            'platform_logo',
+            __('Platform Logo', 'careernest'),
+            [$this, 'render_logo_field'],
+            'careernest_branding',
+            'careernest_branding_section',
+            ['label_for' => 'platform_logo']
+        );
+
+        // Email From Name
+        add_settings_field(
+            'email_from_name',
+            __('Email From Name', 'careernest'),
+            [$this, 'render_text_field'],
+            'careernest_branding',
+            'careernest_branding_section',
+            ['option_group' => 'careernest_branding', 'option_key' => 'email_from_name', 'default' => '', 'label_for' => 'email_from_name', 'description' => 'Name shown as sender in emails (e.g., "AES Team"). Leave empty to use "The [Platform Name] Team".', 'placeholder' => 'The CareerNest Team']
+        );
+
+        // Email From Address
+        add_settings_field(
+            'email_from_address',
+            __('Email From Address', 'careernest'),
+            [$this, 'render_text_field'],
+            'careernest_branding',
+            'careernest_branding_section',
+            ['option_group' => 'careernest_branding', 'option_key' => 'email_from_address', 'default' => '', 'label_for' => 'email_from_address', 'description' => 'Email address shown as sender (e.g., "no-reply@adventistemployment.org.au"). Leave empty to use WordPress admin email.', 'placeholder' => 'noreply@example.com', 'type' => 'email']
+        );
+
+        // Support Email
+        add_settings_field(
+            'support_email',
+            __('Support Email', 'careernest'),
+            [$this, 'render_text_field'],
+            'careernest_branding',
+            'careernest_branding_section',
+            ['option_group' => 'careernest_branding', 'option_key' => 'support_email', 'default' => '', 'label_for' => 'support_email', 'description' => 'Support contact email for users (used in email content). Leave empty to use WordPress admin email.', 'placeholder' => 'support@example.com', 'type' => 'email']
         );
 
         // Employer Dashboard Settings Section
@@ -495,7 +589,7 @@ class Settings
                 }
             });
         </script>
-<?php
+    <?php
     }
 
     public function render_filter_position_field(array $args): void
@@ -747,6 +841,158 @@ class Settings
         // Sanitize welcome message
         if (isset($input['welcome_message'])) {
             $sanitized['welcome_message'] = wp_kses_post($input['welcome_message']);
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Render generic text field
+     */
+    public function render_text_field(array $args): void
+    {
+        $option_group = $args['option_group'] ?? 'careernest_branding';
+        $opts = get_option($option_group, []);
+        $key = $args['option_key'];
+        $default = $args['default'] ?? '';
+        $description = $args['description'] ?? '';
+        $placeholder = $args['placeholder'] ?? '';
+        $type = $args['type'] ?? 'text';
+        $value = isset($opts[$key]) ? $opts[$key] : $default;
+
+        echo '<input type="' . esc_attr($type) . '" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($option_group) . '[' . esc_attr($key) . ']" value="' . esc_attr($value) . '" class="regular-text" placeholder="' . esc_attr($placeholder) . '" />';
+        if ($description) {
+            echo '<p class="description">' . esc_html($description) . '</p>';
+        }
+    }
+
+    /**
+     * Render logo upload field
+     */
+    public function render_logo_field(array $args): void
+    {
+        $opts = get_option('careernest_branding', []);
+        $logo_id = isset($opts['platform_logo']) ? (int) $opts['platform_logo'] : 0;
+        $logo_url = $logo_id ? wp_get_attachment_image_url($logo_id, 'medium') : '';
+
+        echo '<div class="cn-logo-upload-wrapper">';
+
+        // Preview
+        echo '<div class="cn-logo-preview" style="margin-bottom: 1rem;">';
+        if ($logo_url) {
+            echo '<img src="' . esc_url($logo_url) . '" alt="' . esc_attr__('Platform Logo', 'careernest') . '" style="max-width: 200px; max-height: 100px; display: block; border: 1px solid #ddd; padding: 10px; background: white;" />';
+        } else {
+            echo '<div style="padding: 2rem; border: 2px dashed #ddd; text-align: center; color: #999; max-width: 200px;">' . esc_html__('No logo uploaded', 'careernest') . '</div>';
+        }
+        echo '</div>';
+
+        // Hidden input for logo ID
+        echo '<input type="hidden" id="platform_logo" name="careernest_branding[platform_logo]" value="' . esc_attr($logo_id) . '" />';
+
+        // Buttons
+        echo '<button type="button" class="button cn-upload-logo-btn">' . esc_html__('Upload Logo', 'careernest') . '</button>';
+        if ($logo_url) {
+            echo ' <button type="button" class="button cn-remove-logo-btn">' . esc_html__('Remove Logo', 'careernest') . '</button>';
+        }
+
+        echo '<p class="description">' . esc_html__('Recommended size: 200x100px or similar aspect ratio. Used in emails and dashboards.', 'careernest') . '</p>';
+        echo '</div>';
+
+        // Add media uploader script
+    ?>
+        <script>
+            jQuery(document).ready(function($) {
+                var mediaUploader;
+
+                $('.cn-upload-logo-btn').on('click', function(e) {
+                    e.preventDefault();
+
+                    if (mediaUploader) {
+                        mediaUploader.open();
+                        return;
+                    }
+
+                    mediaUploader = wp.media({
+                        title: '<?php echo esc_js(__('Choose Platform Logo', 'careernest')); ?>',
+                        button: {
+                            text: '<?php echo esc_js(__('Use this logo', 'careernest')); ?>'
+                        },
+                        multiple: false,
+                        library: {
+                            type: 'image'
+                        }
+                    });
+
+                    mediaUploader.on('select', function() {
+                        var attachment = mediaUploader.state().get('selection').first().toJSON();
+                        $('#platform_logo').val(attachment.id);
+                        $('.cn-logo-preview').html('<img src="' + attachment.url +
+                            '" style="max-width: 200px; max-height: 100px; display: block; border: 1px solid #ddd; padding: 10px; background: white;" />'
+                        );
+
+                        // Add remove button if not present
+                        if (!$('.cn-remove-logo-btn').length) {
+                            $('.cn-upload-logo-btn').after(
+                                ' <button type="button" class="button cn-remove-logo-btn"><?php echo esc_js(__('Remove Logo', 'careernest')); ?></button>'
+                            );
+                        }
+                    });
+
+                    mediaUploader.open();
+                });
+
+                $(document).on('click', '.cn-remove-logo-btn', function(e) {
+                    e.preventDefault();
+                    $('#platform_logo').val('');
+                    $('.cn-logo-preview').html(
+                        '<div style="padding: 2rem; border: 2px dashed #ddd; text-align: center; color: #999; max-width: 200px;"><?php echo esc_js(__('No logo uploaded', 'careernest')); ?></div>'
+                    );
+                    $(this).remove();
+                });
+            });
+        </script>
+<?php
+    }
+
+    /**
+     * Sanitize branding settings
+     */
+    public function sanitize_branding($input)
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        $sanitized = [];
+
+        // Platform name
+        if (isset($input['platform_name'])) {
+            $sanitized['platform_name'] = sanitize_text_field($input['platform_name']);
+            if (empty($sanitized['platform_name'])) {
+                $sanitized['platform_name'] = 'CareerNest';
+            }
+        }
+
+        // Platform logo (attachment ID)
+        if (isset($input['platform_logo'])) {
+            $sanitized['platform_logo'] = (int) $input['platform_logo'];
+        }
+
+        // Email from name
+        if (isset($input['email_from_name'])) {
+            $sanitized['email_from_name'] = sanitize_text_field($input['email_from_name']);
+        }
+
+        // Email from address
+        if (isset($input['email_from_address'])) {
+            $email = sanitize_email($input['email_from_address']);
+            $sanitized['email_from_address'] = is_email($email) ? $email : '';
+        }
+
+        // Support email
+        if (isset($input['support_email'])) {
+            $email = sanitize_email($input['support_email']);
+            $sanitized['support_email'] = is_email($email) ? $email : '';
         }
 
         return $sanitized;

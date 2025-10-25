@@ -38,7 +38,7 @@ class Employee_Requests
     public function render_requests_page(): void
     {
         // Check user capabilities
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('manage_careernest')) {
             wp_die(__('You do not have sufficient permissions to access this page.'));
         }
 
@@ -228,7 +228,7 @@ class Employee_Requests
         }
 
         // Check capabilities
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('manage_careernest')) {
             wp_die(__('You do not have permission to perform this action.', 'careernest'));
         }
 
@@ -293,7 +293,10 @@ class Employee_Requests
         delete_user_meta($user_id, '_request_date');
 
         // Send welcome email with credentials
-        $subject = 'CareerNest - Employee Account Approved!';
+        $platform_name = cn_get_platform_name();
+        $from_name = cn_get_email_from_name();
+
+        $subject = $platform_name . ' - Employee Account Approved!';
         $message = "Hi {$full_name},\n\n";
         $message .= "Great news! Your employee account request has been approved.\n\n";
         $message .= "Your Login Credentials:\n";
@@ -312,9 +315,17 @@ class Employee_Requests
         }
 
         $message .= "We recommend changing your password after your first login.\n\n";
-        $message .= "Welcome to CareerNest!\nThe CareerNest Team";
+        $message .= "Welcome to {$platform_name}!\n{$from_name}";
 
         wp_mail($email, $subject, $message);
+
+        // Log activity
+        $this->log_activity([
+            'type' => 'employees_added',
+            'text' => '<strong>' . esc_html($full_name) . '</strong> added to <strong>' . esc_html($employer_name) . '</strong>',
+            'icon' => 'dashicons-admin-users',
+            'color' => '#10B981',
+        ]);
 
         // Redirect back with success message
         wp_redirect(add_query_arg([
@@ -338,7 +349,7 @@ class Employee_Requests
         }
 
         // Check capabilities
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('manage_careernest')) {
             wp_die(__('You do not have permission to perform this action.', 'careernest'));
         }
 
@@ -358,9 +369,12 @@ class Employee_Requests
         wp_delete_user($user_id);
 
         // Send decline email
-        $subject = 'CareerNest - Employee Account Request Update';
+        $platform_name = cn_get_platform_name();
+        $from_name = cn_get_email_from_name();
+
+        $subject = $platform_name . ' - Employee Account Request Update';
         $message = "Hi {$full_name},\n\n";
-        $message .= "Thank you for your interest in CareerNest.\n\n";
+        $message .= "Thank you for your interest in {$platform_name}.\n\n";
         $message .= "After reviewing your employee account request to join {$employer_name}, we are unable to approve it at this time.\n\n";
 
         if ($decline_reason) {
@@ -368,7 +382,7 @@ class Employee_Requests
         }
 
         $message .= "If you have any questions or would like to discuss this further, please feel free to contact us.\n\n";
-        $message .= "Thank you,\nThe CareerNest Team";
+        $message .= "Thank you,\n{$from_name}";
 
         wp_mail($email, $subject, $message);
 
@@ -378,5 +392,24 @@ class Employee_Requests
             'message' => 'declined'
         ], admin_url('admin.php')));
         exit;
+    }
+
+    /**
+     * Log activity to recent activity feed
+     */
+    private function log_activity(array $activity): void
+    {
+        $activities = get_option('careernest_recent_activity', []);
+
+        // Add timestamp
+        $activity['timestamp'] = current_time('timestamp');
+
+        // Prepend new activity
+        array_unshift($activities, $activity);
+
+        // Keep only last 50 activities
+        $activities = array_slice($activities, 0, 50);
+
+        update_option('careernest_recent_activity', $activities);
     }
 }

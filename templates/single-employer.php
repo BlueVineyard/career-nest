@@ -26,6 +26,17 @@ $employer_logo = get_the_post_thumbnail_url($employer_id, 'medium');
 // Get company name
 $company_name = get_the_title($employer_id);
 $company_initial = substr($company_name, 0, 1);
+
+// Check if current user is owner
+$is_owner = false;
+if (is_user_logged_in()) {
+    $current_user = wp_get_current_user();
+    $user_employer_id = (int) get_user_meta($current_user->ID, '_employer_id', true);
+    $owner_id = (int) get_post_meta($employer_id, '_user_id', true);
+
+    // User is owner if they're linked to this employer AND designated as owner
+    $is_owner = ($user_employer_id === $employer_id && $owner_id === $current_user->ID);
+}
 ?>
 
 <main id="primary" class="site-main">
@@ -46,10 +57,29 @@ $company_initial = substr($company_name, 0, 1);
                 </div>
                 <div class="cn-company-info">
                     <div class="cn-company-header">
-                        <h2 class="cn-company-name">
-                            <span
-                                class="cn-company-initial"><?php echo esc_html($company_initial); ?></span><?php echo esc_html(substr($company_name, 1)); ?>
-                        </h2>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: start; width: 100%; gap: 1rem;">
+                            <h2 class="cn-company-name">
+                                <span
+                                    class="cn-company-initial"><?php echo esc_html($company_initial); ?></span><?php echo esc_html(substr($company_name, 1)); ?>
+                            </h2>
+                            <?php if ($is_owner): ?>
+                                <a href="<?php echo esc_url(add_query_arg(['action' => 'edit-profile', 'employer_id' => $employer_id], get_permalink($employer_id))); ?>"
+                                    class="cn-owner-edit-btn"
+                                    title="<?php echo esc_attr__('Edit Company Profile', 'careernest'); ?>">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                    <?php echo esc_html__('Edit', 'careernest'); ?>
+                                </a>
+                            <?php endif; ?>
+                        </div>
                         <div class="cn-company-meta">
                             <?php if ($tagline): ?>
                                 <div class="cn-tagline">
@@ -64,12 +94,6 @@ $company_initial = substr($company_name, 0, 1);
                                 </div>
                             <?php endif; ?>
                         </div>
-                    </div>
-                    <div class="cn-edit-button">
-                        <?php if (current_user_can('edit_post', $employer_id)): ?>
-                            <a class="cn-edit-link" href="<?php echo esc_url(get_edit_post_link($employer_id)); ?>">Edit
-                                Company</a>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -510,6 +534,33 @@ $company_initial = substr($company_name, 0, 1);
     .cn-edit-link:hover {
         background: #005a87;
         color: white;
+    }
+
+    /* Owner Edit Button */
+    .cn-owner-edit-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: #0073aa;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .cn-owner-edit-btn:hover {
+        background: #005a87;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .cn-owner-edit-btn svg {
+        width: 20px;
+        height: 20px;
     }
 
     /* Body Section */

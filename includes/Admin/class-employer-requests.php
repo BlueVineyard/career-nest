@@ -39,7 +39,7 @@ class Employer_Requests
     public function render_requests_page(): void
     {
         // Check user capabilities
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('manage_careernest')) {
             wp_die(__('You do not have sufficient permissions to access this page.'));
         }
 
@@ -323,7 +323,7 @@ class Employer_Requests
         }
 
         // Check capabilities
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('manage_careernest')) {
             wp_die(__('You do not have permission to perform this action.', 'careernest'));
         }
 
@@ -407,7 +407,7 @@ class Employer_Requests
         }
 
         // Check capabilities
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('manage_careernest')) {
             wp_die(__('You do not have permission to perform this action.', 'careernest'));
         }
 
@@ -458,7 +458,7 @@ class Employer_Requests
         }
 
         // Check capabilities
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('manage_careernest')) {
             wp_die(__('You do not have permission to perform this action.', 'careernest'));
         }
 

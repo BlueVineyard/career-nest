@@ -22,6 +22,7 @@ define('CAREERNEST_DIR', plugin_dir_path(__FILE__));
 define('CAREERNEST_URL', plugin_dir_url(__FILE__));
 
 // Includes.
+require_once CAREERNEST_DIR . 'includes/branding-helpers.php';
 require_once CAREERNEST_DIR . 'includes/class-activator.php';
 require_once CAREERNEST_DIR . 'includes/class-deactivator.php';
 require_once CAREERNEST_DIR . 'includes/class-plugin.php';
@@ -39,6 +40,7 @@ require_once CAREERNEST_DIR . 'includes/Security/class-caps.php';
 require_once CAREERNEST_DIR . 'includes/Shortcodes/class-login.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employer-requests.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employee-requests.php';
+require_once CAREERNEST_DIR . 'includes/Admin/class-deletion-requests.php';
 require_once CAREERNEST_DIR . 'includes/Email/class-mailer.php';
 require_once CAREERNEST_DIR . 'includes/Email/class-templates.php';
 require_once CAREERNEST_DIR . 'includes/class-job-ajax-handler.php';

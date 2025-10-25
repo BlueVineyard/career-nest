@@ -85,6 +85,10 @@ $applications_query = new WP_Query([
     'order' => 'DESC'
 ]);
 
+// Enqueue custom dropdown assets
+wp_enqueue_style('careernest-custom-dropdown', CAREERNEST_URL . 'assets/css/custom-dropdown.css', [], CAREERNEST_VERSION);
+wp_enqueue_script('careernest-custom-dropdown', CAREERNEST_URL . 'assets/js/custom-dropdown.js', ['jquery'], CAREERNEST_VERSION, true);
+
 get_header();
 ?>
 
@@ -115,34 +119,38 @@ get_header();
 
                 <div class="cn-filter-group">
                     <label for="filter_job"><?php echo esc_html__('Job', 'careernest'); ?></label>
-                    <select id="filter_job" name="filter_job" class="cn-input">
-                        <option value="0"><?php echo esc_html__('All Jobs', 'careernest'); ?></option>
-                        <?php foreach ($employer_jobs as $job): ?>
-                            <option value="<?php echo esc_attr($job->ID); ?>" <?php selected($filter_job, $job->ID); ?>>
-                                <?php echo esc_html($job->post_title); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <div class="cn-custom-select-wrapper" data-icon="briefcase">
+                        <select id="filter_job" name="filter_job" class="cn-input cn-custom-select">
+                            <option value="0"><?php echo esc_html__('All Jobs', 'careernest'); ?></option>
+                            <?php foreach ($employer_jobs as $job): ?>
+                                <option value="<?php echo esc_attr($job->ID); ?>" <?php selected($filter_job, $job->ID); ?>>
+                                    <?php echo esc_html($job->post_title); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="cn-filter-group">
                     <label for="filter_status"><?php echo esc_html__('Status', 'careernest'); ?></label>
-                    <select id="filter_status" name="filter_status" class="cn-input">
-                        <option value="all" <?php selected($filter_status, 'all'); ?>>
-                            <?php echo esc_html__('All Statuses', 'careernest'); ?></option>
-                        <option value="new" <?php selected($filter_status, 'new'); ?>>
-                            <?php echo esc_html__('New', 'careernest'); ?></option>
-                        <option value="reviewed" <?php selected($filter_status, 'reviewed'); ?>>
-                            <?php echo esc_html__('Reviewed', 'careernest'); ?></option>
-                        <option value="interviewed" <?php selected($filter_status, 'interviewed'); ?>>
-                            <?php echo esc_html__('Interviewed', 'careernest'); ?></option>
-                        <option value="offer_extended" <?php selected($filter_status, 'offer_extended'); ?>>
-                            <?php echo esc_html__('Offer Extended', 'careernest'); ?></option>
-                        <option value="hired" <?php selected($filter_status, 'hired'); ?>>
-                            <?php echo esc_html__('Hired', 'careernest'); ?></option>
-                        <option value="rejected" <?php selected($filter_status, 'rejected'); ?>>
-                            <?php echo esc_html__('Rejected', 'careernest'); ?></option>
-                    </select>
+                    <div class="cn-custom-select-wrapper" data-icon="filter">
+                        <select id="filter_status" name="filter_status" class="cn-input cn-custom-select">
+                            <option value="all" <?php selected($filter_status, 'all'); ?>>
+                                <?php echo esc_html__('All Statuses', 'careernest'); ?></option>
+                            <option value="new" <?php selected($filter_status, 'new'); ?>>
+                                <?php echo esc_html__('New', 'careernest'); ?></option>
+                            <option value="reviewed" <?php selected($filter_status, 'reviewed'); ?>>
+                                <?php echo esc_html__('Reviewed', 'careernest'); ?></option>
+                            <option value="interviewed" <?php selected($filter_status, 'interviewed'); ?>>
+                                <?php echo esc_html__('Interviewed', 'careernest'); ?></option>
+                            <option value="offer_extended" <?php selected($filter_status, 'offer_extended'); ?>>
+                                <?php echo esc_html__('Offer Extended', 'careernest'); ?></option>
+                            <option value="hired" <?php selected($filter_status, 'hired'); ?>>
+                                <?php echo esc_html__('Hired', 'careernest'); ?></option>
+                            <option value="rejected" <?php selected($filter_status, 'rejected'); ?>>
+                                <?php echo esc_html__('Rejected', 'careernest'); ?></option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="cn-filter-actions">
@@ -297,15 +305,18 @@ get_header();
                     <input type="hidden" id="status-app-id" name="app_id" value="">
                     <div class="cn-form-field">
                         <label for="new-status"><?php echo esc_html__('New Status', 'careernest'); ?></label>
-                        <select id="new-status" name="new_status" class="cn-input" required>
-                            <option value="new"><?php echo esc_html__('New', 'careernest'); ?></option>
-                            <option value="reviewed"><?php echo esc_html__('Reviewed', 'careernest'); ?></option>
-                            <option value="interviewed"><?php echo esc_html__('Interviewed', 'careernest'); ?></option>
-                            <option value="offer_extended"><?php echo esc_html__('Offer Extended', 'careernest'); ?>
-                            </option>
-                            <option value="hired"><?php echo esc_html__('Hired', 'careernest'); ?></option>
-                            <option value="rejected"><?php echo esc_html__('Rejected', 'careernest'); ?></option>
-                        </select>
+                        <div class="cn-custom-select-wrapper" data-icon="check">
+                            <select id="new-status" name="new_status" class="cn-input cn-custom-select" required>
+                                <option value="new"><?php echo esc_html__('New', 'careernest'); ?></option>
+                                <option value="reviewed"><?php echo esc_html__('Reviewed', 'careernest'); ?></option>
+                                <option value="interviewed"><?php echo esc_html__('Interviewed', 'careernest'); ?>
+                                </option>
+                                <option value="offer_extended"><?php echo esc_html__('Offer Extended', 'careernest'); ?>
+                                </option>
+                                <option value="hired"><?php echo esc_html__('Hired', 'careernest'); ?></option>
+                                <option value="rejected"><?php echo esc_html__('Rejected', 'careernest'); ?></option>
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>

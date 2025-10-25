@@ -54,6 +54,61 @@ $team_members = get_users([
 $owner_id = (int) get_post_meta($employer_id, '_user_id', true);
 $is_owner = ($owner_id === $current_user->ID);
 
+// Handle team member deletion request (owner only)
+$deletion_success = '';
+$deletion_error = '';
+
+if ($is_owner && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cn_delete_team_member_nonce'])) {
+    if (wp_verify_nonce($_POST['cn_delete_team_member_nonce'], 'cn_delete_team_member')) {
+        $member_id_to_delete = isset($_POST['member_id']) ? (int) $_POST['member_id'] : 0;
+
+        if (!$member_id_to_delete) {
+            $deletion_error = 'Invalid team member.';
+        } elseif ($member_id_to_delete === $owner_id) {
+            $deletion_error = 'You cannot request deletion of the owner account.';
+        } else {
+            $member_to_delete = get_user_by('id', $member_id_to_delete);
+            $member_employer_id = (int) get_user_meta($member_id_to_delete, '_employer_id', true);
+
+            if (!$member_to_delete || $member_employer_id !== $employer_id) {
+                $deletion_error = 'Invalid team member or not part of your team.';
+            } else {
+                // Store deletion request in user meta
+                update_user_meta($member_id_to_delete, '_pending_deletion_request', true);
+                update_user_meta($member_id_to_delete, '_deletion_requested_by', $current_user->ID);
+                update_user_meta($member_id_to_delete, '_deletion_request_date', current_time('mysql'));
+                update_user_meta($member_id_to_delete, '_deletion_employer_id', $employer_id);
+
+                // Send notification email to admin
+                $admin_email = get_option('admin_email');
+                $subject = 'Team Member Removal Request - ' . $company_name;
+
+                $message = '<h2>Team Member Removal Request</h2>';
+                $message .= '<p>A company owner has requested to remove a team member:</p>';
+                $message .= '<hr>';
+                $message .= '<p><strong>Company:</strong> ' . esc_html($company_name) . '</p>';
+                $message .= '<p><strong>Requested by:</strong> ' . esc_html($current_user->display_name) . ' (' . esc_html($current_user->user_email) . ')</p>';
+                $message .= '<hr>';
+                $message .= '<h3>Team Member to Remove:</h3>';
+                $message .= '<p><strong>Name:</strong> ' . esc_html($member_to_delete->display_name) . '</p>';
+                $message .= '<p><strong>Email:</strong> ' . esc_html($member_to_delete->user_email) . '</p>';
+                $message .= '<p><strong>User ID:</strong> ' . esc_html($member_id_to_delete) . '</p>';
+                $message .= '<hr>';
+                $platform_name = cn_get_platform_name();
+                $message .= '<p><strong>This request is now in your Deletion Requests queue on ' . esc_html($platform_name) . '.</strong></p>';
+                $message .= '<p><a href="' . esc_url(admin_url('admin.php?page=deletion-requests')) . '" style="display:inline-block; padding:10px 20px; background:#0073aa; color:white; text-decoration:none; border-radius:4px;">Review Request</a></p>';
+
+                $headers = array('Content-Type: text/html; charset=UTF-8');
+                wp_mail($admin_email, $subject, $message, $headers);
+
+                $deletion_success = 'Removal request submitted successfully! Your administrator has been notified.';
+            }
+        }
+    } else {
+        $deletion_error = 'Security check failed. Please try again.';
+    }
+}
+
 // Handle team member invitation (owner only)
 $invitation_success = '';
 $invitation_error = '';
@@ -105,7 +160,8 @@ if ($is_owner && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cn_invit
                     $message .= '<p><strong>Job Title:</strong> ' . esc_html($invite_job_title) . '</p>';
                 }
                 $message .= '<hr>';
-                $message .= '<p><strong>This request is now in your Employee Requests queue.</strong></p>';
+                $platform_name = cn_get_platform_name();
+                $message .= '<p><strong>This request is now in your Employee Requests queue on ' . esc_html($platform_name) . '.</strong></p>';
                 $message .= '<p><a href="' . esc_url(admin_url('admin.php?page=employee-requests')) . '" style="display:inline-block; padding:10px 20px; background:#0073aa; color:white; text-decoration:none; border-radius:4px;">Review Request</a></p>';
 
                 $headers = array('Content-Type: text/html; charset=UTF-8');
@@ -150,6 +206,23 @@ $dashboard_url = $dashboard_id ? get_permalink($dashboard_id) : home_url();
                 </div>
             </div>
         </div>
+
+        <!-- Deletion Messages (Owner Only) -->
+        <?php if ($is_owner): ?>
+            <?php if ($deletion_success): ?>
+                <div
+                    style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem; color: #155724;">
+                    <?php echo esc_html($deletion_success); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($deletion_error): ?>
+                <div
+                    style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem; color: #721c24;">
+                    <?php echo esc_html($deletion_error); ?>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
 
         <!-- Invite Team Member (Owner Only) -->
         <?php if ($is_owner): ?>
@@ -221,10 +294,28 @@ $dashboard_url = $dashboard_id ? get_permalink($dashboard_id) : home_url();
             </div>
         <?php endif; ?>
 
+        <!-- Search Team Members -->
+        <div
+            style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="flex: 1; position: relative;">
+                    <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #4a5568; pointer-events: none;"
+                        width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M17.5 17.5L13.875 13.875M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <input type="text" id="team-search"
+                        placeholder="<?php echo esc_attr__('Search team members...', 'careernest'); ?>"
+                        style="width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                </div>
+            </div>
+        </div>
+
         <!-- Team Members List -->
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 2rem;">
             <h2 style="margin: 0 0 1.5rem 0; color: #333; font-size: 1.5rem;">
-                <?php echo esc_html(count($team_members)); ?>
+                <span id="team-count"><?php echo esc_html(count($team_members)); ?></span>
                 <?php echo esc_html(count($team_members) === 1 ? 'Team Member' : 'Team Members'); ?>
             </h2>
 
@@ -238,9 +329,24 @@ $dashboard_url = $dashboard_id ? get_permalink($dashboard_id) : home_url();
                         $member_bio = get_user_meta($member->ID, '_bio', true);
                         ?>
                         <div class="cn-team-member-card-view"
-                            style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; <?php echo $member_is_owner ? 'background: #f0f9ff; border-color: #0073aa;' : ''; ?>">
+                            style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; position: relative; <?php echo $member_is_owner ? 'background: #f0f9ff; border-color: #0073aa;' : ''; ?>">
+
+                            <?php if ($is_owner && !$member_is_owner): ?>
+                                <button type="button" class="cn-delete-member-btn"
+                                    data-member-id="<?php echo esc_attr($member->ID); ?>"
+                                    data-member-name="<?php echo esc_attr($member->display_name); ?>"
+                                    title="<?php echo esc_attr__('Request Removal', 'careernest'); ?>"
+                                    style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; padding: 0.5rem; cursor: pointer; color: #dc3545; border-radius: 4px; transition: all 0.2s ease;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </button>
+                            <?php endif; ?>
+
                             <div
-                                style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; <?php echo ($is_owner && !$member_is_owner) ? 'padding-right: 2.5rem;' : ''; ?>">
                                 <div>
                                     <h3 style="margin: 0 0 0.25rem 0; color: #333; font-size: 1.2rem;">
                                         <?php echo esc_html($member->display_name); ?>
@@ -306,6 +412,83 @@ $dashboard_url = $dashboard_id ? get_permalink($dashboard_id) : home_url();
         </div>
     </div>
 </main>
+
+<style>
+    .cn-delete-member-btn:hover {
+        background: #fee !important;
+        transform: scale(1.1);
+    }
+</style>
+
+<script>
+    // Real-time team search
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('team-search');
+        const teamCards = document.querySelectorAll('.cn-team-member-card-view');
+        const teamCount = document.getElementById('team-count');
+
+        if (searchInput && teamCards.length > 0) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                teamCards.forEach(card => {
+                    const name = card.querySelector('h3').textContent.toLowerCase();
+                    const email = card.querySelector('a[href^="mailto:"]').textContent
+                        .toLowerCase();
+                    const jobTitle = card.querySelector('p[style*="color: #0073aa"]');
+                    const jobTitleText = jobTitle ? jobTitle.textContent.toLowerCase() : '';
+
+                    if (name.includes(searchTerm) || email.includes(searchTerm) || jobTitleText
+                        .includes(searchTerm)) {
+                        card.style.display = '';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Update count
+                teamCount.textContent = visibleCount;
+            });
+        }
+
+        // Handle delete member button clicks
+        const deleteButtons = document.querySelectorAll('.cn-delete-member-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const memberId = this.dataset.memberId;
+                const memberName = this.dataset.memberName;
+
+                if (confirm('Are you sure you want to request the removal of ' + memberName +
+                        ' from your team?\n\nThis will send a request to your administrator for review.'
+                    )) {
+                    // Create and submit form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.style.display = 'none';
+
+                    // Add nonce field
+                    const nonceField = document.createElement('input');
+                    nonceField.type = 'hidden';
+                    nonceField.name = 'cn_delete_team_member_nonce';
+                    nonceField.value = '<?php echo wp_create_nonce('cn_delete_team_member'); ?>';
+                    form.appendChild(nonceField);
+
+                    // Add member ID field
+                    const memberIdField = document.createElement('input');
+                    memberIdField.type = 'hidden';
+                    memberIdField.name = 'member_id';
+                    memberIdField.value = memberId;
+                    form.appendChild(memberIdField);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
 
 <?php
 get_footer();

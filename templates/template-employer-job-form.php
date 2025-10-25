@@ -91,6 +91,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cn_job_nonce'])) {
             }
 
             if (!is_wp_error($result)) {
+                // Save taxonomies
+                if (isset($_POST['job_category']) && !empty($_POST['job_category'])) {
+                    $category_id = absint($_POST['job_category']);
+                    wp_set_post_terms($job_id, [$category_id], 'job_category');
+                }
+
+                if (isset($_POST['job_type']) && !empty($_POST['job_type'])) {
+                    $type_id = absint($_POST['job_type']);
+                    wp_set_post_terms($job_id, [$type_id], 'job_type');
+                }
+
                 // Save meta
                 update_post_meta($job_id, '_job_location', sanitize_text_field($_POST['job_location'] ?? ''));
                 update_post_meta($job_id, '_remote_position', !empty($_POST['remote_position']) ? 1 : 0);
@@ -128,6 +139,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cn_job_nonce'])) {
     }
 }
 
+// Enqueue custom dropdown assets
+wp_enqueue_style('careernest-custom-dropdown', CAREERNEST_URL . 'assets/css/custom-dropdown.css', [], CAREERNEST_VERSION);
+wp_enqueue_script('careernest-custom-dropdown', CAREERNEST_URL . 'assets/js/custom-dropdown.js', ['jquery'], CAREERNEST_VERSION, true);
+
 get_header();
 ?>
 
@@ -161,38 +176,194 @@ get_header();
 
                     <div class="cn-form-field">
                         <label for="job_title">Job Title <span class="required">*</span></label>
-                        <input type="text" id="job_title" name="job_title" class="cn-input" required
-                            value="<?php echo esc_attr($job_data['title'] ?? ''); ?>"
-                            placeholder="e.g., Senior Software Engineer">
+                        <div class="cn-input-with-icon">
+                            <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <polygon points="18,2 22,6 12,16 8,16 8,12 18,2" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <input type="text" id="job_title" name="job_title" class="cn-input cn-input-with-icon-field"
+                                required value="<?php echo esc_attr($job_data['title'] ?? ''); ?>"
+                                placeholder="e.g., Senior Software Engineer">
+                        </div>
                     </div>
 
                     <div class="cn-form-row">
                         <div class="cn-form-field">
-                            <label for="job_location">Location</label>
-                            <input type="text" id="job_location" name="job_location" class="cn-input"
-                                value="<?php echo esc_attr($job_data['location'] ?? ''); ?>"
-                                placeholder="e.g., Melbourne, VIC">
+                            <label for="job_category">Job Category <span class="required">*</span></label>
+                            <div class="cn-custom-select-wrapper" data-icon="folder">
+                                <select name="job_category" id="job_category" class="cn-filter-select cn-custom-select"
+                                    required>
+                                    <option value="">Select Category...</option>
+                                    <?php
+                                    $selected_category = 0;
+                                    if ($is_edit) {
+                                        $terms = get_the_terms($job_id, 'job_category');
+                                        if ($terms && !is_wp_error($terms)) {
+                                            $selected_category = $terms[0]->term_id;
+                                        }
+                                    }
+                                    $categories = get_terms(['taxonomy' => 'job_category', 'hide_empty' => false]);
+                                    if ($categories && !is_wp_error($categories)):
+                                        foreach ($categories as $category):
+                                    ?>
+                                            <option value="<?php echo esc_attr($category->term_id); ?>"
+                                                <?php selected($selected_category, $category->term_id); ?>>
+                                                <?php echo esc_html($category->name); ?>
+                                            </option>
+                                    <?php
+                                        endforeach;
+                                    endif;
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="cn-form-field">
+                            <label for="job_type">Job Type <span class="required">*</span></label>
+                            <div class="cn-custom-select-wrapper" data-icon="layers">
+                                <select name="job_type" id="job_type" class="cn-filter-select cn-custom-select"
+                                    required>
+                                    <option value="">Select Type...</option>
+                                    <?php
+                                    $selected_type = 0;
+                                    if ($is_edit) {
+                                        $terms = get_the_terms($job_id, 'job_type');
+                                        if ($terms && !is_wp_error($terms)) {
+                                            $selected_type = $terms[0]->term_id;
+                                        }
+                                    }
+                                    $job_types = get_terms(['taxonomy' => 'job_type', 'hide_empty' => false]);
+                                    if ($job_types && !is_wp_error($job_types)):
+                                        foreach ($job_types as $type):
+                                    ?>
+                                            <option value="<?php echo esc_attr($type->term_id); ?>"
+                                                <?php selected($selected_type, $type->term_id); ?>>
+                                                <?php echo esc_html($type->name); ?>
+                                            </option>
+                                    <?php
+                                        endforeach;
+                                    endif;
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cn-form-row">
+                        <div class="cn-form-field">
+                            <label for="job_location">Location <span class="required">*</span></label>
+                            <div class="cn-input-with-icon">
+                                <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 20 21" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M3.33337 8.95258C3.33337 5.20473 6.31814 2.1665 10 2.1665C13.6819 2.1665 16.6667 5.20473 16.6667 8.95258C16.6667 12.6711 14.5389 17.0102 11.2192 18.5619C10.4453 18.9236 9.55483 18.9236 8.78093 18.5619C5.46114 17.0102 3.33337 12.6711 3.33337 8.95258Z"
+                                        stroke="currentColor" stroke-width="1.5" />
+                                    <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor"
+                                        stroke-width="1.5" />
+                                </svg>
+                                <input type="text" id="job_location" name="job_location"
+                                    class="cn-input cn-input-with-icon-field" required
+                                    value="<?php echo esc_attr($job_data['location'] ?? ''); ?>"
+                                    placeholder="e.g., Melbourne, VIC">
+                            </div>
                         </div>
                         <div class="cn-form-field">
                             <label for="salary_range">Salary Range</label>
-                            <input type="text" id="salary_range" name="salary_range" class="cn-input"
-                                value="<?php echo esc_attr($job_data['salary_range'] ?? ''); ?>"
-                                placeholder="e.g., $80,000 - $120,000 per year">
+                            <div class="cn-input-with-icon">
+                                <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 20 21" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="10" cy="10.5" r="8.33333" stroke="currentColor" stroke-width="1.5" />
+                                    <path d="M10 5.5V15.5" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                    <path
+                                        d="M12.5 8.41683C12.5 7.26624 11.3807 6.3335 10 6.3335C8.61929 6.3335 7.5 7.26624 7.5 8.41683C7.5 9.56742 8.61929 10.5002 10 10.5002C11.3807 10.5002 12.5 11.4329 12.5 12.5835C12.5 13.7341 11.3807 14.6668 10 14.6668C8.61929 14.6668 7.5 13.7341 7.5 12.5835"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                </svg>
+                                <input type="text" id="salary_range" name="salary_range"
+                                    class="cn-input cn-input-with-icon-field"
+                                    value="<?php echo esc_attr($job_data['salary_range'] ?? ''); ?>"
+                                    placeholder="e.g., $80,000 - $120,000 per year">
+                            </div>
                         </div>
                     </div>
 
                     <div class="cn-form-row">
                         <div class="cn-form-field">
-                            <label for="opening_date">Opening Date</label>
-                            <input type="date" id="opening_date" name="opening_date" class="cn-input"
+                            <label for="opening_date">Opening Date <span class="required">*</span></label>
+                            <input type="date" id="opening_date" name="opening_date" class="cn-input" required
+                                min="<?php echo esc_attr(date('Y-m-d')); ?>"
                                 value="<?php echo esc_attr($job_data['opening_date'] ?? ''); ?>">
                         </div>
                         <div class="cn-form-field">
-                            <label for="closing_date">Application Close Date</label>
-                            <input type="date" id="closing_date" name="closing_date" class="cn-input"
+                            <label for="closing_date">Application Close Date <span class="required">*</span></label>
+                            <input type="date" id="closing_date" name="closing_date" class="cn-input" required
+                                min="<?php echo esc_attr(!empty($job_data['opening_date']) ? $job_data['opening_date'] : date('Y-m-d')); ?>"
                                 value="<?php echo esc_attr($job_data['closing_date'] ?? ''); ?>">
                         </div>
                     </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            // Update closing date min when opening date changes
+                            const openingDate = document.getElementById('opening_date');
+                            const closingDate = document.getElementById('closing_date');
+
+                            if (openingDate && closingDate) {
+                                openingDate.addEventListener('change', function() {
+                                    if (this.value) {
+                                        // Set closing date min to opening date
+                                        closingDate.min = this.value;
+
+                                        // If closing date is before opening date, clear it
+                                        if (closingDate.value && closingDate.value < this.value) {
+                                            closingDate.value = '';
+                                        }
+                                    } else {
+                                        // Reset to today if opening date is cleared
+                                        closingDate.min = '<?php echo esc_js(date('Y-m-d')); ?>';
+                                    }
+                                });
+                            }
+
+                            // Validate overview field on form submit
+                            const form = document.getElementById('cn-job-submit-form');
+                            if (form) {
+                                form.addEventListener('submit', function(e) {
+                                    // Get TinyMCE content
+                                    if (typeof tinymce !== 'undefined') {
+                                        const editor = tinymce.get('overview');
+                                        if (editor) {
+                                            const content = editor.getContent({
+                                                format: 'text'
+                                            }).trim();
+                                            if (content === '') {
+                                                e.preventDefault();
+                                                alert(
+                                                    'Overview is required. Please provide a job overview.'
+                                                );
+                                                // Focus the editor
+                                                editor.focus();
+                                                return false;
+                                            }
+                                        }
+                                    }
+                                    // Also check textarea fallback
+                                    const overviewTextarea = document.querySelector(
+                                        'textarea[name="overview"]');
+                                    if (overviewTextarea && overviewTextarea.value.trim() === '') {
+                                        e.preventDefault();
+                                        alert('Overview is required. Please provide a job overview.');
+                                        overviewTextarea.focus();
+                                        return false;
+                                    }
+                                });
+                            }
+                        });
+                    </script>
 
                     <div class="cn-form-field">
                         <label>
@@ -210,15 +381,28 @@ get_header();
                         </label>
                         <div id="external-apply-container"
                             style="margin-top: 0.5rem; <?php echo ($job_data['apply_externally'] ?? false) ? '' : 'display: none;'; ?>">
-                            <input type="text" id="external_apply" name="external_apply" class="cn-input"
-                                value="<?php echo esc_attr($job_data['external_apply'] ?? ''); ?>"
-                                placeholder="External URL or email (e.g., jobs@company.com)">
+                            <div class="cn-input-with-icon">
+                                <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                                <input type="text" id="external_apply" name="external_apply"
+                                    class="cn-input cn-input-with-icon-field"
+                                    value="<?php echo esc_attr($job_data['external_apply'] ?? ''); ?>"
+                                    placeholder="External URL or email (e.g., jobs@company.com)">
+                            </div>
                         </div>
                     </div>
 
                     <div class="cn-form-field">
-                        <label for="overview">Overview</label>
-                        <p class="cn-field-description">Provide a high-level summary of the role and its impact.</p>
+                        <label for="overview">Overview <span class="required">*</span></label>
+                        <p class="cn-field-description">Provide a high-level summary of the role and its impact.
+                            (Required)</p>
                         <?php
                         wp_editor($job_data['overview'] ?? '', 'overview', [
                             'textarea_name' => 'overview',
@@ -228,6 +412,7 @@ get_header();
                             'quicktags' => true,
                         ]);
                         ?>
+                        <input type="hidden" id="overview_required" value="1">
                     </div>
                 </div>
 
@@ -347,6 +532,28 @@ get_header();
         </div>
     </div>
 </main>
+
+<style>
+    /* Icon Input Styles */
+    .cn-input-with-icon {
+        position: relative;
+        width: 100%;
+    }
+
+    .cn-input-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #4a5568;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .cn-input-with-icon-field {
+        padding-left: 2.5rem !important;
+    }
+</style>
 
 <?php
 get_footer();

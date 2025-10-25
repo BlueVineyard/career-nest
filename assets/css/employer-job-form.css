@@ -57,6 +57,24 @@
   scroll-margin-top: 100px;
 }
 
+#companyDetails {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+
+  .cn-form-card-title {
+    grid-column: span 4;
+  }
+
+  .cn-company-logo-display {
+    grid-column: span 1;
+    text-align: left;
+  }
+
+  .cn-company-info-display {
+    grid-column: span 3;
+  }
+}
+
 .cn-form-card-title {
   color: #333;
   font-size: 1.4rem;
@@ -122,13 +140,9 @@
 }
 
 /* Company Info Display */
-.cn-company-logo-display {
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
 
 .cn-company-logo-display img {
-  max-width: 200px;
+  max-width: 130px;
   height: auto;
   border-radius: 8px;
   border: 1px solid #e0e0e0;

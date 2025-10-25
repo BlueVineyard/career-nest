@@ -58,6 +58,10 @@ if ($search) {
 
 $jobs_query = new WP_Query($query_args);
 
+// Enqueue custom dropdown assets
+wp_enqueue_style('careernest-custom-dropdown', CAREERNEST_URL . 'assets/css/custom-dropdown.css', [], CAREERNEST_VERSION);
+wp_enqueue_script('careernest-custom-dropdown', CAREERNEST_URL . 'assets/js/custom-dropdown.js', ['jquery'], CAREERNEST_VERSION, true);
+
 get_header();
 ?>
 
@@ -94,14 +98,16 @@ get_header();
 
                 <div class="cn-filter-group">
                     <label for="filter_status"><?php echo esc_html__('Status', 'careernest'); ?></label>
-                    <select id="filter_status" name="filter_status" class="cn-input">
-                        <option value="all" <?php selected($filter_status, 'all'); ?>>
-                            <?php echo esc_html__('All Statuses', 'careernest'); ?></option>
-                        <option value="publish" <?php selected($filter_status, 'publish'); ?>>
-                            <?php echo esc_html__('Published', 'careernest'); ?></option>
-                        <option value="draft" <?php selected($filter_status, 'draft'); ?>>
-                            <?php echo esc_html__('Draft', 'careernest'); ?></option>
-                    </select>
+                    <div class="cn-custom-select-wrapper" data-icon="filter">
+                        <select id="filter_status" name="filter_status" class="cn-input cn-custom-select">
+                            <option value="all" <?php selected($filter_status, 'all'); ?>>
+                                <?php echo esc_html__('All Statuses', 'careernest'); ?></option>
+                            <option value="publish" <?php selected($filter_status, 'publish'); ?>>
+                                <?php echo esc_html__('Published', 'careernest'); ?></option>
+                            <option value="draft" <?php selected($filter_status, 'draft'); ?>>
+                                <?php echo esc_html__('Draft', 'careernest'); ?></option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="cn-filter-actions">
