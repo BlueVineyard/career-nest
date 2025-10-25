@@ -274,6 +274,14 @@ class Plugin
                         return $plugin_template;
                     }
                 }
+
+                // Team management page
+                if ($action === 'manage-team') {
+                    $plugin_template = $this->locate_template('template-employer-team.php');
+                    if ($plugin_template) {
+                        return $plugin_template;
+                    }
+                }
             }
 
             // Map page IDs to template files

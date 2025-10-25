@@ -164,6 +164,13 @@ $personal_job_title = get_user_meta($current_user->ID, '_job_title', true);
 $personal_phone = get_user_meta($current_user->ID, '_personal_phone', true);
 $personal_bio = get_user_meta($current_user->ID, '_bio', true);
 
+// Check if current user is owner
+$is_owner = false;
+if ($employer_id) {
+    $owner_id = (int) get_post_meta($employer_id, '_user_id', true);
+    $is_owner = ($owner_id === $current_user->ID);
+}
+
 // Get employer's jobs (including drafts)
 $jobs_query = new WP_Query([
     'post_type' => 'job_listing',
@@ -240,7 +247,15 @@ if ($applications_query->have_posts()) {
         <div class="cn-dashboard-header">
             <div class="cn-header-content">
                 <div class="cn-user-info">
-                    <h1><?php echo esc_html__('Employer Dashboard', 'careernest'); ?></h1>
+                    <h1>
+                        <?php echo esc_html__('Employer Dashboard', 'careernest'); ?>
+                        <?php if ($is_owner): ?>
+                            <span class="cn-owner-badge-header"
+                                style="display:inline-block; background:#0073aa; color:white; padding:4px 12px; border-radius:15px; font-size:0.5em; font-weight:500; margin-left:10px; vertical-align:middle;">
+                                <?php echo esc_html__('OWNER', 'careernest'); ?>
+                            </span>
+                        <?php endif; ?>
+                    </h1>
                     <?php if ($company_name): ?>
                         <p class="cn-company-name"><?php echo esc_html($company_name); ?></p>
                     <?php endif; ?>
@@ -688,6 +703,21 @@ if ($applications_query->have_posts()) {
                 <div class="cn-dashboard-section">
                     <h3><?php echo esc_html__('Quick Actions', 'careernest'); ?></h3>
                     <div class="cn-quick-actions">
+                        <a href="<?php echo esc_url(add_query_arg('action', 'manage-team', get_permalink())); ?>"
+                            class="cn-quick-action">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <?php echo esc_html__('Manage Team', 'careernest'); ?>
+                        </a>
                         <a href="<?php echo esc_url(add_query_arg('action', 'add-job', get_permalink())); ?>"
                             class="cn-quick-action">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
