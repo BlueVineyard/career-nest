@@ -97,11 +97,15 @@ class Login
 ?>
         <div class="cn-login-widget cn-logged-in">
             <a href="<?php echo esc_url($dashboard_url); ?>" class="cn-user-link">
-                <span class="cn-user-icon">👤</span>
                 <span class="cn-user-name"><?php echo esc_html($display_name); ?></span>
             </a>
             <a href="<?php echo esc_url(wp_logout_url(home_url())); ?>" class="cn-logout-btn" title="Logout">
-                <span class="cn-logout-icon">⎋</span>
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 3H4C3.44772 3 3 3.44772 3 4V16C3 16.5523 3.44772 17 4 17H9" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" />
+                    <path d="M16 10H9M16 10L13 7M16 10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
             </a>
         </div>
     <?php

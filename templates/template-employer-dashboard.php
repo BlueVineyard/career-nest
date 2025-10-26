@@ -278,20 +278,31 @@ if ($jobs_query->have_posts()) {
 }
 
 // Get applications for employer's jobs
-$applications_query = new WP_Query([
-    'post_type' => 'job_application',
-    'post_status' => 'publish',
-    'posts_per_page' => -1,
-    'meta_query' => [
-        [
-            'key' => '_job_id',
-            'value' => wp_list_pluck($jobs_query->posts, 'ID'),
-            'compare' => 'IN'
-        ]
-    ],
-    'orderby' => 'date',
-    'order' => 'DESC'
-]);
+$job_ids = wp_list_pluck($jobs_query->posts, 'ID');
+
+// Only query applications if there are jobs, otherwise create empty query
+if (!empty($job_ids)) {
+    $applications_query = new WP_Query([
+        'post_type' => 'job_application',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'meta_query' => [
+            [
+                'key' => '_job_id',
+                'value' => $job_ids,
+                'compare' => 'IN'
+            ]
+        ],
+        'orderby' => 'date',
+        'order' => 'DESC'
+    ]);
+} else {
+    // Empty query - no jobs means no applications
+    $applications_query = new WP_Query([
+        'post_type' => 'job_application',
+        'post__in' => [0], // Force no results
+    ]);
+}
 
 // Get application statistics
 $total_applications = $applications_query->found_posts;
@@ -439,6 +450,13 @@ if ($applications_query->have_posts()) {
                                     $status_color = '#10B981';
                                 }
                             ?>
+                                <?php
+                                // Get who posted this job
+                                $posted_by_id = get_post_field('post_author', $job_id);
+                                $posted_by_user = get_userdata($posted_by_id);
+                                $posted_by_name = $posted_by_user ? $posted_by_user->display_name : 'Unknown';
+                                $is_current_user_author = ($posted_by_id == $current_user->ID);
+                                ?>
                                 <div class="cn-job-card">
                                     <div class="cn-job-header">
                                         <div class="cn-job-info">
@@ -449,6 +467,11 @@ if ($applications_query->have_posts()) {
                                             <?php if ($job_location): ?>
                                                 <p class="cn-job-location">📍 <?php echo esc_html($job_location); ?></p>
                                             <?php endif; ?>
+                                            <p class="cn-job-author"
+                                                style="font-size: 0.85rem; color: #718096; margin: 0.25rem 0 0 0;">
+                                                Posted by: <strong
+                                                    style="color: #4a5568;"><?php echo $is_current_user_author ? 'You' : esc_html($posted_by_name); ?></strong>
+                                            </p>
                                         </div>
                                         <div class="cn-job-status">
                                             <span class="cn-status-badge"

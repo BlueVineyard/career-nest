@@ -294,8 +294,15 @@ $interested = get_post_meta($employer_id, '_interested_in_working', true);
                     <p class="cn-field-help">
                         <?php echo esc_html__('Tell potential candidates about your company', 'careernest'); ?>
                     </p>
-                    <textarea id="about" name="about" rows="6"
-                        class="cn-textarea"><?php echo esc_textarea($about); ?></textarea>
+                    <?php
+                    wp_editor($about, 'about', [
+                        'textarea_name' => 'about',
+                        'textarea_rows' => 8,
+                        'media_buttons' => false,
+                        'teeny' => true,
+                        'quicktags' => true,
+                    ]);
+                    ?>
                 </div>
 
                 <div class="cn-form-field">
@@ -303,8 +310,15 @@ $interested = get_post_meta($employer_id, '_interested_in_working', true);
                     <p class="cn-field-help">
                         <?php echo esc_html__('What drives your company and its goals', 'careernest'); ?>
                     </p>
-                    <textarea id="mission" name="mission" rows="5"
-                        class="cn-textarea"><?php echo esc_textarea($mission); ?></textarea>
+                    <?php
+                    wp_editor($mission, 'mission', [
+                        'textarea_name' => 'mission',
+                        'textarea_rows' => 6,
+                        'media_buttons' => false,
+                        'teeny' => true,
+                        'quicktags' => true,
+                    ]);
+                    ?>
                 </div>
 
                 <div class="cn-form-field">
@@ -312,8 +326,15 @@ $interested = get_post_meta($employer_id, '_interested_in_working', true);
                     <p class="cn-field-help">
                         <?php echo esc_html__('Highlight recent achievements or news', 'careernest'); ?>
                     </p>
-                    <textarea id="spotlight" name="spotlight" rows="5"
-                        class="cn-textarea"><?php echo esc_textarea($spotlight); ?></textarea>
+                    <?php
+                    wp_editor($spotlight, 'spotlight', [
+                        'textarea_name' => 'spotlight',
+                        'textarea_rows' => 6,
+                        'media_buttons' => false,
+                        'teeny' => true,
+                        'quicktags' => true,
+                    ]);
+                    ?>
                 </div>
 
                 <div class="cn-form-field">
@@ -322,8 +343,15 @@ $interested = get_post_meta($employer_id, '_interested_in_working', true);
                     <p class="cn-field-help">
                         <?php echo esc_html__('Message to potential candidates about why they should join', 'careernest'); ?>
                     </p>
-                    <textarea id="interested_in_working" name="interested_in_working" rows="5"
-                        class="cn-textarea"><?php echo esc_textarea($interested); ?></textarea>
+                    <?php
+                    wp_editor($interested, 'interested_in_working', [
+                        'textarea_name' => 'interested_in_working',
+                        'textarea_rows' => 6,
+                        'media_buttons' => false,
+                        'teeny' => true,
+                        'quicktags' => true,
+                    ]);
+                    ?>
                 </div>
             </div>
 

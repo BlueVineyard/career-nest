@@ -18,6 +18,7 @@
   padding: 10px 30px;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-transform: capitalize;
 }
 
 .cn-login-btn:hover {
@@ -32,50 +33,51 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  background: #f7fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
 .cn-user-link {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   text-decoration: none;
-  color: #2d3748;
-  transition: color 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .cn-user-link:hover {
-  color: #ff8200;
-}
-
-.cn-user-icon {
-  font-size: 1.25rem;
+  opacity: 0.8;
 }
 
 .cn-user-name {
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--cn-primary-btn, #ff8200);
+  text-transform: capitalize;
 }
 
 .cn-logout-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: #f56565;
+  width: 36px;
+  height: 36px;
+  background: var(--cn-primary-btn, #ff8200);
   color: white;
   text-decoration: none;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
-  font-size: 1.1rem;
+  border-radius: 999px;
+  transition: all 0.2s ease;
 }
 
 .cn-logout-btn:hover {
-  background: #e53e3e;
+  background: var(--cn-danger, #dc3545);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.cn-logout-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Modal Overlay */

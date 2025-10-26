@@ -60,6 +60,9 @@ class Plugin
 
         // Redirect password reset to custom page
         add_action('init', [$this, 'redirect_password_reset']);
+
+        // Add CareerNest menu to admin bar
+        add_action('admin_bar_menu', [$this, 'add_admin_bar_menu'], 100);
     }
 
     /**
@@ -1026,6 +1029,107 @@ class Plugin
         $b = max(0, min(255, $b + (($b * $percent) / 100)));
 
         return '#' . str_pad(dechex($r), 2, '0', STR_PAD_LEFT) . str_pad(dechex($g), 2, '0', STR_PAD_LEFT) . str_pad(dechex($b), 2, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Add CareerNest menu to admin bar
+     */
+    public function add_admin_bar_menu($wp_admin_bar): void
+    {
+        // Only show for users who can manage CareerNest
+        if (!current_user_can('manage_careernest') && !current_user_can('manage_options')) {
+            return;
+        }
+
+        // Main CareerNest menu
+        $wp_admin_bar->add_node([
+            'id' => 'careernest',
+            'title' => '💼 CareerNest',
+            'href' => admin_url('edit.php?post_type=job_listing'),
+        ]);
+
+        // Job Listings
+        $wp_admin_bar->add_node([
+            'id' => 'careernest-jobs',
+            'parent' => 'careernest',
+            'title' => 'Job Listings',
+            'href' => admin_url('edit.php?post_type=job_listing'),
+        ]);
+
+        // Employers
+        $wp_admin_bar->add_node([
+            'id' => 'careernest-employers',
+            'parent' => 'careernest',
+            'title' => 'Employers',
+            'href' => admin_url('edit.php?post_type=employer'),
+        ]);
+
+        // Applicants
+        $wp_admin_bar->add_node([
+            'id' => 'careernest-applicants',
+            'parent' => 'careernest',
+            'title' => 'Applicants',
+            'href' => admin_url('edit.php?post_type=applicant'),
+        ]);
+
+        // Applications
+        $wp_admin_bar->add_node([
+            'id' => 'careernest-applications',
+            'parent' => 'careernest',
+            'title' => 'Applications',
+            'href' => admin_url('edit.php?post_type=job_application'),
+        ]);
+
+        // Separator
+        $wp_admin_bar->add_node([
+            'id' => 'careernest-separator',
+            'parent' => 'careernest',
+            'title' => '—————',
+            'href' => '#',
+            'meta' => ['class' => 'ab-sub-secondary'],
+        ]);
+
+        // CareerNest Pages
+        $pages = get_option('careernest_pages', []);
+        if (!empty($pages)) {
+            $wp_admin_bar->add_node([
+                'id' => 'careernest-pages',
+                'parent' => 'careernest',
+                'title' => 'CareerNest Pages',
+                'href' => admin_url('admin.php?page=careernest-settings'),
+            ]);
+
+            $page_labels = [
+                'jobs' => 'Job Listings Page',
+                'login' => 'Login Page',
+                'forgot-password' => 'Forgot Password',
+                'employer-dashboard' => 'Employer Dashboard',
+                'applicant-dashboard' => 'Applicant Dashboard',
+            ];
+
+            foreach ($page_labels as $slug => $label) {
+                if (isset($pages[$slug])) {
+                    $page_id = (int) $pages[$slug];
+                    if (get_post_status($page_id) === 'publish') {
+                        $wp_admin_bar->add_node([
+                            'id' => 'careernest-page-' . $slug,
+                            'parent' => 'careernest-pages',
+                            'title' => $label,
+                            'href' => get_permalink($page_id),
+                            'meta' => ['target' => '_blank'],
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Settings
+        $wp_admin_bar->add_node([
+            'id' => 'careernest-settings',
+            'parent' => 'careernest',
+            'title' => '⚙️ Settings',
+            'href' => admin_url('admin.php?page=careernest-settings'),
+        ]);
     }
 
     /**
