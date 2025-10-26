@@ -11,11 +11,24 @@
     if (typeof google !== "undefined" && google.maps && google.maps.places) {
       const locationInput = document.getElementById("job_location");
       if (locationInput) {
+        const options = {
+          fields: ["formatted_address", "name", "address_components"],
+        };
+
+        // Don't restrict types to allow full address input (cities, streets, etc.)
+
+        // Add country restrictions if available
+        if (
+          typeof careerNestMaps !== "undefined" &&
+          careerNestMaps.countries &&
+          careerNestMaps.countries.length > 0
+        ) {
+          options.componentRestrictions = { country: careerNestMaps.countries };
+        }
+
         const autocomplete = new google.maps.places.Autocomplete(
           locationInput,
-          {
-            fields: ["formatted_address", "name", "address_components"],
-          }
+          options
         );
 
         autocomplete.addListener("place_changed", function () {

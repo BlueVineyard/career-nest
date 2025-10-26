@@ -369,4 +369,69 @@ $interested = get_post_meta($employer_id, '_interested_in_working', true);
 </main>
 
 <?php
+// Add Google Maps autocomplete for location field
+$options = get_option('careernest_options', []);
+$maps_api_key = isset($options['maps_api_key']) ? trim((string) $options['maps_api_key']) : '';
+$has_maps_api = $maps_api_key !== '';
+
+if ($has_maps_api):
+?>
+    <script>
+        // Initialize Google Maps Autocomplete for company location
+        function initEmployerProfileAutocomplete() {
+            if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                const input = document.getElementById('location');
+                if (input) {
+                    const options = {
+                        fields: ['formatted_address', 'geometry', 'name']
+                    };
+
+                    // Add country restrictions if available
+                    <?php
+                    $maps_countries = isset($options['maps_countries']) && is_array($options['maps_countries']) ? $options['maps_countries'] : [];
+                    if (!empty($maps_countries)) {
+                        $maps_countries_lower = array_map('strtolower', $maps_countries);
+                        echo 'const countries = ' . json_encode($maps_countries_lower) . ';';
+                        echo "\n                    ";
+                        echo 'if (countries.length > 0) {';
+                        echo "\n                        ";
+                        echo 'options.componentRestrictions = { country: countries };';
+                        echo "\n                    ";
+                        echo '}';
+                    }
+                    ?>
+
+                    const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+                    autocomplete.addListener('place_changed', function() {
+                        const place = autocomplete.getPlace();
+                        if (place.geometry) {
+                            input.value = place.formatted_address || place.name;
+                        }
+                    });
+                }
+            }
+        }
+
+        // Initialize when Maps API is ready
+        if (typeof google !== 'undefined') {
+            initEmployerProfileAutocomplete();
+        } else {
+            window.initEmployerProfileAutocomplete = initEmployerProfileAutocomplete;
+        }
+    </script>
+
+<?php
+    // Enqueue Google Maps API
+    wp_enqueue_script(
+        'google-maps-employer-profile',
+        'https://maps.googleapis.com/maps/api/js?key=' . urlencode($maps_api_key) . '&libraries=places&callback=initEmployerProfileAutocomplete',
+        [],
+        null,
+        true
+    );
+endif;
+?>
+
+<?php
 get_footer();

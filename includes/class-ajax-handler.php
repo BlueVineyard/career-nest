@@ -672,7 +672,12 @@ class Ajax_Handler
             </div>
 
             <div class="cn-job-card-meta">
-                <?php if ($location): ?>
+                <?php if ($location):
+                    $debug_mode = get_option('careernest_options', []);
+                    $show_coords = isset($debug_mode['debug_show_coordinates']) && $debug_mode['debug_show_coordinates'] === '1';
+                    $job_lat = get_post_meta($job_id, '_job_location_lat', true);
+                    $job_lng = get_post_meta($job_id, '_job_location_lng', true);
+                ?>
                     <span class="cn-job-meta-item">
                         <svg width="16" height="16" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -681,6 +686,18 @@ class Ajax_Handler
                             <ellipse cx="10" cy="8.8335" rx="2.5" ry="2.5" stroke="currentColor" stroke-width="1.5" />
                         </svg>
                         <?php echo esc_html($location); ?>
+                        <?php if ($show_coords && ($job_lat || $job_lng)): ?>
+                            <span class="cn-debug-coords"
+                                style="display: inline-block; margin-left: 8px; padding: 2px 6px; background: #f0f0f0; border-radius: 3px; font-size: 11px; color: #666; font-family: monospace;">
+                                <?php echo esc_html($job_lat ? number_format((float)$job_lat, 6) : 'N/A'); ?>,
+                                <?php echo esc_html($job_lng ? number_format((float)$job_lng, 6) : 'N/A'); ?>
+                            </span>
+                        <?php elseif ($show_coords): ?>
+                            <span class="cn-debug-coords"
+                                style="display: inline-block; margin-left: 8px; padding: 2px 6px; background: #ffebee; border-radius: 3px; font-size: 11px; color: #c62828; font-family: monospace;">
+                                NO COORDS
+                            </span>
+                        <?php endif; ?>
                         <?php if ($distance !== null): ?>
                             <span class="cn-distance-badge"><?php echo esc_html(number_format($distance, 1)); ?> km</span>
                         <?php endif; ?>

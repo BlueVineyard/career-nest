@@ -650,16 +650,89 @@
         return;
       }
 
-      // Default center (will be updated based on markers)
-      const defaultCenter = { lat: 0, lng: 0 };
+      // Default center and zoom (will be updated based on markers or country restrictions)
+      let defaultCenter = { lat: 0, lng: 0 };
+      let defaultZoom = 10;
+
+      // Debug: Log country restrictions
+      console.log(
+        "CareerNest Map - Country restrictions:",
+        typeof careerNestMaps !== "undefined"
+          ? careerNestMaps.countries
+          : "No restrictions"
+      );
+
+      // Apply country restrictions to initial map view
+      if (
+        typeof careerNestMaps !== "undefined" &&
+        careerNestMaps.countries &&
+        careerNestMaps.countries.length > 0
+      ) {
+        // Country bounds (approximate bounding boxes)
+        const countryBounds = {
+          au: { north: -9.0, south: -45.0, east: 155.0, west: 112.0 },
+          ca: { north: 83.0, south: 41.7, east: -52.6, west: -141.0 },
+          nz: { north: -34.0, south: -47.3, east: 179.0, west: 166.0 },
+          us: { north: 49.4, south: 24.5, east: -66.9, west: -125.0 },
+          gb: { north: 60.9, south: 49.9, east: 1.8, west: -8.6 },
+          de: { north: 55.1, south: 47.3, east: 15.0, west: 5.9 },
+          fr: { north: 51.1, south: 41.3, east: 9.6, west: -5.1 },
+        };
+
+        // Use first country's center as default
+        const firstCountry = careerNestMaps.countries[0].toLowerCase();
+        if (countryBounds[firstCountry]) {
+          const cb = countryBounds[firstCountry];
+          defaultCenter = {
+            lat: (cb.north + cb.south) / 2,
+            lng: (cb.east + cb.west) / 2,
+          };
+          defaultZoom = 5;
+        }
+      }
 
       this.map = new google.maps.Map(document.getElementById("cn-jobs-map"), {
         center: defaultCenter,
-        zoom: 10,
+        zoom: defaultZoom,
         mapTypeControl: true,
         streetViewControl: false,
         fullscreenControl: true,
       });
+
+      // Fit map to selected countries if restrictions are set
+      if (
+        typeof careerNestMaps !== "undefined" &&
+        careerNestMaps.countries &&
+        careerNestMaps.countries.length > 0
+      ) {
+        const countryBounds = {
+          au: { north: -9.0, south: -45.0, east: 155.0, west: 112.0 },
+          ca: { north: 83.0, south: 41.7, east: -52.6, west: -141.0 },
+          nz: { north: -34.0, south: -47.3, east: 179.0, west: 166.0 },
+          us: { north: 49.4, south: 24.5, east: -66.9, west: -125.0 },
+          gb: { north: 60.9, south: 49.9, east: 1.8, west: -8.6 },
+          de: { north: 55.1, south: 47.3, east: 15.0, west: 5.9 },
+          fr: { north: 51.1, south: 41.3, east: 9.6, west: -5.1 },
+        };
+
+        const bounds = new google.maps.LatLngBounds();
+        let hasValidCountry = false;
+
+        for (let i = 0; i < careerNestMaps.countries.length; i++) {
+          const countryCode = careerNestMaps.countries[i].toLowerCase();
+          if (countryBounds[countryCode]) {
+            hasValidCountry = true;
+            const cb = countryBounds[countryCode];
+            bounds.extend(new google.maps.LatLng(cb.north, cb.west));
+            bounds.extend(new google.maps.LatLng(cb.south, cb.east));
+          }
+        }
+
+        // Fit map to country bounds if we have valid countries
+        if (hasValidCountry && !bounds.isEmpty()) {
+          this.map.fitBounds(bounds);
+        }
+      }
     },
 
     updateMapView: function () {
@@ -670,8 +743,24 @@
 
       const { markers, userLocation, radius } = this.mapData;
 
+      // Debug: Log marker count
+      console.log(
+        "CareerNest Map - Creating markers:",
+        markers ? markers.length : 0
+      );
+
       // Create markers for each job
       if (markers && markers.length > 0) {
+        console.log(
+          "CareerNest Map - Marker details:",
+          markers.map((m) => ({
+            title: m.title,
+            lat: m.lat,
+            lng: m.lng,
+            location: m.location,
+          }))
+        );
+
         markers.forEach((job) => {
           this.createMarker(job);
         });
@@ -802,6 +891,7 @@
     fitMapToMarkers: function () {
       if (!this.map || this.markers.length === 0) return;
 
+      // Fit map bounds to show all markers
       const bounds = new google.maps.LatLngBounds();
       this.markers.forEach((marker) => {
         bounds.extend(marker.getPosition());

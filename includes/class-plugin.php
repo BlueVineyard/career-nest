@@ -28,6 +28,9 @@ class Plugin
         // Dequeue block editor assets on edit screens for our CPTs.
         add_action('admin_enqueue_scripts', [$this, 'strip_block_assets_on_cpt_edit'], 100);
 
+        // Enqueue admin assets and pass country restrictions
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+
         // Hide admin bar for applicants on the frontend.
         add_filter('show_admin_bar', [$this, 'maybe_hide_admin_bar'], 10, 1);
 
@@ -574,6 +577,32 @@ class Plugin
     }
 
     /**
+     * Enqueue admin assets and pass country restrictions
+     */
+    public function enqueue_admin_assets(): void
+    {
+        $screen = get_current_screen();
+
+        // Only on CareerNest CPT edit screens
+        if (!$screen || !in_array($screen->post_type, ['job_listing', 'employer', 'applicant'])) {
+            return;
+        }
+
+        // Pass country restrictions to maps.js for admin meta boxes
+        $options = get_option('careernest_options', []);
+        $maps_countries = isset($options['maps_countries']) && is_array($options['maps_countries']) ? $options['maps_countries'] : [];
+        $maps_countries_lower = array_map('strtolower', $maps_countries);
+
+        wp_localize_script(
+            'careernest-maps',
+            'careerNestMaps',
+            [
+                'countries' => $maps_countries_lower,
+            ]
+        );
+    }
+
+    /**
      * Enqueue frontend assets for specific pages
      */
     public function enqueue_frontend_assets(): void
@@ -654,6 +683,17 @@ class Plugin
                     ['jquery'],
                     CAREERNEST_VERSION,
                     true
+                );
+
+                // Pass country restrictions to JavaScript
+                $maps_countries = isset($options['maps_countries']) && is_array($options['maps_countries']) ? $options['maps_countries'] : [];
+                $maps_countries_lower = array_map('strtolower', $maps_countries);
+                wp_localize_script(
+                    'careernest-job-form',
+                    'careerNestMaps',
+                    [
+                        'countries' => $maps_countries_lower,
+                    ]
                 );
             } elseif (in_array($action, ['view-applications', 'manage-jobs'], true)) {
                 // Enqueue applications/jobs management assets (shared styles)
@@ -779,6 +819,18 @@ class Plugin
                     [],
                     CAREERNEST_VERSION,
                     true
+                );
+
+                // Pass country restrictions to JavaScript
+                $maps_countries = isset($options['maps_countries']) && is_array($options['maps_countries']) ? $options['maps_countries'] : [];
+                // Convert to lowercase for Google Maps API
+                $maps_countries_lower = array_map('strtolower', $maps_countries);
+                wp_localize_script(
+                    'careernest-maps',
+                    'careerNestMaps',
+                    [
+                        'countries' => $maps_countries_lower,
+                    ]
                 );
             }
 

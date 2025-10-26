@@ -10,10 +10,26 @@
     if (typeof google === "undefined" || !google.maps || !google.maps.places)
       return;
     try {
-      var ac = new google.maps.places.Autocomplete(input, {
+      var options = {
         fields: ["formatted_address", "geometry", "name", "place_id"],
-        types: ["geocode"],
-      });
+      };
+
+      // Use address types for more specific location searches (includes street addresses)
+      // Don't restrict types for job locations to allow full address input
+      if (config.inputId !== "careernest_job_location") {
+        options.types = ["geocode"];
+      }
+
+      // Add country restrictions if available
+      if (
+        typeof careerNestMaps !== "undefined" &&
+        careerNestMaps.countries &&
+        careerNestMaps.countries.length > 0
+      ) {
+        options.componentRestrictions = { country: careerNestMaps.countries };
+      }
+
+      var ac = new google.maps.places.Autocomplete(input, options);
       ac.addListener("place_changed", function () {
         var place = ac.getPlace();
         var pid = $(config.placeIdId);
@@ -72,11 +88,65 @@
           var lng =
             parseFloat(($(cfg.lngId) && $(cfg.lngId).value) || "") || 133.7751;
           var center = { lat: lat, lng: lng };
+
+          // Determine zoom and bounds based on selected countries
+          var zoom = 5;
+          var bounds = null;
+
+          if (
+            typeof careerNestMaps !== "undefined" &&
+            careerNestMaps.countries &&
+            careerNestMaps.countries.length > 0
+          ) {
+            // Country bounds (approximate bounding boxes)
+            var countryBounds = {
+              au: { north: -9.0, south: -45.0, east: 155.0, west: 112.0 },
+              ca: { north: 83.0, south: 41.7, east: -52.6, west: -141.0 },
+              nz: { north: -34.0, south: -47.3, east: 179.0, west: 166.0 },
+              us: { north: 49.4, south: 24.5, east: -66.9, west: -125.0 },
+              gb: { north: 60.9, south: 49.9, east: 1.8, west: -8.6 },
+              de: { north: 55.1, south: 47.3, east: 15.0, west: 5.9 },
+              fr: { north: 51.1, south: 41.3, east: 9.6, west: -5.1 },
+            };
+
+            // Create bounds that encompass all selected countries
+            bounds = new google.maps.LatLngBounds();
+            var hasValidCountry = false;
+
+            for (var i = 0; i < careerNestMaps.countries.length; i++) {
+              var countryCode = careerNestMaps.countries[i].toLowerCase();
+              if (countryBounds[countryCode]) {
+                hasValidCountry = true;
+                var cb = countryBounds[countryCode];
+                bounds.extend(new google.maps.LatLng(cb.north, cb.west));
+                bounds.extend(new google.maps.LatLng(cb.south, cb.east));
+              }
+            }
+
+            // If we have valid countries, use first country's center
+            if (hasValidCountry && careerNestMaps.countries.length > 0) {
+              var firstCountry = careerNestMaps.countries[0].toLowerCase();
+              if (countryBounds[firstCountry]) {
+                var cb = countryBounds[firstCountry];
+                center = {
+                  lat: (cb.north + cb.south) / 2,
+                  lng: (cb.east + cb.west) / 2,
+                };
+              }
+            }
+          }
+
           map = new google.maps.Map(mapEl, {
             center: center,
-            zoom: 5,
+            zoom: zoom,
             mapTypeControl: false,
           });
+
+          // Fit bounds if we have them
+          if (bounds && !bounds.isEmpty()) {
+            map.fitBounds(bounds);
+          }
+
           geocoder = new google.maps.Geocoder();
           marker = new google.maps.Marker({
             position: center,
@@ -167,12 +237,23 @@
       google.maps.places
     ) {
       try {
+        var options = {
+          fields: ["formatted_address", "geometry", "name"],
+          types: ["geocode"],
+        };
+
+        // Add country restrictions if available
+        if (
+          typeof careerNestMaps !== "undefined" &&
+          careerNestMaps.countries &&
+          careerNestMaps.countries.length > 0
+        ) {
+          options.componentRestrictions = { country: careerNestMaps.countries };
+        }
+
         var autocomplete = new google.maps.places.Autocomplete(
           frontendLocationInput,
-          {
-            fields: ["formatted_address", "geometry", "name"],
-            types: ["geocode"],
-          }
+          options
         );
 
         // When user selects from autocomplete, trigger geocoding for radius search

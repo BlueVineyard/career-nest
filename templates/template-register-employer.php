@@ -382,10 +382,26 @@ $has_maps_api = $maps_api_key !== '';
                 if (typeof google !== 'undefined' && google.maps && google.maps.places) {
                     const input = document.getElementById('company_location');
                     if (input) {
-                        const autocomplete = new google.maps.places.Autocomplete(input, {
-                            types: ['(cities)'],
+                        const options = {
                             fields: ['formatted_address', 'geometry', 'name']
-                        });
+                        };
+
+                        // Add country restrictions if available
+                        <?php
+                        $maps_countries = isset($options['maps_countries']) && is_array($options['maps_countries']) ? $options['maps_countries'] : [];
+                        if (!empty($maps_countries)) {
+                            $maps_countries_lower = array_map('strtolower', $maps_countries);
+                            echo 'const countries = ' . json_encode($maps_countries_lower) . ';';
+                            echo "\n                        ";
+                            echo 'if (countries.length > 0) {';
+                            echo "\n                            ";
+                            echo 'options.componentRestrictions = { country: countries };';
+                            echo "\n                        ";
+                            echo '}';
+                        }
+                        ?>
+
+                        const autocomplete = new google.maps.places.Autocomplete(input, options);
 
                         autocomplete.addListener('place_changed', function() {
                             const place = autocomplete.getPlace();

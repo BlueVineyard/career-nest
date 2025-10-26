@@ -82,6 +82,24 @@ class Settings
             ['label_for' => 'careernest_maps_api_key']
         );
 
+        add_settings_field(
+            'maps_countries',
+            __('Restrict Locations to Countries', 'careernest'),
+            [$this, 'render_maps_countries_field'],
+            'careernest_settings',
+            'careernest_general_section',
+            ['label_for' => 'careernest_maps_countries']
+        );
+
+        add_settings_field(
+            'debug_show_coordinates',
+            __('Debug: Show Coordinates', 'careernest'),
+            [$this, 'render_debug_coordinates_field'],
+            'careernest_settings',
+            'careernest_general_section',
+            ['label_for' => 'careernest_debug_coordinates']
+        );
+
         // Job Filters Section
         add_settings_section(
             'careernest_filters_section',
@@ -416,6 +434,15 @@ class Settings
         // Sanitize text fields
         $out['maps_api_key'] = isset($opts['maps_api_key']) ? sanitize_text_field($opts['maps_api_key']) : '';
 
+        // Sanitize maps countries array
+        if (isset($opts['maps_countries']) && is_array($opts['maps_countries'])) {
+            // Valid country codes (ISO 3166-1 alpha-2)
+            $valid_countries = ['AU', 'CA', 'CN', 'FR', 'DE', 'IN', 'ID', 'IE', 'IT', 'JP', 'MY', 'MX', 'NL', 'NZ', 'PH', 'PL', 'SG', 'ZA', 'KR', 'ES', 'SE', 'CH', 'TH', 'GB', 'US', 'VN'];
+            $out['maps_countries'] = array_values(array_intersect($opts['maps_countries'], $valid_countries));
+        } else {
+            $out['maps_countries'] = [];
+        }
+
         // Sanitize filter position
         $out['filter_position'] = isset($opts['filter_position']) && in_array($opts['filter_position'], ['left', 'right', 'top'], true) ? $opts['filter_position'] : 'left';
 
@@ -426,6 +453,9 @@ class Settings
         if (isset($opts['filter_order']) && is_array($opts['filter_order'])) {
             $out['filter_order'] = array_map('sanitize_text_field', $opts['filter_order']);
         }
+
+        // Sanitize debug option
+        $out['debug_show_coordinates'] = isset($opts['debug_show_coordinates']) && $opts['debug_show_coordinates'] === '1' ? '1' : '0';
 
         // Sanitize checkbox fields (filters)
         $filters = [
@@ -456,6 +486,62 @@ class Settings
         $val  = isset($opts['maps_api_key']) ? (string) $opts['maps_api_key'] : '';
         echo '<input type="text" id="careernest_maps_api_key" name="careernest_options[maps_api_key]" class="regular-text" value="' . esc_attr($val) . '" placeholder="' . esc_attr__('AIzaSy...', 'careernest') . '" />';
         echo '<p class="description">' . esc_html__('Used for Google Maps features (e.g., location autocomplete).', 'careernest') . '</p>';
+    }
+
+    public function render_maps_countries_field(array $args): void
+    {
+        $opts = get_option('careernest_options', []);
+        $selected_countries = isset($opts['maps_countries']) && is_array($opts['maps_countries']) ? $opts['maps_countries'] : [];
+
+        // List of countries with ISO 3166-1 alpha-2 codes
+        $countries = [
+            'AU' => __('Australia', 'careernest'),
+            'CA' => __('Canada', 'careernest'),
+            'CN' => __('China', 'careernest'),
+            'FR' => __('France', 'careernest'),
+            'DE' => __('Germany', 'careernest'),
+            'IN' => __('India', 'careernest'),
+            'ID' => __('Indonesia', 'careernest'),
+            'IE' => __('Ireland', 'careernest'),
+            'IT' => __('Italy', 'careernest'),
+            'JP' => __('Japan', 'careernest'),
+            'MY' => __('Malaysia', 'careernest'),
+            'MX' => __('Mexico', 'careernest'),
+            'NL' => __('Netherlands', 'careernest'),
+            'NZ' => __('New Zealand', 'careernest'),
+            'PH' => __('Philippines', 'careernest'),
+            'PL' => __('Poland', 'careernest'),
+            'SG' => __('Singapore', 'careernest'),
+            'ZA' => __('South Africa', 'careernest'),
+            'KR' => __('South Korea', 'careernest'),
+            'ES' => __('Spain', 'careernest'),
+            'SE' => __('Sweden', 'careernest'),
+            'CH' => __('Switzerland', 'careernest'),
+            'TH' => __('Thailand', 'careernest'),
+            'GB' => __('United Kingdom', 'careernest'),
+            'US' => __('United States', 'careernest'),
+            'VN' => __('Vietnam', 'careernest'),
+        ];
+
+        echo '<select id="' . esc_attr($args['label_for']) . '" name="careernest_options[maps_countries][]" multiple size="8" style="height: auto; min-width: 300px;">';
+        foreach ($countries as $code => $name) {
+            $is_selected = in_array($code, $selected_countries, true);
+            echo '<option value="' . esc_attr($code) . '" ' . selected($is_selected, true, false) . '>' . esc_html($name) . '</option>';
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Hold Ctrl (or Cmd on Mac) to select multiple countries. Leave empty to show locations from all countries. Selected countries will restrict location autocomplete in job forms and registration.', 'careernest') . '</p>';
+    }
+
+    public function render_debug_coordinates_field(array $args): void
+    {
+        $opts = get_option('careernest_options', []);
+        $checked = isset($opts['debug_show_coordinates']) && $opts['debug_show_coordinates'] === '1';
+
+        echo '<label>';
+        echo '<input type="checkbox" id="' . esc_attr($args['label_for']) . '" name="careernest_options[debug_show_coordinates]" value="1" ' . checked($checked, true, false) . ' />';
+        echo ' ' . esc_html__('Show latitude/longitude on job cards', 'careernest');
+        echo '</label>';
+        echo '<p class="description">' . esc_html__('When enabled, job cards will display coordinates to help verify that locations are saved correctly.', 'careernest') . '</p>';
     }
 
     public function render_checkbox_field(array $args): void

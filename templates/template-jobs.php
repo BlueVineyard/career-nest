@@ -187,6 +187,9 @@ switch ($sort_by) {
 // Execute query
 $jobs_query = new WP_Query($args);
 
+// Get filter settings
+$filter_settings = get_option('careernest_options', []);
+
 // Get taxonomies for filters
 $job_categories = get_terms([
     'taxonomy' => 'job_category',
@@ -198,8 +201,7 @@ $job_types = get_terms([
     'hide_empty' => true,
 ]);
 
-// Get filter settings
-$filter_settings = get_option('careernest_options', []);
+// Filter settings already loaded above for country filtering
 $show_category = isset($filter_settings['filter_category']) ? $filter_settings['filter_category'] === '1' : true;
 $show_job_type = isset($filter_settings['filter_job_type']) ? $filter_settings['filter_job_type'] === '1' : true;
 $show_location = isset($filter_settings['filter_location']) ? $filter_settings['filter_location'] === '1' : true;

@@ -82,6 +82,17 @@ class Admin
                     );
                     wp_enqueue_script('careernest-google-maps', $maps_url, [], null, true);
                     wp_enqueue_script('careernest-maps', CAREERNEST_URL . 'assets/js/maps.js', ['careernest-google-maps'], CAREERNEST_VERSION, true);
+
+                    // Pass country restrictions to JavaScript
+                    $maps_countries = isset($opts['maps_countries']) && is_array($opts['maps_countries']) ? $opts['maps_countries'] : [];
+                    $maps_countries_lower = array_map('strtolower', $maps_countries);
+                    wp_localize_script(
+                        'careernest-maps',
+                        'careerNestMaps',
+                        [
+                            'countries' => $maps_countries_lower,
+                        ]
+                    );
                 }
             }
             if ('job_application' === $screen->id) {
