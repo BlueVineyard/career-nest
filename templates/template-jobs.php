@@ -36,7 +36,7 @@ $search_query = isset($_GET['job_search']) ? sanitize_text_field(wp_unslash($_GE
 $selected_category = isset($_GET['job_category']) ? absint($_GET['job_category']) : 0;
 $selected_type = isset($_GET['job_type']) ? absint($_GET['job_type']) : 0;
 $selected_location = isset($_GET['job_location']) ? sanitize_text_field(wp_unslash($_GET['job_location'])) : '';
-$selected_employer = isset($_GET['employer']) ? absint($_GET['employer']) : 0;
+$selected_employer = isset($_GET['employer_id']) ? absint($_GET['employer_id']) : 0;
 $min_salary = isset($_GET['min_salary']) ? absint($_GET['min_salary']) : 0;
 $max_salary = isset($_GET['max_salary']) ? absint($_GET['max_salary']) : 200000;
 $date_posted = isset($_GET['date_posted']) ? sanitize_text_field(wp_unslash($_GET['date_posted'])) : '';
@@ -358,11 +358,11 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
             ?>
                 <!-- Employer Filter -->
                 <div class="cn-filter-group">
-                    <label for="employer" class="cn-filter-label">
+                    <label for="employer_id" class="cn-filter-label">
                         <?php esc_html_e('Employer', 'careernest'); ?>
                     </label>
                     <div class="cn-custom-select-wrapper" data-icon="building">
-                        <select name="employer" id="employer" class="cn-filter-select cn-custom-select">
+                        <select name="employer_id" id="employer_id" class="cn-filter-select cn-custom-select">
                             <option value=""><?php esc_html_e('All Employers', 'careernest'); ?></option>
                             <?php foreach ($employers as $employer): ?>
                                 <option value="<?php echo esc_attr($employer->ID); ?>"

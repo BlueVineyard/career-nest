@@ -46,7 +46,7 @@
       });
 
       // Filter changes (instant)
-      $("#job_category, #job_type, #sort, #employer, #date_posted").on(
+      $("#job_category, #job_type, #sort, #employer_id, #date_posted").on(
         "change",
         function () {
           // Skip if we're clearing filters
@@ -223,7 +223,7 @@
         category: $("#job_category").val(),
         type: $("#job_type").val(),
         location: $("#job_location").val(),
-        employer: $("#employer").val(),
+        employer: $("#employer_id").val(),
         min_salary: $("#min_salary").val(),
         max_salary: $("#max_salary").val(),
         date_posted: $("#date_posted").val(),
@@ -339,7 +339,7 @@
       $("#job_category").val("").trigger("change");
       $("#job_type").val("").trigger("change");
       $("#job_location").val("");
-      $("#employer").val("").trigger("change");
+      $("#employer_id").val("").trigger("change");
       $("#min_salary").val(0);
       $("#max_salary").val(200000);
       $("#date_posted").val("").trigger("change");
@@ -378,7 +378,7 @@
       if (data.category) params.set("job_category", data.category);
       if (data.type) params.set("job_type", data.type);
       if (data.location) params.set("job_location", data.location);
-      if (data.employer) params.set("employer", data.employer);
+      if (data.employer) params.set("employer_id", data.employer);
       if (data.min_salary && data.min_salary > 0)
         params.set("min_salary", data.min_salary);
       if (data.max_salary && data.max_salary < 200000)

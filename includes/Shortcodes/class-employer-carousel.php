@@ -67,7 +67,7 @@ class EmployerCarousel
                 <div class="swiper-wrapper">
                     <?php foreach ($employers as $employer): ?>
                         <div class="swiper-slide">
-                            <a href="<?php echo esc_url($jobs_page_url . '?employer=' . $employer['id']); ?>"
+                            <a href="<?php echo esc_url($jobs_page_url . '?employer_id=' . $employer['id']); ?>"
                                 class="cn-employer-card">
                                 <div class="cn-employer-logo">
                                     <?php if ($employer['logo']): ?>
@@ -286,10 +286,9 @@ class EmployerCarousel
         // Inline CSS for the carousel
         $css = "
         .cn-employer-carousel-wrapper {
-            margin: 2rem 0;
-            padding: 2rem;
-            background: #f8f9fa;
-            border-radius: 8px;
+            margin: 0;
+            padding: 0;
+            background: transparent;
         }
         
         .cn-carousel-title {
