@@ -463,7 +463,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
 <main id="primary" class="site-main cn-jobs-page">
     <div class="cn-jobs-container">
         <header class="cn-jobs-header">
-            <h1 class="cn-jobs-title"><?php echo esc_html(get_the_title()); ?></h1>
+            <h1 class="cn-jobs-title"><?php esc_html_e('Jobs', 'careernest'); ?></h1>
 
             <?php
             // Display active filters count

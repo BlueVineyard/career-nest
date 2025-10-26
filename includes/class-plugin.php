@@ -52,8 +52,103 @@ class Plugin
         // Handle login redirects
         add_filter('login_redirect', ['\CareerNest\Shortcodes\Login', 'login_redirect'], 10, 3);
 
-        // Handle AJAX login
+        // Handle AJAX login for popup/modal
         add_action('wp_ajax_nopriv_careernest_login', ['\CareerNest\Shortcodes\Login', 'ajax_login']);
+
+        // Redirect WordPress default login to custom login page
+        add_action('init', [$this, 'redirect_wp_login']);
+
+        // Redirect password reset to custom page
+        add_action('init', [$this, 'redirect_password_reset']);
+    }
+
+    /**
+     * Redirect WordPress default login page to custom login page
+     */
+    public function redirect_wp_login(): void
+    {
+        // Only redirect on wp-login.php for non-logged-in users
+        global $pagenow;
+
+        if ($pagenow === 'wp-login.php' && !is_user_logged_in()) {
+            // Don't redirect if it's a logout action
+            if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+                return;
+            }
+
+            // Don't redirect if it's password reset/lost password actions
+            if (isset($_GET['action']) && in_array($_GET['action'], ['lostpassword', 'rp', 'resetpass'])) {
+                // Redirect these to our custom pages instead
+                $this->redirect_password_reset();
+                return;
+            }
+
+            // Don't redirect if it's a POST request (actual login attempt)
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                return;
+            }
+
+            // Get custom login page URL
+            $pages = get_option('careernest_pages', []);
+            $login_page_id = isset($pages['login']) ? (int) $pages['login'] : 0;
+
+            if ($login_page_id && get_post_status($login_page_id) === 'publish') {
+                $login_url = get_permalink($login_page_id);
+
+                // Preserve redirect_to parameter if present
+                if (isset($_GET['redirect_to'])) {
+                    $login_url = add_query_arg('redirect_to', urlencode($_GET['redirect_to']), $login_url);
+                }
+
+                wp_safe_redirect($login_url);
+                exit;
+            }
+        }
+    }
+
+    /**
+     * Redirect password reset actions to custom pages
+     */
+    public function redirect_password_reset(): void
+    {
+        global $pagenow;
+
+        if ($pagenow === 'wp-login.php') {
+            $action = isset($_GET['action']) ? $_GET['action'] : '';
+
+            // Get custom page URLs
+            $pages = get_option('careernest_pages', []);
+
+            // Redirect lost password to forgot password page
+            if ($action === 'lostpassword') {
+                $forgot_password_id = isset($pages['forgot-password']) ? (int) $pages['forgot-password'] : 0;
+                if ($forgot_password_id && get_post_status($forgot_password_id) === 'publish') {
+                    wp_safe_redirect(get_permalink($forgot_password_id));
+                    exit;
+                }
+            }
+
+            // Redirect password reset form to custom reset page
+            if (in_array($action, ['rp', 'resetpass'])) {
+                $reset_key = isset($_GET['key']) ? $_GET['key'] : '';
+                $reset_login = isset($_GET['login']) ? $_GET['login'] : '';
+
+                if (!empty($reset_key) && !empty($reset_login)) {
+                    $forgot_password_id = isset($pages['forgot-password']) ? (int) $pages['forgot-password'] : 0;
+                    if ($forgot_password_id && get_post_status($forgot_password_id) === 'publish') {
+                        $reset_url = get_permalink($forgot_password_id);
+                        $reset_url = add_query_arg([
+                            'action' => 'resetpass',
+                            'key' => $reset_key,
+                            'login' => $reset_login
+                        ], $reset_url);
+
+                        wp_safe_redirect($reset_url);
+                        exit;
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -69,6 +164,12 @@ class Plugin
 
         // Register Employer Carousel shortcode
         \CareerNest\Shortcodes\EmployerCarousel::register();
+
+        // Register Job Categories Grid shortcode
+        \CareerNest\Shortcodes\JobCategories::register();
+
+        // Register Jobs by Category Tabs shortcode
+        \CareerNest\Shortcodes\JobsByCategory::register();
     }
 
     public function hide_managed_pages_in_admin(\WP_Query $query): void
@@ -303,6 +404,8 @@ class Plugin
             // Map page IDs to template files
             $page_templates = [
                 'jobs' => 'template-jobs.php',
+                'login' => 'template-login-register.php',
+                'forgot-password' => 'template-forgot-password.php',
                 'employer-dashboard' => 'template-employer-dashboard.php',
                 'applicant-dashboard' => 'template-applicant-dashboard.php',
                 'register-employer' => 'template-register-employer.php',
@@ -610,6 +713,40 @@ class Plugin
             }
         }
 
+        // Check if we're on the login or forgot password page
+        $login_page_id = isset($pages['login']) ? (int) $pages['login'] : 0;
+        $forgot_password_id = isset($pages['forgot-password']) ? (int) $pages['forgot-password'] : 0;
+
+        if (($login_page_id && is_page($login_page_id)) || ($forgot_password_id && is_page($forgot_password_id))) {
+            // Enqueue auth page assets
+            wp_enqueue_style(
+                'careernest-auth-page',
+                CAREERNEST_URL . 'assets/css/auth-page.css',
+                [],
+                CAREERNEST_VERSION
+            );
+
+            // Only enqueue JS on login page
+            if ($login_page_id && is_page($login_page_id)) {
+                wp_enqueue_script(
+                    'careernest-auth-page',
+                    CAREERNEST_URL . 'assets/js/auth-page.js',
+                    ['jquery'],
+                    CAREERNEST_VERSION,
+                    true
+                );
+
+                // Localize script
+                wp_localize_script(
+                    'careernest-auth-page',
+                    'careerNestAuth',
+                    [
+                        'ajaxurl' => admin_url('admin-ajax.php'),
+                    ]
+                );
+            }
+        }
+
         // Check if we're on the jobs listing page
         if ($jobs_page_id && is_page($jobs_page_id)) {
             // Enqueue Google Maps API if key is configured
@@ -675,6 +812,7 @@ class Plugin
                 [
                     'ajaxurl' => admin_url('admin-ajax.php'),
                     'nonce' => wp_create_nonce('careernest_jobs_nonce'),
+                    'pages' => $pages,
                 ]
             );
         }

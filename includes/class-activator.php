@@ -51,6 +51,8 @@ class Activator
         $definitions = [
             // slug => [title, template, is_private]
             'jobs'               => ['Job Listings', 'template-jobs.php', false],
+            'login'              => ['Login', 'template-login-register.php', false],
+            'forgot-password'    => ['Forgot Password', 'template-forgot-password.php', false],
             'employer-dashboard' => ['Employer Dashboard', 'template-employer-dashboard.php', false],
             'applicant-dashboard' => ['Applicant Dashboard', 'template-applicant-dashboard.php', false],
             'register-employer'  => ['Employer Registration', 'template-register-employer.php', false],
@@ -74,7 +76,8 @@ class Activator
     {
         $existing = get_page_by_path($slug, OBJECT, 'page');
 
-        $content  = sprintf('This page is managed by CareerNest (%s).', esc_html($slug));
+        // Use empty content for pages with custom templates
+        $content  = '';
         $status   = $is_private ? 'private' : 'publish';
 
         if ($existing && $existing instanceof \WP_Post) {

@@ -72,6 +72,25 @@ function process_employer_registration()
         $errors[] = 'Please tell us about your company.';
     }
 
+    // Validate logo upload
+    if (empty($_FILES['company_logo']['name'])) {
+        $errors[] = 'Company logo is required.';
+    } elseif ($_FILES['company_logo']['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = 'Error uploading logo. Please try again.';
+    } else {
+        // Check file size (max 2MB)
+        if ($_FILES['company_logo']['size'] > 2 * 1024 * 1024) {
+            $errors[] = 'Logo file size must be less than 2MB.';
+        }
+
+        // Check file type
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
+        $file_type = $_FILES['company_logo']['type'];
+        if (!in_array($file_type, $allowed_types)) {
+            $errors[] = 'Logo must be a JPG, PNG, or GIF file.';
+        }
+    }
+
     // Check if email already has a pending or approved request
     $existing_request = new \WP_Query([
         'post_type' => 'employer',
@@ -117,6 +136,20 @@ function process_employer_registration()
     update_post_meta($employer_id, '_industry', $industry);
     update_post_meta($employer_id, '_request_status', 'pending'); // Custom status
     update_post_meta($employer_id, '_request_date', current_time('mysql'));
+
+    // Handle logo upload
+    if (!empty($_FILES['company_logo']['name'])) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $attachment_id = media_handle_upload('company_logo', $employer_id);
+
+        if (!is_wp_error($attachment_id)) {
+            // Set as featured image
+            set_post_thumbnail($employer_id, $attachment_id);
+        }
+    }
 
     // Send confirmation email to requester using HTML template
     \CareerNest\Email\Mailer::send($email, 'employer_request_confirmation', [
@@ -197,7 +230,7 @@ $has_maps_api = $maps_api_key !== '';
                 <?php endif; ?>
 
                 <!-- Registration Form -->
-                <form method="post" class="cn-register-form" id="cn-employer-register-form">
+                <form method="post" class="cn-register-form" id="cn-employer-register-form" enctype="multipart/form-data">
                     <?php wp_nonce_field('cn_register_employer', 'cn_register_employer_nonce'); ?>
 
                     <div class="cn-form-section">
@@ -259,6 +292,20 @@ $has_maps_api = $maps_api_key !== '';
                         </div>
 
                         <div class="cn-form-field">
+                            <label for="company_logo"><?php echo esc_html__('Company Logo', 'careernest'); ?> <span
+                                    class="required">*</span></label>
+                            <input type="file" id="company_logo" name="company_logo" accept="image/*" required
+                                class="cn-input-file">
+                            <p class="cn-field-help">
+                                <?php echo esc_html__('Upload your company logo (JPG, PNG, or GIF - max 2MB)', 'careernest'); ?>
+                            </p>
+                            <div id="logo-preview" class="cn-logo-preview" style="display: none;">
+                                <img src="" alt="Logo preview"
+                                    style="max-width: 200px; max-height: 100px; margin-top: 1rem; border: 1px solid #ddd; padding: 0.5rem; background: white;">
+                            </div>
+                        </div>
+
+                        <div class="cn-form-field">
                             <label for="about_company"><?php echo esc_html__('About Your Company', 'careernest'); ?> <span
                                     class="required">*</span></label>
                             <textarea id="about_company" name="about_company" rows="4" required class="cn-input"
@@ -312,34 +359,51 @@ $has_maps_api = $maps_api_key !== '';
     </div>
 </main>
 
-<?php if ($has_maps_api && !$form_submitted): ?>
+<?php if (!$form_submitted): ?>
     <script>
-        // Initialize Google Maps Autocomplete for company location
-        function initEmployerAutocomplete() {
-            if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-                const input = document.getElementById('company_location');
-                if (input) {
-                    const autocomplete = new google.maps.places.Autocomplete(input, {
-                        types: ['(cities)'],
-                        fields: ['formatted_address', 'geometry', 'name']
-                    });
+        // Logo preview functionality
+        document.getElementById('company_logo')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('logo-preview');
+                    const img = preview.querySelector('img');
+                    img.src = event.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
-                    autocomplete.addListener('place_changed', function() {
-                        const place = autocomplete.getPlace();
-                        if (place.geometry) {
-                            input.value = place.formatted_address || place.name;
-                        }
-                    });
+        <?php if ($has_maps_api): ?>
+            // Initialize Google Maps Autocomplete for company location
+            function initEmployerAutocomplete() {
+                if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                    const input = document.getElementById('company_location');
+                    if (input) {
+                        const autocomplete = new google.maps.places.Autocomplete(input, {
+                            types: ['(cities)'],
+                            fields: ['formatted_address', 'geometry', 'name']
+                        });
+
+                        autocomplete.addListener('place_changed', function() {
+                            const place = autocomplete.getPlace();
+                            if (place.geometry) {
+                                input.value = place.formatted_address || place.name;
+                            }
+                        });
+                    }
                 }
             }
-        }
 
-        // Initialize when Maps API is ready
-        if (typeof google !== 'undefined') {
-            initEmployerAutocomplete();
-        } else {
-            window.initEmployerAutocomplete = initEmployerAutocomplete;
-        }
+            // Initialize when Maps API is ready
+            if (typeof google !== 'undefined') {
+                initEmployerAutocomplete();
+            } else {
+                window.initEmployerAutocomplete = initEmployerAutocomplete;
+            }
+        <?php endif; ?>
     </script>
 
 <?php

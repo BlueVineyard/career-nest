@@ -1,4 +1,4 @@
-/* CareerNest Login Modal Styles */
+/* CareerNest Login Modal Styles - Minimal & Clean Design */
 
 /* Login Widget (Button and Logged-in State) */
 .cn-login-widget {
@@ -8,24 +8,23 @@
 }
 
 .cn-login-btn {
-  background: #0073aa;
+  background-color: #ff8200;
+  border: 1px solid #ff8200;
   color: white;
-  border: none;
-  padding: 0.625rem 1.25rem;
-  border-radius: 4px;
-  font-size: 0.95rem;
+  font-size: 18px;
   font-weight: 500;
+  line-height: 148%;
+  border-radius: 10px;
+  padding: 10px 30px;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition: all 0.2s ease;
 }
 
 .cn-login-btn:hover {
-  background: #005a87;
+  background-color: #e67300;
+  border-color: #e67300;
   transform: translateY(-1px);
-}
-
-.cn-login-btn:active {
-  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(255, 130, 0, 0.25);
 }
 
 /* Logged-in State */
@@ -34,9 +33,9 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
-  background: #f8f9fa;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
+  background: #f7fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .cn-user-link {
@@ -44,12 +43,12 @@
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
-  color: #333;
+  color: #2d3748;
   transition: color 0.2s ease;
 }
 
 .cn-user-link:hover {
-  color: #0073aa;
+  color: #ff8200;
 }
 
 .cn-user-icon {
@@ -67,21 +66,16 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: #dc3545;
+  background: #f56565;
   color: white;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: background-color 0.2s ease;
   font-size: 1.1rem;
 }
 
 .cn-logout-btn:hover {
-  background: #c82333;
-}
-
-.cn-logout-icon {
-  display: block;
-  line-height: 1;
+  background: #e53e3e;
 }
 
 /* Modal Overlay */
@@ -91,34 +85,34 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   padding: 20px;
-  overflow-y: auto;
+  backdrop-filter: blur(4px);
 }
 
-/* Modal Content */
+/* Modal Content - Match login page card */
 .cn-modal-content {
   background: white;
-  border-radius: 8px;
-  max-width: 480px;
+  border-radius: 12px;
+  max-width: 450px;
   width: 100%;
   position: relative;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   animation: modalSlideIn 0.3s ease-out;
 }
 
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-30px);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
 }
 
@@ -129,108 +123,180 @@
   right: 1rem;
   background: transparent;
   border: none;
-  font-size: 2rem;
+  font-size: 1.75rem;
   line-height: 1;
-  color: #666;
+  color: #a0aec0;
   cursor: pointer;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .cn-modal-close:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: #f7fafc;
+  color: #2d3748;
 }
 
-.cn-modal-close:focus {
-  outline: 2px solid #0073aa;
-  outline-offset: 2px;
-}
-
-/* Modal Header */
+/* Modal Header - Match login page */
 .cn-modal-header {
-  padding: 2rem 2rem 1rem 2rem;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 2.5rem 2.5rem 1rem 2.5rem;
+  text-align: center;
 }
 
 .cn-modal-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 1.5rem;
-  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+  font-size: 1.75rem;
+  font-weight: 700;
 }
 
-/* Modal Body */
+/* Modal Body - Match login page */
 .cn-modal-body {
-  padding: 2rem;
+  padding: 0 2.5rem 2.5rem 2.5rem;
+}
+
+/* Social Login Buttons */
+.cn-social-login {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cn-social-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #4a5568;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cn-social-btn:not([disabled]):hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.cn-social-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cn-social-btn svg {
+  flex-shrink: 0;
+}
+
+/* Form Divider */
+.cn-form-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+  color: #a0aec0;
+  font-size: 0.875rem;
+}
+
+.cn-form-divider::before,
+.cn-form-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.cn-form-divider span {
+  padding: 0 1rem;
 }
 
 /* Login Messages */
 .cn-login-messages {
-  margin-bottom: 1.5rem;
-}
-
-.cn-alert {
-  padding: 0.75rem 1rem;
-  border-radius: 4px;
   margin-bottom: 1rem;
 }
 
-.cn-alert p {
-  margin: 0;
-  font-size: 0.9rem;
+.cn-alert {
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
 }
 
 .cn-alert-success {
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  color: #155724;
+  background: #f0fff4;
+  border: 1px solid #68d391;
+  color: #22543d;
 }
 
 .cn-alert-error {
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-  color: #721c24;
+  background: #fff5f5;
+  border: 1px solid #fc8181;
+  color: #c53030;
 }
 
-/* Form Fields */
+/* Form Fields - Match login page */
 .cn-form-field {
   margin-bottom: 1.25rem;
 }
 
 .cn-form-field label {
   display: block;
-  color: #333;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 0.5rem;
-  font-size: 0.95rem;
+  color: #2d3748;
+  font-size: 0.875rem;
+}
+
+.cn-input-wrapper {
+  position: relative;
+}
+
+.cn-input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0aec0;
+  pointer-events: none;
 }
 
 .cn-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 0.95rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  background: #f7fafc;
+  box-sizing: border-box;
+  color: #2d3748;
 }
 
 .cn-input:focus {
   outline: none;
-  border-color: #0073aa;
-  box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+  border-color: #ff8200;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(255, 130, 0, 0.08);
 }
 
 .cn-input::placeholder {
-  color: #999;
+  color: #a0aec0;
 }
 
-/* Remember Me Checkbox */
+/* Remember Me Checkbox - Match login page */
 .cn-remember-me {
   margin-bottom: 1.5rem;
 }
@@ -240,94 +306,169 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  font-size: 0.9rem;
-  color: #555;
+  user-select: none;
 }
 
 .cn-checkbox-label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cn-checkbox-custom {
   width: 18px;
   height: 18px;
+  border: 2px solid #cbd5e0;
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked ~ .cn-checkbox-custom {
+  border-color: #ff8200;
+  background: #ff8200;
+}
+
+input[type="checkbox"]:checked ~ .cn-checkbox-custom::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.cn-checkbox-text {
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+/* Password Toggle */
+.cn-password-wrapper {
+  position: relative;
+}
+
+.cn-password-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #a0aec0;
   cursor: pointer;
-}
-
-.cn-checkbox-label:hover {
-  color: #333;
-}
-
-/* Submit Button */
-.cn-btn-full {
-  width: 100%;
-  padding: 0.875rem;
-  font-size: 1rem;
-}
-
-.cn-btn-primary:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* Modal Footer */
-.cn-modal-footer {
-  padding: 1.5rem 2rem 2rem 2rem;
-  border-top: 1px solid #e0e0e0;
-}
-
-.cn-forgot-password {
-  color: #0073aa;
-  text-decoration: none;
-  font-size: 0.9rem;
-  display: inline-block;
-  margin-bottom: 1.5rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: color 0.2s ease;
 }
 
-.cn-forgot-password:hover {
-  color: #005a87;
+.cn-password-toggle:hover {
+  color: #ff8200;
+}
+
+/* Form Options (Remember Me + Forgot Password) */
+.cn-form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.cn-forgot-link {
+  color: #ff8200;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.cn-forgot-link:hover {
+  color: #e67300;
   text-decoration: underline;
 }
 
-/* Register Links */
+/* Submit Button - Match login page */
+.cn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.cn-btn-primary {
+  background: #ff8200;
+  color: white;
+}
+
+.cn-btn-primary:hover:not(:disabled) {
+  background: #e67300;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 130, 0, 0.25);
+}
+
+.cn-btn-full {
+  width: 100%;
+}
+
+.cn-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Register Links - Match login page */
 .cn-register-links {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
 }
 
-.cn-register-links p {
-  color: #666;
-  margin: 0 0 0.75rem 0;
-  font-size: 0.9rem;
+.cn-register-text {
+  color: #718096;
+  font-size: 0.95rem;
+  margin: 0 0 1rem 0;
 }
 
-.cn-register-options {
+.cn-register-buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
-.cn-register-link {
-  display: block;
-  padding: 0.625rem 1rem;
-  text-align: center;
-  background: #f8f9fa;
-  color: #333;
-  text-decoration: none;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+.cn-register-buttons .cn-btn {
+  width: 100%;
+  justify-content: center;
 }
 
-.cn-register-link:hover {
-  background: #e9ecef;
-  border-color: #0073aa;
-  color: #0073aa;
+.cn-btn-outline {
+  background: transparent;
+  border: 2px solid #e2e8f0;
+  color: #4a5568;
+}
+
+.cn-btn-outline:hover {
+  background: #f7fafc;
+  border-color: #ff8200;
+  color: #ff8200;
 }
 
 /* Responsive Design */
 @media (max-width: 576px) {
   .cn-modal-content {
     max-width: 100%;
-    margin: 0;
     border-radius: 0;
   }
 
@@ -337,27 +478,26 @@
   }
 
   .cn-modal-header {
-    padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+    padding: 2rem 1.5rem 1rem 1.5rem;
   }
 
   .cn-modal-header h2 {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
   }
 
   .cn-modal-body {
-    padding: 1.5rem;
+    padding: 0 1.5rem 2rem 1.5rem;
   }
 
   .cn-modal-footer {
-    padding: 1rem 1.5rem 1.5rem 1.5rem;
+    padding: 1.5rem;
   }
 
   .cn-modal-close {
-    top: 0.75rem;
-    right: 0.75rem;
+    top: 1rem;
+    right: 1rem;
   }
 
-  /* Logged-in widget responsive */
   .cn-login-widget.cn-logged-in {
     padding: 0.5rem 0.75rem;
   }
@@ -375,17 +515,19 @@
 .cn-modal-close:focus-visible,
 .cn-login-btn:focus-visible,
 .cn-input:focus-visible,
-.cn-btn-primary:focus-visible {
-  outline: 2px solid #0073aa;
+.cn-btn-primary:focus-visible,
+.cn-register-link:focus-visible {
+  outline: 2px solid #ff8200;
   outline-offset: 2px;
 }
 
 /* Loading State */
-.cn-btn-primary:disabled {
+.cn-btn-primary.loading {
   position: relative;
+  pointer-events: none;
 }
 
-.cn-btn-primary:disabled::after {
+.cn-btn-primary.loading::after {
   content: "";
   position: absolute;
   width: 16px;
@@ -405,30 +547,13 @@
   }
 }
 
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-  .cn-modal-overlay {
-    background: rgba(0, 0, 0, 0.85);
-  }
-
-  .cn-input:focus {
-    outline: 3px solid #0073aa;
-    outline-offset: 2px;
-  }
-}
-
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
   .cn-modal-content {
     animation: none;
   }
 
-  .cn-login-btn,
-  .cn-user-link,
-  .cn-logout-btn,
-  .cn-register-link,
-  .cn-forgot-password,
-  .cn-input {
-    transition: none;
+  * {
+    transition: none !important;
   }
 }

@@ -55,6 +55,14 @@ class Settings
             'capability' => 'manage_careernest',
         ]);
 
+        // Pages Section
+        add_settings_section(
+            'careernest_pages_section',
+            __('CareerNest Pages', 'careernest'),
+            [$this, 'render_pages_section_description'],
+            'careernest_settings'
+        );
+
         // General Section
         add_settings_section(
             'careernest_general_section',
@@ -331,6 +339,73 @@ class Settings
             'careernest_employer_dash_section',
             ['option_key' => 'welcome_message', 'label_for' => 'welcome_message', 'description' => 'Custom message shown at top of employer dashboard (leave empty for default)']
         );
+    }
+
+    /**
+     * Render pages section description
+     */
+    public function render_pages_section_description(): void
+    {
+        $pages = get_option('careernest_pages', []);
+
+        echo '<p class="description">' . esc_html__('These pages were automatically created by CareerNest. You can view and edit them below.', 'careernest') . '</p>';
+
+        if (empty($pages)) {
+            echo '<div class="notice notice-warning inline"><p>' . esc_html__('No pages found. Try deactivating and reactivating the plugin.', 'careernest') . '</p></div>';
+            return;
+        }
+
+        echo '<table class="wp-list-table widefat fixed striped" style="margin-top: 1rem;">';
+        echo '<thead><tr>';
+        echo '<th style="width: 25%;">' . esc_html__('Page', 'careernest') . '</th>';
+        echo '<th style="width: 40%;">' . esc_html__('URL', 'careernest') . '</th>';
+        echo '<th style="width: 15%;">' . esc_html__('Status', 'careernest') . '</th>';
+        echo '<th style="width: 20%;">' . esc_html__('Actions', 'careernest') . '</th>';
+        echo '</tr></thead><tbody>';
+
+        $page_labels = [
+            'jobs' => __('Job Listings', 'careernest'),
+            'login' => __('Login', 'careernest'),
+            'forgot-password' => __('Forgot Password', 'careernest'),
+            'employer-dashboard' => __('Employer Dashboard', 'careernest'),
+            'applicant-dashboard' => __('Applicant Dashboard', 'careernest'),
+            'register-employer' => __('Employer Registration', 'careernest'),
+            'register-employee' => __('Employee Registration', 'careernest'),
+            'register-applicant' => __('Applicant Registration', 'careernest'),
+            'apply-job' => __('Apply for Job', 'careernest'),
+        ];
+
+        foreach ($pages as $slug => $page_id) {
+            $page_id = (int) $page_id;
+            $page = get_post($page_id);
+
+            if (!$page) {
+                continue;
+            }
+
+            $label = isset($page_labels[$slug]) ? $page_labels[$slug] : ucwords(str_replace('-', ' ', $slug));
+            $permalink = get_permalink($page_id);
+            $edit_link = get_edit_post_link($page_id);
+            $status = get_post_status($page_id);
+            $status_label = $status === 'publish' ? '<span style="color: #46b450;">●</span> ' . __('Published', 'careernest') : '<span style="color: #dc3232;">●</span> ' . ucfirst($status);
+
+            echo '<tr>';
+            echo '<td><strong>' . esc_html($label) . '</strong></td>';
+            echo '<td><code>' . esc_html($permalink) . '</code></td>';
+            echo '<td>' . $status_label . '</td>';
+            echo '<td>';
+            echo '<a href="' . esc_url($permalink) . '" class="button button-small" target="_blank">' . esc_html__('View', 'careernest') . '</a> ';
+            echo '<a href="' . esc_url($edit_link) . '" class="button button-small">' . esc_html__('Edit', 'careernest') . '</a>';
+            echo '</td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody></table>';
+
+        echo '<p class="description" style="margin-top: 1rem;">';
+        echo '<strong>' . esc_html__('Note:', 'careernest') . '</strong> ';
+        echo esc_html__('These pages are automatically managed by CareerNest. Avoid deleting them as they are required for the plugin to function properly.', 'careernest');
+        echo '</p>';
     }
 
     public function sanitize_options($opts)

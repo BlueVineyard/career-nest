@@ -16,6 +16,7 @@ class Ajax_Handler
         add_action('wp_ajax_careernest_track_external_click', [$this, 'track_external_click']);
         add_action('wp_ajax_nopriv_careernest_track_external_click', [$this, 'track_external_click']);
         add_action('wp_ajax_careernest_toggle_bookmark', [$this, 'toggle_bookmark']);
+        add_action('wp_ajax_nopriv_careernest_toggle_bookmark', [$this, 'toggle_bookmark']);
     }
 
     /**

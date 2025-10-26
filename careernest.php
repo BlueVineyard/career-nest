@@ -40,6 +40,8 @@ require_once CAREERNEST_DIR . 'includes/Security/class-caps.php';
 require_once CAREERNEST_DIR . 'includes/Shortcodes/class-login.php';
 require_once CAREERNEST_DIR . 'includes/Shortcodes/class-job-search-widget.php';
 require_once CAREERNEST_DIR . 'includes/Shortcodes/class-employer-carousel.php';
+require_once CAREERNEST_DIR . 'includes/Shortcodes/class-job-categories.php';
+require_once CAREERNEST_DIR . 'includes/Shortcodes/class-jobs-by-category.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employer-requests.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employee-requests.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-deletion-requests.php';
@@ -50,6 +52,8 @@ require_once CAREERNEST_DIR . 'includes/class-job-ajax-handler.php';
 require_once CAREERNEST_DIR . 'includes/class-applicant-notifications.php';
 require_once CAREERNEST_DIR . 'includes/class-profile-helper.php';
 require_once CAREERNEST_DIR . 'includes/class-applicant-ajax-handler.php';
+require_once CAREERNEST_DIR . 'includes/class-auth-ajax-handler.php';
+require_once CAREERNEST_DIR . 'includes/class-team-ajax-handler.php';
 
 // Hooks.
 register_activation_hook(__FILE__, ['\\CareerNest\\Activator', 'activate']);
@@ -80,6 +84,16 @@ add_action('plugins_loaded', function () {
     // Initialize Applicant AJAX Handler
     if (class_exists('\\CareerNest\\Applicant_Ajax_Handler')) {
         new \CareerNest\Applicant_Ajax_Handler();
+    }
+
+    // Initialize Auth AJAX Handler
+    if (class_exists('\\CareerNest\\Auth_Ajax_Handler')) {
+        new \CareerNest\Auth_Ajax_Handler();
+    }
+
+    // Initialize Team AJAX Handler
+    if (class_exists('\\CareerNest\\Team_Ajax_Handler')) {
+        new \CareerNest\Team_Ajax_Handler();
     }
 
     // Hook admin and security subsystems.

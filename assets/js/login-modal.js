@@ -155,4 +155,24 @@
   function clearMessages() {
     $loginMessages.empty();
   }
+
+  /**
+   * Password toggle functionality
+   */
+  $loginModal.on("click", ".cn-password-toggle", function () {
+    const $wrapper = $(this).closest(".cn-password-wrapper");
+    const $input = $wrapper.find("input");
+    const $eyeOpen = $(this).find(".cn-eye-open");
+    const $eyeClosed = $(this).find(".cn-eye-closed");
+
+    if ($input.attr("type") === "password") {
+      $input.attr("type", "text");
+      $eyeOpen.hide();
+      $eyeClosed.show();
+    } else {
+      $input.attr("type", "password");
+      $eyeOpen.show();
+      $eyeClosed.hide();
+    }
+  });
 })(jQuery);
