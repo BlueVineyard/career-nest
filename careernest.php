@@ -38,6 +38,8 @@ require_once CAREERNEST_DIR . 'includes/Admin/class-users.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-settings.php';
 require_once CAREERNEST_DIR . 'includes/Security/class-caps.php';
 require_once CAREERNEST_DIR . 'includes/Shortcodes/class-login.php';
+require_once CAREERNEST_DIR . 'includes/Shortcodes/class-job-search-widget.php';
+require_once CAREERNEST_DIR . 'includes/Shortcodes/class-employer-carousel.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employer-requests.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-employee-requests.php';
 require_once CAREERNEST_DIR . 'includes/Admin/class-deletion-requests.php';

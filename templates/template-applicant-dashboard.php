@@ -483,124 +483,330 @@ if ($applicant_id && ($skills || $work_types)) {
         <div class="cn-dashboard-content">
             <!-- Left Column -->
             <div class="cn-dashboard-main">
-                <!-- Recent Applications -->
-                <div class="cn-dashboard-section">
-                    <div class="cn-section-header">
-                        <h2><?php echo esc_html__('Your Applications', 'careernest'); ?></h2>
+                <!-- Dashboard Tabs -->
+                <div class="cn-dashboard-tabs">
+                    <button class="cn-tab-btn cn-tab-active" data-tab="applications">
+                        <?php echo esc_html__('Applications', 'careernest'); ?>
+                        <span class="cn-tab-count"><?php echo esc_html($total_applications); ?></span>
+                    </button>
+                    <button class="cn-tab-btn" data-tab="bookmarks">
                         <?php
-                        $pages = get_option('careernest_pages', []);
-                        $jobs_page_id = isset($pages['jobs']) ? (int) $pages['jobs'] : 0;
-                        if ($jobs_page_id && get_post_status($jobs_page_id) === 'publish'):
+                        $bookmarked_jobs = get_user_meta($current_user->ID, '_bookmarked_jobs', true);
+                        $bookmarked_jobs = is_array($bookmarked_jobs) ? $bookmarked_jobs : [];
+                        $bookmarks_count = count($bookmarked_jobs);
+                        echo esc_html__('Bookmarks', 'careernest');
                         ?>
-                            <a href="<?php echo esc_url(get_permalink($jobs_page_id)); ?>"
-                                class="cn-btn cn-btn-primary">Browse Jobs</a>
-                        <?php endif; ?>
-                    </div>
+                        <span class="cn-tab-count"><?php echo esc_html($bookmarks_count); ?></span>
+                    </button>
+                </div>
 
-                    <?php if ($applications_query->have_posts()): ?>
-                        <div class="cn-applications-list">
-                            <?php while ($applications_query->have_posts()): $applications_query->the_post();
-                                $app_id = get_the_ID();
-                                $job_id = get_post_meta($app_id, '_job_id', true);
-                                $app_status = get_post_meta($app_id, '_app_status', true) ?: 'new';
-                                $app_date = get_post_meta($app_id, '_application_date', true);
-                                $resume_id = get_post_meta($app_id, '_resume_id', true);
-
-                                $job_title = $job_id ? get_the_title($job_id) : 'Unknown Job';
-                                $employer_id = $job_id ? get_post_meta($job_id, '_employer_id', true) : 0;
-                                $company_name = $employer_id ? get_the_title($employer_id) : '';
-
-                                $status_labels = [
-                                    'new' => 'New',
-                                    'interviewed' => 'Interviewed',
-                                    'offer_extended' => 'Offer Extended',
-                                    'hired' => 'Hired',
-                                    'rejected' => 'Rejected',
-                                    'archived' => 'Archived',
-                                    'withdrawn' => 'Withdrawn'
-                                ];
-
-                                $status_colors = [
-                                    'new' => '#0073aa',
-                                    'interviewed' => '#f39c12',
-                                    'offer_extended' => '#27ae60',
-                                    'hired' => '#10B981',
-                                    'rejected' => '#e74c3c',
-                                    'archived' => '#95a5a6',
-                                    'withdrawn' => '#6c757d'
-                                ];
+                <!-- Applications Tab Content -->
+                <div class="cn-tab-content cn-tab-content-active" data-tab-content="applications">
+                    <!-- Recent Applications -->
+                    <div class="cn-dashboard-section">
+                        <div class="cn-section-header">
+                            <h2><?php echo esc_html__('Your Applications', 'careernest'); ?></h2>
+                            <?php
+                            $pages = get_option('careernest_pages', []);
+                            $jobs_page_id = isset($pages['jobs']) ? (int) $pages['jobs'] : 0;
+                            if ($jobs_page_id && get_post_status($jobs_page_id) === 'publish'):
                             ?>
-                                <div class="cn-application-card">
-                                    <div class="cn-app-header">
-                                        <div class="cn-app-job-info">
-                                            <h3>
-                                                <?php if ($job_id && get_post_status($job_id) === 'publish'): ?>
-                                                    <a
-                                                        href="<?php echo esc_url(get_permalink($job_id)); ?>"><?php echo esc_html($job_title); ?></a>
-                                                <?php else: ?>
-                                                    <?php echo esc_html($job_title); ?>
+                                <a href="<?php echo esc_url(get_permalink($jobs_page_id)); ?>"
+                                    class="cn-btn cn-btn-primary">Browse Jobs</a>
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if ($applications_query->have_posts()): ?>
+                            <div class="cn-applications-list">
+                                <?php while ($applications_query->have_posts()): $applications_query->the_post();
+                                    $app_id = get_the_ID();
+                                    $job_id = get_post_meta($app_id, '_job_id', true);
+                                    $app_status = get_post_meta($app_id, '_app_status', true) ?: 'new';
+                                    $app_date = get_post_meta($app_id, '_application_date', true);
+                                    $resume_id = get_post_meta($app_id, '_resume_id', true);
+
+                                    $job_title = $job_id ? get_the_title($job_id) : 'Unknown Job';
+                                    $employer_id = $job_id ? get_post_meta($job_id, '_employer_id', true) : 0;
+                                    $company_name = $employer_id ? get_the_title($employer_id) : '';
+
+                                    $status_labels = [
+                                        'new' => 'New',
+                                        'interviewed' => 'Interviewed',
+                                        'offer_extended' => 'Offer Extended',
+                                        'hired' => 'Hired',
+                                        'rejected' => 'Rejected',
+                                        'archived' => 'Archived',
+                                        'withdrawn' => 'Withdrawn'
+                                    ];
+
+                                    $status_colors = [
+                                        'new' => '#0073aa',
+                                        'interviewed' => '#f39c12',
+                                        'offer_extended' => '#27ae60',
+                                        'hired' => '#10B981',
+                                        'rejected' => '#e74c3c',
+                                        'archived' => '#95a5a6',
+                                        'withdrawn' => '#6c757d'
+                                    ];
+                                ?>
+                                    <div class="cn-application-card">
+                                        <div class="cn-app-header">
+                                            <div class="cn-app-job-info">
+                                                <h3>
+                                                    <?php if ($job_id && get_post_status($job_id) === 'publish'): ?>
+                                                        <a
+                                                            href="<?php echo esc_url(get_permalink($job_id)); ?>"><?php echo esc_html($job_title); ?></a>
+                                                    <?php else: ?>
+                                                        <?php echo esc_html($job_title); ?>
+                                                    <?php endif; ?>
+                                                </h3>
+                                                <?php if ($company_name): ?>
+                                                    <p class="cn-app-company"><?php echo esc_html($company_name); ?></p>
                                                 <?php endif; ?>
-                                            </h3>
-                                            <?php if ($company_name): ?>
-                                                <p class="cn-app-company"><?php echo esc_html($company_name); ?></p>
+                                            </div>
+                                            <div class="cn-app-status">
+                                                <span class="cn-status-badge"
+                                                    style="background-color: <?php echo esc_attr($status_colors[$app_status] ?? '#666'); ?>">
+                                                    <?php echo esc_html($status_labels[$app_status] ?? 'Unknown'); ?>
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="cn-app-meta">
+                                            <span class="cn-app-date">Applied:
+                                                <?php echo esc_html($app_date ? date('F j, Y', strtotime($app_date)) : get_the_date('F j, Y', $app_id)); ?></span>
+                                            <?php if ($resume_id): ?>
+                                                <a href="<?php echo esc_url(wp_get_attachment_url($resume_id)); ?>" target="_blank"
+                                                    class="cn-app-resume">📄 View Resume</a>
                                             <?php endif; ?>
                                         </div>
-                                        <div class="cn-app-status">
-                                            <span class="cn-status-badge"
-                                                style="background-color: <?php echo esc_attr($status_colors[$app_status] ?? '#666'); ?>">
-                                                <?php echo esc_html($status_labels[$app_status] ?? 'Unknown'); ?>
-                                            </span>
+
+                                        <div class="cn-app-actions">
+                                            <?php if (current_user_can('edit_post', $app_id)): ?>
+                                                <a href="<?php echo esc_url(get_edit_post_link($app_id)); ?>"
+                                                    class="cn-btn cn-btn-small cn-btn-outline">View Details</a>
+                                            <?php endif; ?>
+                                            <?php
+                                            // Allow withdrawal for applications that haven't been hired or rejected
+                                            if (!in_array($app_status, ['hired', 'rejected', 'withdrawn'])):
+                                            ?>
+                                                <button type="button" class="cn-btn cn-btn-small cn-btn-danger cn-withdraw-btn"
+                                                    data-application-id="<?php echo esc_attr($app_id); ?>"
+                                                    data-job-title="<?php echo esc_attr($job_title); ?>">
+                                                    Withdraw
+                                                </button>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
-
-                                    <div class="cn-app-meta">
-                                        <span class="cn-app-date">Applied:
-                                            <?php echo esc_html($app_date ? date('F j, Y', strtotime($app_date)) : get_the_date('F j, Y', $app_id)); ?></span>
-                                        <?php if ($resume_id): ?>
-                                            <a href="<?php echo esc_url(wp_get_attachment_url($resume_id)); ?>" target="_blank"
-                                                class="cn-app-resume">📄 View Resume</a>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <div class="cn-app-actions">
-                                        <?php if (current_user_can('edit_post', $app_id)): ?>
-                                            <a href="<?php echo esc_url(get_edit_post_link($app_id)); ?>"
-                                                class="cn-btn cn-btn-small cn-btn-outline">View Details</a>
-                                        <?php endif; ?>
-                                        <?php
-                                        // Allow withdrawal for applications that haven't been hired or rejected
-                                        if (!in_array($app_status, ['hired', 'rejected', 'withdrawn'])):
-                                        ?>
-                                            <button type="button" class="cn-btn cn-btn-small cn-btn-danger cn-withdraw-btn"
-                                                data-application-id="<?php echo esc_attr($app_id); ?>"
-                                                data-job-title="<?php echo esc_attr($job_title); ?>">
-                                                Withdraw
-                                            </button>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        </div>
-                        <?php wp_reset_postdata(); ?>
-                    <?php else: ?>
-                        <div class="cn-empty-state">
-                            <div class="cn-empty-icon">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M20 6L9 17L4 12" stroke="#ccc" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-                                </svg>
+                                <?php endwhile; ?>
                             </div>
-                            <h3><?php echo esc_html__('No Applications Yet', 'careernest'); ?></h3>
-                            <p><?php echo esc_html__('You haven\'t applied for any jobs yet. Start browsing available positions!', 'careernest'); ?>
-                            </p>
+                            <?php wp_reset_postdata(); ?>
+                        <?php else: ?>
+                            <div class="cn-empty-state">
+                                <div class="cn-empty-icon">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 6L9 17L4 12" stroke="#ccc" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                </div>
+                                <h3><?php echo esc_html__('No Applications Yet', 'careernest'); ?></h3>
+                                <p><?php echo esc_html__('You haven\'t applied for any jobs yet. Start browsing available positions!', 'careernest'); ?>
+                                </p>
+                                <?php if ($jobs_page_id && get_post_status($jobs_page_id) === 'publish'): ?>
+                                    <a href="<?php echo esc_url(get_permalink($jobs_page_id)); ?>"
+                                        class="cn-btn cn-btn-primary">Browse Jobs</a>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- End Applications Tab Content -->
+
+                <!-- Bookmarks Tab Content -->
+                <div class="cn-tab-content" data-tab-content="bookmarks" style="display: none;">
+                    <div class="cn-dashboard-section">
+                        <div class="cn-section-header">
+                            <h2><?php echo esc_html__('Bookmarked Jobs', 'careernest'); ?></h2>
                             <?php if ($jobs_page_id && get_post_status($jobs_page_id) === 'publish'): ?>
                                 <a href="<?php echo esc_url(get_permalink($jobs_page_id)); ?>"
                                     class="cn-btn cn-btn-primary">Browse Jobs</a>
                             <?php endif; ?>
                         </div>
-                    <?php endif; ?>
+
+                        <?php
+                        // Get user's bookmarked jobs
+                        $bookmarked_jobs = get_user_meta($current_user->ID, '_bookmarked_jobs', true);
+                        $bookmarked_jobs = is_array($bookmarked_jobs) ? $bookmarked_jobs : [];
+
+                        if (!empty($bookmarked_jobs)):
+                            // Query bookmarked jobs
+                            $bookmarks_query = new WP_Query([
+                                'post_type' => 'job_listing',
+                                'post_status' => 'publish',
+                                'posts_per_page' => -1,
+                                'post__in' => $bookmarked_jobs,
+                                'orderby' => 'post__in', // Maintain bookmark order
+                            ]);
+
+                            if ($bookmarks_query->have_posts()):
+                        ?>
+                                <div class="cn-bookmarks-list">
+                                    <?php while ($bookmarks_query->have_posts()): $bookmarks_query->the_post();
+                                        $job_id = get_the_ID();
+                                        $employer_id = get_post_meta($job_id, '_employer_id', true);
+                                        $company_name = $employer_id ? get_the_title($employer_id) : '';
+                                        $job_location = get_post_meta($job_id, '_job_location', true);
+                                        $job_type = get_post_meta($job_id, '_job_type', true);
+                                        $closing_date = get_post_meta($job_id, '_closing_date', true);
+
+                                        // Check if user has already applied to this job
+                                        $application_check = new WP_Query([
+                                            'post_type' => 'job_application',
+                                            'post_status' => 'publish',
+                                            'posts_per_page' => 1,
+                                            'meta_query' => [
+                                                'relation' => 'AND',
+                                                [
+                                                    'key' => '_job_id',
+                                                    'value' => $job_id,
+                                                    'compare' => '='
+                                                ],
+                                                [
+                                                    'key' => '_user_id',
+                                                    'value' => $current_user->ID,
+                                                    'compare' => '='
+                                                ]
+                                            ]
+                                        ]);
+                                        $has_applied = $application_check->have_posts();
+                                        if ($has_applied) {
+                                            $application_post = $application_check->posts[0];
+                                            $app_status = get_post_meta($application_post->ID, '_app_status', true) ?: 'new';
+                                        }
+                                        wp_reset_postdata();
+
+                                        // Calculate days until closing
+                                        $days_until_closing = '';
+                                        if ($closing_date) {
+                                            $today = new DateTime();
+                                            $closing = new DateTime($closing_date);
+                                            $diff = $today->diff($closing);
+                                            if ($diff->invert) {
+                                                $days_until_closing = 'Expired';
+                                            } else {
+                                                $days_until_closing = $diff->days . ' days left';
+                                            }
+                                        }
+                                    ?>
+                                        <div class="cn-bookmark-card" data-job-id="<?php echo esc_attr($job_id); ?>">
+                                            <div class="cn-bookmark-header">
+                                                <div class="cn-bookmark-job-info">
+                                                    <h3>
+                                                        <a href="<?php echo esc_url(get_permalink($job_id)); ?>">
+                                                            <?php echo esc_html(get_the_title($job_id)); ?>
+                                                        </a>
+                                                    </h3>
+                                                    <?php if ($company_name): ?>
+                                                        <p class="cn-bookmark-company">
+                                                            <?php echo esc_html($company_name); ?>
+                                                            <?php if ($job_type): ?>
+                                                                <span class="cn-bookmark-type">|
+                                                                    <?php echo esc_html(ucfirst(str_replace('_', ' ', $job_type))); ?></span>
+                                                            <?php endif; ?>
+                                                        </p>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <?php if ($has_applied): ?>
+                                                    <div class="cn-bookmark-status">
+                                                        <span class="cn-applied-badge">✓ Applied</span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <div class="cn-bookmark-meta">
+                                                <?php if ($job_location): ?>
+                                                    <span class="cn-bookmark-location">📍 <?php echo esc_html($job_location); ?></span>
+                                                <?php endif; ?>
+                                                <?php if ($closing_date): ?>
+                                                    <span class="cn-bookmark-expiry">
+                                                        <?php echo esc_html($days_until_closing); ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <div class="cn-bookmark-actions">
+                                                <?php if ($has_applied): ?>
+                                                    <span class="cn-bookmark-app-status">
+                                                        Status: <strong><?php
+                                                                        $status_labels = [
+                                                                            'new' => 'Under Review',
+                                                                            'interviewed' => 'Interviewed',
+                                                                            'offer_extended' => 'Offer Extended',
+                                                                            'hired' => 'Hired',
+                                                                            'rejected' => 'Not Selected',
+                                                                            'archived' => 'Archived',
+                                                                            'withdrawn' => 'Withdrawn'
+                                                                        ];
+                                                                        echo esc_html($status_labels[$app_status] ?? 'Unknown');
+                                                                        ?></strong>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <a href="<?php echo esc_url(get_permalink($job_id)); ?>"
+                                                        class="cn-btn cn-btn-small cn-btn-primary">
+                                                        Apply Now
+                                                    </a>
+                                                <?php endif; ?>
+                                                <button type="button"
+                                                    class="cn-btn cn-btn-small cn-btn-outline cn-remove-bookmark-btn"
+                                                    data-job-id="<?php echo esc_attr($job_id); ?>"
+                                                    data-job-title="<?php echo esc_attr(get_the_title($job_id)); ?>">
+                                                    Remove Bookmark
+                                                </button>
+                                            </div>
+                                        </div>
+                                    <?php endwhile; ?>
+                                </div>
+                                <?php wp_reset_postdata(); ?>
+                            <?php else: ?>
+                                <div class="cn-empty-state">
+                                    <div class="cn-empty-icon">
+                                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="#ccc"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                    <h3><?php echo esc_html__('No Bookmarked Jobs', 'careernest'); ?></h3>
+                                    <p><?php echo esc_html__('Jobs you bookmark will appear here for easy access.', 'careernest'); ?>
+                                    </p>
+                                    <?php if ($jobs_page_id && get_post_status($jobs_page_id) === 'publish'): ?>
+                                        <a href="<?php echo esc_url(get_permalink($jobs_page_id)); ?>"
+                                            class="cn-btn cn-btn-primary">Browse Jobs</a>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="cn-empty-state">
+                                <div class="cn-empty-icon">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="#ccc"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </div>
+                                <h3><?php echo esc_html__('No Bookmarked Jobs', 'careernest'); ?></h3>
+                                <p><?php echo esc_html__('Jobs you bookmark will appear here for easy access.', 'careernest'); ?>
+                                </p>
+                                <?php if ($jobs_page_id && get_post_status($jobs_page_id) === 'publish'): ?>
+                                    <a href="<?php echo esc_url(get_permalink($jobs_page_id)); ?>"
+                                        class="cn-btn cn-btn-primary">Browse Jobs</a>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
+                <!-- End Bookmarks Tab Content -->
 
                 <!-- Profile Sections -->
                 <!-- Personal Summary -->

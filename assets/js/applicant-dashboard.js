@@ -116,7 +116,169 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Application withdrawal functionality
   initializeWithdrawalButtons();
+
+  // Tab switching functionality
+  initializeTabSwitching();
+
+  // Bookmark removal functionality
+  initializeBookmarkRemoval();
 });
+
+/**
+ * Initialize tab switching functionality
+ */
+function initializeTabSwitching() {
+  const tabButtons = document.querySelectorAll(".cn-tab-btn");
+  const tabContents = document.querySelectorAll(".cn-tab-content");
+
+  tabButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const targetTab = this.getAttribute("data-tab");
+
+      // Remove active class from all buttons and contents
+      tabButtons.forEach((btn) => btn.classList.remove("cn-tab-active"));
+      tabContents.forEach((content) => {
+        content.classList.remove("cn-tab-content-active");
+        content.style.display = "none";
+      });
+
+      // Add active class to clicked button
+      this.classList.add("cn-tab-active");
+
+      // Show target content
+      const targetContent = document.querySelector(
+        `[data-tab-content="${targetTab}"]`
+      );
+      if (targetContent) {
+        targetContent.classList.add("cn-tab-content-active");
+        targetContent.style.display = "block";
+      }
+    });
+  });
+}
+
+/**
+ * Initialize bookmark removal functionality
+ */
+function initializeBookmarkRemoval() {
+  const removeButtons = document.querySelectorAll(".cn-remove-bookmark-btn");
+
+  removeButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      const jobId = this.getAttribute("data-job-id");
+      const jobTitle = this.getAttribute("data-job-title");
+
+      if (!jobId) {
+        return;
+      }
+
+      // Confirm removal
+      if (
+        !confirm(
+          `Are you sure you want to remove "${jobTitle}" from your bookmarks?`
+        )
+      ) {
+        return;
+      }
+
+      // Disable button during request
+      button.disabled = true;
+      button.textContent = "Removing...";
+
+      // Send AJAX request using the same nonce as jobs page
+      fetch(careerNestJobs.ajaxurl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          action: "careernest_toggle_bookmark",
+          job_id: jobId,
+          nonce: careerNestJobs.nonce,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            // Remove the bookmark card from the DOM
+            const bookmarkCard = button.closest(".cn-bookmark-card");
+            if (bookmarkCard) {
+              bookmarkCard.style.opacity = "0";
+              bookmarkCard.style.transition = "opacity 0.3s ease";
+              setTimeout(function () {
+                bookmarkCard.remove();
+
+                // Check if there are any bookmarks left
+                const bookmarksContainer =
+                  document.querySelector(".cn-bookmarks-list");
+                const remainingBookmarks =
+                  bookmarksContainer?.querySelectorAll(".cn-bookmark-card");
+
+                if (!remainingBookmarks || remainingBookmarks.length === 0) {
+                  // Show empty state
+                  const bookmarksSection = document.querySelector(
+                    '[data-tab-content="bookmarks"] .cn-dashboard-section'
+                  );
+                  if (bookmarksSection && bookmarksContainer) {
+                    bookmarksContainer.remove();
+
+                    // Create and insert empty state
+                    const emptyState = document.createElement("div");
+                    emptyState.className = "cn-empty-state";
+                    emptyState.innerHTML = `
+                      <div class="cn-empty-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                      <h3>No Bookmarked Jobs</h3>
+                      <p>Jobs you bookmark will appear here for easy access.</p>
+                    `;
+
+                    // Find jobs page link if it exists in header
+                    const browseJobsLink = document.querySelector(
+                      '[data-tab-content="bookmarks"] .cn-section-header .cn-btn-primary'
+                    );
+                    if (browseJobsLink) {
+                      const browseBtn = browseJobsLink.cloneNode(true);
+                      emptyState.appendChild(browseBtn);
+                    }
+
+                    bookmarksSection.appendChild(emptyState);
+                  }
+                }
+
+                // Update bookmark count in tab
+                const bookmarksTab = document.querySelector(
+                  '[data-tab="bookmarks"] .cn-tab-count'
+                );
+                if (bookmarksTab) {
+                  const currentCount = parseInt(bookmarksTab.textContent) || 0;
+                  bookmarksTab.textContent = Math.max(0, currentCount - 1);
+                }
+              }, 300);
+            }
+          } else {
+            // Show error message
+            alert(
+              data.data?.message ||
+                "Failed to remove bookmark. Please try again."
+            );
+            // Re-enable button
+            button.disabled = false;
+            button.textContent = "Remove Bookmark";
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("An error occurred. Please try again.");
+          // Re-enable button
+          button.disabled = false;
+          button.textContent = "Remove Bookmark";
+        });
+    });
+  });
+}
 
 /**
  * Initialize withdrawal button functionality

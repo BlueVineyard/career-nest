@@ -63,6 +63,12 @@ class Plugin
     {
         // Register Login shortcode
         \CareerNest\Shortcodes\Login::register();
+
+        // Register Job Search Widget shortcode
+        \CareerNest\Shortcodes\JobSearchWidget::register();
+
+        // Register Employer Carousel shortcode
+        \CareerNest\Shortcodes\EmployerCarousel::register();
     }
 
     public function hide_managed_pages_in_admin(\WP_Query $query): void
@@ -489,13 +495,23 @@ class Plugin
                 true
             );
 
-            // Localize script with AJAX URL and nonce
+            // Localize script with AJAX URL and nonce for withdrawal
             wp_localize_script(
                 'careernest-applicant-dashboard',
                 'careerNestWithdraw',
                 [
                     'ajaxurl' => admin_url('admin-ajax.php'),
                     'nonce' => wp_create_nonce('cn_withdraw_application'),
+                ]
+            );
+
+            // Localize script with AJAX URL and nonce for bookmarks
+            wp_localize_script(
+                'careernest-applicant-dashboard',
+                'careerNestJobs',
+                [
+                    'ajaxurl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('careernest_jobs_nonce'),
                 ]
             );
         }

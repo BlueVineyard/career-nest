@@ -15,6 +15,7 @@ class Ajax_Handler
         add_action('wp_ajax_nopriv_careernest_filter_jobs', [$this, 'filter_jobs']);
         add_action('wp_ajax_careernest_track_external_click', [$this, 'track_external_click']);
         add_action('wp_ajax_nopriv_careernest_track_external_click', [$this, 'track_external_click']);
+        add_action('wp_ajax_careernest_toggle_bookmark', [$this, 'toggle_bookmark']);
     }
 
     /**
@@ -43,6 +44,59 @@ class Ajax_Handler
         ]);
     }
 
+    /**
+     * Toggle job bookmark for applicants
+     */
+    public function toggle_bookmark()
+    {
+        // Verify nonce
+        check_ajax_referer('careernest_jobs_nonce', 'nonce');
+
+        // Check if user is logged in
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'Please log in to bookmark jobs', 'require_login' => true]);
+        }
+
+        // Check if user is an applicant
+        $user = wp_get_current_user();
+        if (!in_array('applicant', $user->roles)) {
+            wp_send_json_error(['message' => 'Only applicants can bookmark jobs', 'require_login' => true]);
+        }
+
+        $job_id = isset($_POST['job_id']) ? absint($_POST['job_id']) : 0;
+
+        if (!$job_id || get_post_type($job_id) !== 'job_listing') {
+            wp_send_json_error(['message' => 'Invalid job ID']);
+        }
+
+        $user_id = get_current_user_id();
+
+        // Get current bookmarks
+        $bookmarks = get_user_meta($user_id, '_bookmarked_jobs', true);
+        $bookmarks = $bookmarks ? (array) $bookmarks : [];
+
+        // Toggle bookmark
+        if (in_array($job_id, $bookmarks)) {
+            // Remove bookmark
+            $bookmarks = array_diff($bookmarks, [$job_id]);
+            $is_bookmarked = false;
+            $message = 'Bookmark removed';
+        } else {
+            // Add bookmark
+            $bookmarks[] = $job_id;
+            $is_bookmarked = true;
+            $message = 'Job bookmarked!';
+        }
+
+        // Update user meta
+        update_user_meta($user_id, '_bookmarked_jobs', array_values($bookmarks));
+
+        wp_send_json_success([
+            'is_bookmarked' => $is_bookmarked,
+            'message' => $message
+        ]);
+    }
+
     public function filter_jobs()
     {
         // Verify nonce
@@ -57,7 +111,7 @@ class Ajax_Handler
         $min_salary = isset($_POST['min_salary']) ? absint($_POST['min_salary']) : 0;
         $max_salary = isset($_POST['max_salary']) ? absint($_POST['max_salary']) : 200000;
         $date_posted = isset($_POST['date_posted']) ? sanitize_text_field(wp_unslash($_POST['date_posted'])) : '';
-        $sort_by = isset($_POST['sort']) ? sanitize_text_field(wp_unslash($_POST['sort'])) : 'date_desc';
+        $sort_by = isset($_POST['sort']) ? sanitize_text_field(wp_unslash($_POST['sort'])) : 'expiry_asc';
         $paged = isset($_POST['paged']) ? absint($_POST['paged']) : 1;
 
         // Radius search parameters
@@ -69,7 +123,7 @@ class Ajax_Handler
         $args = [
             'post_type' => 'job_listing',
             'post_status' => 'publish',
-            'posts_per_page' => 10,
+            'posts_per_page' => 9,
             'paged' => $paged,
         ];
 
@@ -205,6 +259,20 @@ class Ajax_Handler
                 break;
             case 'title_desc':
                 $args['orderby'] = 'title';
+                $args['order'] = 'DESC';
+                break;
+            case 'expiry_asc':
+                // Expiring soonest first (most urgent)
+                $args['orderby'] = 'meta_value';
+                $args['meta_key'] = '_closing_date';
+                $args['meta_type'] = 'DATE';
+                $args['order'] = 'ASC';
+                break;
+            case 'expiry_desc':
+                // Expiring latest first
+                $args['orderby'] = 'meta_value';
+                $args['meta_key'] = '_closing_date';
+                $args['meta_type'] = 'DATE';
                 $args['order'] = 'DESC';
                 break;
             case 'date_desc':
@@ -532,8 +600,17 @@ class Ajax_Handler
                 $expiry_class = 'cn-expiry-expired';
             }
         }
+
+        // Check if job is bookmarked
+        $user_bookmarks = [];
+        if (is_user_logged_in()) {
+            $user_bookmarks = get_user_meta(get_current_user_id(), '_bookmarked_jobs', true);
+            $user_bookmarks = $user_bookmarks ? (array) $user_bookmarks : [];
+        }
+        $is_bookmarked = in_array($job_id, $user_bookmarks);
         ?>
-        <article class="cn-job-card <?php echo $position_filled ? 'cn-job-filled' : ''; ?>">
+        <article class="cn-job-card <?php echo $position_filled ? 'cn-job-filled' : ''; ?>"
+            data-job-id="<?php echo esc_attr($job_id); ?>">
             <div class="cn-job-card-header">
                 <?php if ($employer_logo): ?>
                     <img src="<?php echo esc_url($employer_logo); ?>" alt="<?php echo esc_attr($company_name); ?>"
@@ -550,8 +627,25 @@ class Ajax_Handler
                             <?php echo esc_html(get_the_title()); ?>
                         </a>
                     </h2>
-                    <?php if ($company_name): ?>
-                        <p class="cn-job-company"><?php echo esc_html($company_name); ?></p>
+                    <?php if ($company_name):
+                        // Get job type for inline display
+                        $job_types_terms_header = get_the_terms($job_id, 'job_type');
+                        $job_type_name_header = '';
+                        $job_type_slug_header = '';
+                        if ($job_types_terms_header && !is_wp_error($job_types_terms_header)) {
+                            $job_type_name_header = $job_types_terms_header[0]->name;
+                            $job_type_slug_header = sanitize_title($job_type_name_header);
+                        }
+                    ?>
+                        <p class="cn-job-company">
+                            <?php echo esc_html($company_name); ?>
+                            <?php if ($job_type_name_header): ?>
+                                <span class="cn-company-separator"> | </span>
+                                <span class="cn-job-type-inline cn-job-type-<?php echo esc_attr($job_type_slug_header); ?>">
+                                    <?php echo esc_html($job_type_name_header); ?>
+                                </span>
+                            <?php endif; ?>
+                        </p>
                     <?php endif; ?>
                 </div>
 
@@ -560,6 +654,20 @@ class Ajax_Handler
                         <?php esc_html_e('Filled', 'careernest'); ?>
                     </span>
                 <?php endif; ?>
+
+                <?php
+                // Bookmark icon with conditional tooltip
+                $is_applicant = is_user_logged_in() && (current_user_can('applicant') || in_array('applicant', wp_get_current_user()->roles));
+                $bookmark_tooltip = $is_applicant ? __('Bookmark this job', 'careernest') : __('Log in as an applicant', 'careernest');
+                ?>
+                <button type="button" class="cn-job-bookmark-btn <?php echo $is_bookmarked ? 'bookmarked' : ''; ?>"
+                    title="<?php echo esc_attr($bookmark_tooltip); ?>" aria-label="<?php echo esc_attr($bookmark_tooltip); ?>">
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M16.1269 3.04559C17.1353 3.16292 17.875 4.03284 17.875 5.0485V19.2504L11 15.8129L4.125 19.2504V5.0485C4.125 4.03284 4.86383 3.16292 5.87308 3.04559C9.27959 2.65017 12.7204 2.65017 16.1269 3.04559Z"
+                            stroke="#636363" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </button>
             </div>
 
             <div class="cn-job-card-meta">
@@ -578,17 +686,6 @@ class Ajax_Handler
                         <?php if ($remote_position): ?>
                             <span class="cn-remote-badge"><?php esc_html_e('Remote', 'careernest'); ?></span>
                         <?php endif; ?>
-                    </span>
-                <?php endif; ?>
-
-                <?php if ($job_types_terms && !is_wp_error($job_types_terms)): ?>
-                    <span class="cn-job-meta-item">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M4.97883 9.68508C2.99294 8.89073 2 8.49355 2 8C2 7.50645 2.99294 7.10927 4.97883 6.31492L7.7873 5.19153C9.77318 4.39718 10.7661 4 12 4C13.2339 4 14.2268 4.39718 16.2127 5.19153L19.0212 6.31492C21.0071 7.10927 22 7.50645 22 8C22 8.49355 21.0071 8.89073 19.0212 9.68508L16.2127 10.8085C14.2268 11.6028 13.2339 12 12 12C10.7661 12 9.77318 11.6028 7.7873 10.8085L4.97883 9.68508Z"
-                                stroke="currentColor" stroke-width="1.5" />
-                        </svg>
-                        <?php echo esc_html($job_types_terms[0]->name); ?>
                     </span>
                 <?php endif; ?>
 
@@ -624,8 +721,8 @@ class Ajax_Handler
             <?php endif; ?>
 
             <div class="cn-job-card-footer">
-                <?php if ($expiry_text): ?>
-                    <span class="cn-job-expiry <?php echo esc_attr($expiry_class); ?>">
+                <?php if ($closing_date): ?>
+                    <span class="cn-job-closing-date">
                         <svg width="14" height="14" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path
                                 d="M1.66659 10.5C1.66659 15.1024 5.39755 18.8333 9.99992 18.8333C14.6023 18.8333 18.3333 15.1024 18.3333 10.5C18.3333 5.89763 14.6023 2.16667 9.99992 2.16667"
@@ -633,17 +730,15 @@ class Ajax_Handler
                             <path d="M10 8V11.3333H13.3333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                                 stroke-linejoin="round" />
                         </svg>
-                        <?php echo esc_html($expiry_text); ?>
+                        <?php echo esc_html(date('M jS, Y', strtotime($closing_date))); ?>
                     </span>
                 <?php endif; ?>
 
-                <a href="<?php echo esc_url(get_permalink()); ?>" class="cn-btn cn-btn-view-job">
-                    <?php esc_html_e('View Details', 'careernest'); ?>
-                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                    </svg>
-                </a>
+                <?php if ($expiry_text): ?>
+                    <span class="cn-job-expiry <?php echo esc_attr($expiry_class); ?>">
+                        <?php echo esc_html($expiry_text); ?>
+                    </span>
+                <?php endif; ?>
             </div>
         </article>
 <?php

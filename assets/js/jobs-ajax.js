@@ -150,6 +150,64 @@
           self.clearFilters();
         }
       });
+
+      // Bookmark button
+      $(document).on("click", ".cn-job-bookmark-btn", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        self.toggleBookmark($(this));
+      });
+    },
+
+    toggleBookmark: function (btn) {
+      const jobCard = btn.closest(".cn-job-card");
+      const jobId = jobCard.data("job-id");
+
+      if (!jobId) {
+        console.error("Job ID not found");
+        return;
+      }
+
+      // Disable button during request
+      btn.prop("disabled", true);
+
+      $.ajax({
+        url: careerNestAjax.ajaxurl,
+        type: "POST",
+        data: {
+          action: "careernest_toggle_bookmark",
+          nonce: careerNestAjax.nonce,
+          job_id: jobId,
+        },
+        success: (response) => {
+          if (response.success) {
+            // Toggle bookmarked class
+            if (response.data.is_bookmarked) {
+              btn.addClass("bookmarked");
+              btn.attr("title", "Remove bookmark");
+            } else {
+              btn.removeClass("bookmarked");
+              btn.attr("title", "Bookmark this job");
+            }
+          } else {
+            // Handle non-applicant users - check if login required
+            if (response.data.require_login) {
+              // Get login page URL from CareerNest pages option
+              const pages = careerNestAjax.pages || {};
+              const loginUrl = pages.login || "/login/";
+              window.location.href = loginUrl;
+            } else {
+              this.showError(response.data.message);
+            }
+          }
+        },
+        error: () => {
+          this.showError("Failed to update bookmark. Please try again.");
+        },
+        complete: () => {
+          btn.prop("disabled", false);
+        },
+      });
     },
 
     loadJobs: function (page) {
@@ -339,8 +397,19 @@
     },
 
     getPageFromUrl: function (url) {
-      const match = url.match(/[?&]paged=(\d+)/);
-      return match ? parseInt(match[1]) : 1;
+      // Try ?paged= or &paged= format first
+      let match = url.match(/[?&]paged=(\d+)/);
+      if (match) {
+        return parseInt(match[1]);
+      }
+
+      // Try /page/X/ format
+      match = url.match(/\/page\/(\d+)\/?/);
+      if (match) {
+        return parseInt(match[1]);
+      }
+
+      return 1;
     },
 
     scrollToTop: function () {

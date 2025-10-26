@@ -1054,6 +1054,191 @@
   font-size: 0.9rem;
 }
 
+/* Dashboard Tabs */
+.cn-dashboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.cn-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.cn-tab-btn:hover {
+  color: #0073aa;
+  background: #f8f9fa;
+}
+
+.cn-tab-btn.cn-tab-active {
+  color: #0073aa;
+  border-bottom-color: #0073aa;
+}
+
+.cn-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  margin-left: 0.5rem;
+  background: #e0e0e0;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.cn-tab-btn.cn-tab-active .cn-tab-count {
+  background: #0073aa;
+  color: white;
+}
+
+.cn-tab-content {
+  display: none;
+}
+
+.cn-tab-content.cn-tab-content-active {
+  display: block;
+}
+
+/* Bookmarks List */
+.cn-bookmarks-list {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Bookmark Card */
+.cn-bookmark-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.cn-bookmark-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #0073aa;
+}
+
+.cn-bookmark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.cn-bookmark-job-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+}
+
+.cn-bookmark-job-info h3 a {
+  color: #333;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.cn-bookmark-job-info h3 a:hover {
+  color: #0073aa;
+}
+
+.cn-bookmark-company {
+  color: #666;
+  margin: 0;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cn-bookmark-type {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.cn-bookmark-status {
+  flex-shrink: 0;
+}
+
+.cn-applied-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #c3e6cb;
+}
+
+.cn-bookmark-meta {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+  flex-wrap: wrap;
+}
+
+.cn-bookmark-location {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.cn-bookmark-expiry {
+  color: #f39c12;
+  font-weight: 500;
+}
+
+.cn-bookmark-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cn-bookmark-app-status {
+  font-size: 0.9rem;
+  color: #666;
+  flex: 1;
+}
+
+.cn-bookmark-app-status strong {
+  color: #0073aa;
+}
+
+.cn-remove-bookmark-btn {
+  background: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+}
+
+.cn-remove-bookmark-btn:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.cn-remove-bookmark-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .cn-header-content {
@@ -1114,5 +1299,54 @@
 
   .cn-form-field-row {
     grid-template-columns: 1fr !important;
+  }
+
+  /* Tab responsive adjustments */
+  .cn-dashboard-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cn-tab-btn {
+    white-space: nowrap;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .cn-tab-count {
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    padding: 0 6px;
+  }
+
+  /* Bookmark card responsive adjustments */
+  .cn-bookmark-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .cn-bookmark-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .cn-bookmark-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .cn-bookmark-app-status {
+    width: 100%;
+    text-align: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+  }
+
+  .cn-btn-small {
+    width: 100%;
+    text-align: center;
   }
 }
