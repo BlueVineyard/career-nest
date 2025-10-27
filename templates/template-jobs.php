@@ -505,6 +505,30 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
 
         <!-- View Toggle -->
         <div class="cn-view-toggle">
+            <!-- Mobile Filter Toggle Button -->
+            <button type="button" class="cn-mobile-filter-toggle"
+                aria-label="<?php esc_attr_e('Open Filters', 'careernest'); ?>">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span><?php esc_html_e('Filters', 'careernest'); ?></span>
+                <?php if ($active_filters > 0): ?>
+                    <span class="cn-filter-badge"><?php echo esc_html($active_filters); ?></span>
+                <?php endif; ?>
+            </button>
+
+            <!-- Mobile Clear Filters Button (only show when filters are active) -->
+            <?php if ($active_filters > 0): ?>
+                <a href="<?php echo esc_url(get_permalink()); ?>" class="cn-mobile-clear-filters"
+                    aria-label="<?php esc_attr_e('Clear Filters', 'careernest'); ?>">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </a>
+            <?php endif; ?>
+
             <button type="button" class="cn-view-toggle-btn cn-view-toggle-list active" data-view="list"
                 aria-label="<?php esc_attr_e('List View', 'careernest'); ?>">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -537,9 +561,25 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
             </button>
         </div>
 
+        <!-- Mobile Filter Overlay -->
+        <div class="cn-mobile-filter-overlay" aria-hidden="true"></div>
+
         <div class="cn-jobs-layout cn-filter-position-<?php echo esc_attr($filter_position); ?>">
             <!-- Sidebar Filters -->
-            <aside class="cn-jobs-sidebar cn-filters-<?php echo esc_attr($filter_position); ?>">
+            <aside class="cn-jobs-sidebar cn-filters-<?php echo esc_attr($filter_position); ?>" role="complementary"
+                aria-label="<?php esc_attr_e('Job Filters', 'careernest'); ?>">
+                <!-- Mobile Filter Header -->
+                <div class="cn-mobile-filter-header">
+                    <h2 class="cn-mobile-filter-title"><?php esc_html_e('Filter Jobs', 'careernest'); ?></h2>
+                    <button type="button" class="cn-mobile-filter-close"
+                        aria-label="<?php esc_attr_e('Close Filters', 'careernest'); ?>">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </div>
+
                 <div class="cn-filters-wrapper">
                     <form method="get" action="" class="cn-jobs-filters" id="cn-jobs-filter-form">
                         <h2 class="cn-filters-title"><?php esc_html_e('Filter Jobs', 'careernest'); ?></h2>
@@ -1853,6 +1893,135 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         flex: 0 0 auto;
     }
 
+    /* Mobile Filter Toggle Button */
+    .cn-mobile-filter-toggle {
+        display: none;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: var(--cn-primary-btn);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        margin-right: auto;
+    }
+
+    .cn-mobile-filter-toggle:hover {
+        opacity: 0.9;
+    }
+
+    .cn-mobile-filter-toggle svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Mobile Clear Filters Button */
+    .cn-mobile-clear-filters {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 0.625rem;
+        background: white;
+        border: 1px solid #e53e3e;
+        border-radius: 4px;
+        color: #e53e3e;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        min-width: 42px;
+        min-height: 42px;
+        margin-right: auto;
+    }
+
+    .cn-mobile-clear-filters:hover {
+        background: #e53e3e;
+        color: white;
+    }
+
+    .cn-mobile-clear-filters svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .cn-filter-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 0.375rem;
+        background: white;
+        color: var(--cn-primary-btn);
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.25rem;
+    }
+
+    /* Mobile Filter Overlay */
+    .cn-mobile-filter-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .cn-mobile-filter-overlay.active {
+        opacity: 1;
+    }
+
+    /* Mobile Filter Header (hidden on desktop) */
+    .cn-mobile-filter-header {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .cn-mobile-filter-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1a202c;
+    }
+
+    .cn-mobile-filter-close {
+        background: transparent;
+        border: none;
+        padding: 0.5rem;
+        cursor: pointer;
+        color: #4a5568;
+        transition: color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cn-mobile-filter-close:hover {
+        color: #1a202c;
+    }
+
+    .cn-mobile-filter-close svg {
+        width: 24px;
+        height: 24px;
+    }
+
     /* Responsive Design */
     @media (max-width: 1024px) {
         .cn-jobs-columns-3 {
@@ -1869,6 +2038,67 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
             font-size: 1.75rem;
         }
 
+        /* Show mobile filter toggle button */
+        .cn-mobile-filter-toggle {
+            display: flex;
+        }
+
+        /* Show mobile clear filters button */
+        .cn-mobile-clear-filters {
+            display: flex;
+        }
+
+        /* Show mobile filter overlay only when active */
+        .cn-mobile-filter-overlay {
+            display: block;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .cn-mobile-filter-overlay.active {
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* Mobile filter panel - slide up from bottom */
+        .cn-jobs-sidebar {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            z-index: 1000 !important;
+            max-height: 85vh !important;
+            max-width: 100% !important;
+            overflow-y: auto;
+            background: white;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .cn-jobs-sidebar.active {
+            transform: translateY(0);
+        }
+
+        /* Show mobile filter header */
+        .cn-mobile-filter-header {
+            display: flex;
+        }
+
+        /* Hide desktop filter title */
+        .cn-filters-title {
+            display: none;
+        }
+
+        /* Adjust filter wrapper for mobile */
+        .cn-filters-wrapper {
+            background: transparent;
+            padding: 1rem 1.5rem 2rem;
+            border-radius: 0;
+        }
+
         .cn-jobs-layout,
         .cn-filter-position-right {
             grid-template-columns: 1fr;
@@ -1878,10 +2108,6 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         .cn-jobs-columns-2,
         .cn-jobs-columns-3 {
             grid-template-columns: 1fr;
-        }
-
-        .cn-jobs-sidebar {
-            position: static;
         }
 
         .cn-filter-position-right .cn-jobs-sidebar {
@@ -1898,10 +2124,6 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
 
         .cn-filter-position-top .cn-filter-actions {
             flex-direction: column;
-        }
-
-        .cn-filters-wrapper {
-            padding: 1rem;
         }
 
         .cn-job-card {
@@ -1930,5 +2152,53 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         }
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        'use strict';
+
+        // Mobile filter panel functionality
+        const mobileFilterToggle = document.querySelector('.cn-mobile-filter-toggle');
+        const mobileFilterClose = document.querySelector('.cn-mobile-filter-close');
+        const mobileFilterOverlay = document.querySelector('.cn-mobile-filter-overlay');
+        const sidebar = document.querySelector('.cn-jobs-sidebar');
+        const filterForm = document.querySelector('#cn-jobs-filter-form');
+
+        if (mobileFilterToggle && mobileFilterClose && mobileFilterOverlay && sidebar) {
+            // Open filter panel
+            mobileFilterToggle.addEventListener('click', function() {
+                sidebar.classList.add('active');
+                mobileFilterOverlay.classList.add('active');
+                mobileFilterOverlay.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden'; // Prevent body scroll
+            });
+
+            // Close filter panel
+            function closeFilterPanel() {
+                sidebar.classList.remove('active');
+                mobileFilterOverlay.classList.remove('active');
+                mobileFilterOverlay.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = ''; // Restore body scroll
+            }
+
+            mobileFilterClose.addEventListener('click', closeFilterPanel);
+            mobileFilterOverlay.addEventListener('click', closeFilterPanel);
+
+            // Close panel when form is submitted (Apply Filters button)
+            if (filterForm) {
+                filterForm.addEventListener('submit', function() {
+                    closeFilterPanel();
+                });
+            }
+
+            // Close on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    closeFilterPanel();
+                }
+            });
+        }
+    });
+</script>
 
 <?php get_footer(); ?>

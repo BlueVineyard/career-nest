@@ -287,6 +287,9 @@
         $(".cn-jobs-header").html(data.header_html);
       }
 
+      // Update filter badge and clear button
+      this.updateFilterControls();
+
       // Update the appropriate view
       if (this.currentView === "map") {
         // Update list data silently (without showing)
@@ -302,6 +305,50 @@
           $(".cn-jobs-list-container").html(data.jobs_html);
           $(".cn-jobs-list-container").fadeIn(200);
         });
+      }
+    },
+
+    updateFilterControls: function () {
+      // Count active filters
+      let activeFilters = 0;
+
+      if ($("#job_search").val()) activeFilters++;
+      if ($("#job_category").val()) activeFilters++;
+      if ($("#job_type").val()) activeFilters++;
+      if ($("#job_location").val()) activeFilters++;
+      if ($("#employer_id").val()) activeFilters++;
+
+      const minSalary = parseInt($("#min_salary").val()) || 0;
+      const maxSalary = parseInt($("#max_salary").val()) || 200000;
+      if (minSalary > 0 || maxSalary < 200000) activeFilters++;
+
+      if ($("#date_posted").val()) activeFilters++;
+
+      // Update filter badge
+      const existingBadge = $(".cn-mobile-filter-toggle .cn-filter-badge");
+      if (activeFilters > 0) {
+        if (existingBadge.length) {
+          existingBadge.text(activeFilters);
+        } else {
+          $(".cn-mobile-filter-toggle").append(
+            `<span class="cn-filter-badge">${activeFilters}</span>`
+          );
+        }
+
+        // Show clear filters button
+        if (!$(".cn-mobile-clear-filters").length) {
+          const clearBtn = $(`
+            <a href="${window.location.pathname}" class="cn-mobile-clear-filters" aria-label="Clear Filters">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          `);
+          $(".cn-mobile-filter-toggle").after(clearBtn);
+        }
+      } else {
+        existingBadge.remove();
+        $(".cn-mobile-clear-filters").remove();
       }
     },
 
