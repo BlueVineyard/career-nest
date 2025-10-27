@@ -619,6 +619,52 @@
   text-decoration: underline;
 }
 
+/* Link with icon styling */
+.cn-link-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.2s ease;
+}
+
+.cn-link-with-icon:hover {
+  opacity: 0.8;
+}
+
+.cn-link-icon {
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* Platform-specific colors */
+.cn-link-linkedin {
+  color: #0077b5;
+}
+
+.cn-link-github {
+  color: #333;
+}
+
+.cn-link-twitter {
+  color: #1da1f2;
+}
+
+.cn-link-facebook {
+  color: #1877f2;
+}
+
+.cn-link-instagram {
+  color: #e4405f;
+}
+
+.cn-link-portfolio {
+  color: #0073aa;
+}
+
+.cn-link-website {
+  color: #666;
+}
+
 /* More items indicator */
 .cn-more-items {
   color: #666;
@@ -799,11 +845,18 @@
 
 /* Form actions styling */
 .cn-form-actions {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
   display: flex;
   gap: 1rem;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 1rem 0;
+  justify-content: flex-end;
+  position: sticky;
+  bottom: 20px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  margin-top: 2rem;
 }
 
 /* Profile edit form styling */
@@ -869,22 +922,49 @@
   gap: 1rem;
 }
 
-/* Special styling for date fields */
-.cn-repeater-item input[type="month"] {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M1 4h14M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4M1 4V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1M5 2v2m6-2v2'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 16px 12px;
-  padding-right: 2.5rem;
+/* Improved repeater field styling */
+.cn-repeater-item {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
 
-/* URL field styling */
-.cn-repeater-item input[type="url"] {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%23343a40' d='M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9c-.086 0-.17.01-.25.031A2 2 0 0 1 7 5.5zM9 5.5a3 3 0 0 0-2.83 4h1.098A2 2 0 0 1 9 7.5h3a2 2 0 1 1 0 4H9.354a3 3 0 0 0 2.83-4H12a3 3 0 1 0 0-6H9z'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 16px 12px;
-  padding-right: 2.5rem;
+.cn-repeater-item:hover {
+  border-color: #0073aa;
+  box-shadow: 0 2px 6px rgba(0, 115, 170, 0.1);
+}
+
+.cn-repeater-item .cn-remove-item {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.cn-repeater-item .cn-remove-item:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+/* Date fields - remove custom background to prevent double icons */
+.cn-repeater-item input[type="month"],
+.cn-repeater-item input[type="date"] {
+  background-image: none;
+  padding-right: 0.5rem;
 }
 
 /* Animation for adding/removing items */
@@ -1239,6 +1319,26 @@
   cursor: not-allowed;
 }
 
+/* Icon Input Styles */
+.cn-input-with-icon {
+  position: relative;
+  width: 100%;
+}
+
+.cn-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4a5568;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cn-input-with-icon-field {
+  padding-left: 2.5rem !important;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .cn-header-content {
@@ -1348,5 +1448,18 @@
   .cn-btn-small {
     width: 100%;
     text-align: center;
+  }
+
+  /* Form actions responsive */
+  .cn-form-actions {
+    flex-direction: column-reverse;
+    position: relative;
+    bottom: auto;
+    box-shadow: none;
+    padding: 1.5rem;
+  }
+
+  .cn-form-actions .cn-btn {
+    width: 100%;
   }
 }

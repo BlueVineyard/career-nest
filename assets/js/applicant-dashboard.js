@@ -54,6 +54,17 @@ document.addEventListener("DOMContentLoaded", function () {
     // Update button text
     editText.style.display = "none";
     cancelText.style.display = "inline";
+
+    // Scroll to the profile picture section (first edit section)
+    setTimeout(function () {
+      const firstSection = editForm.querySelector(".cn-dashboard-section");
+      if (firstSection) {
+        firstSection.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 100);
   }
 
   function exitEditMode() {
@@ -523,11 +534,22 @@ function getEducationTemplate(fieldName, index) {
     <div class="cn-repeater-item" data-index="${index}">
       <div class="cn-form-field">
         <label>Institution</label>
-        <input type="text" name="${fieldName}[${index}][institution]" class="cn-input cn-input-small">
+        <div class="cn-input-with-icon">
+          <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input type="text" name="${fieldName}[${index}][institution]" class="cn-input cn-input-small cn-input-with-icon-field">
+        </div>
       </div>
       <div class="cn-form-field">
         <label>Degree/Certification</label>
-        <input type="text" name="${fieldName}[${index}][certification]" class="cn-input cn-input-small">
+        <div class="cn-input-with-icon">
+          <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c0 1 2 3 6 3s6-2 6-3v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input type="text" name="${fieldName}[${index}][certification]" class="cn-input cn-input-small cn-input-with-icon-field">
+        </div>
       </div>
       <div class="cn-form-field">
         <label>Completion Date</label>
@@ -552,11 +574,23 @@ function getExperienceTemplate(fieldName, index) {
     <div class="cn-repeater-item" data-index="${index}">
       <div class="cn-form-field">
         <label>Company</label>
-        <input type="text" name="${fieldName}[${index}][company]" class="cn-input cn-input-small">
+        <div class="cn-input-with-icon">
+          <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input type="text" name="${fieldName}[${index}][company]" class="cn-input cn-input-small cn-input-with-icon-field">
+        </div>
       </div>
       <div class="cn-form-field">
         <label>Job Title</label>
-        <input type="text" name="${fieldName}[${index}][title]" class="cn-input cn-input-small">
+        <div class="cn-input-with-icon">
+          <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input type="text" name="${fieldName}[${index}][title]" class="cn-input cn-input-small cn-input-with-icon-field">
+        </div>
       </div>
       <div class="cn-form-field">
         <label>Start Date</label>
@@ -589,11 +623,24 @@ function getLicenseTemplate(fieldName, index) {
     <div class="cn-repeater-item" data-index="${index}">
       <div class="cn-form-field">
         <label>Name</label>
-        <input type="text" name="${fieldName}[${index}][name]" class="cn-input cn-input-small">
+        <div class="cn-input-with-icon">
+          <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 18v-6M9 15l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input type="text" name="${fieldName}[${index}][name]" class="cn-input cn-input-small cn-input-with-icon-field">
+        </div>
       </div>
       <div class="cn-form-field">
         <label>Issuing Organization</label>
-        <input type="text" name="${fieldName}[${index}][issuer]" class="cn-input cn-input-small">
+        <div class="cn-input-with-icon">
+          <svg class="cn-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input type="text" name="${fieldName}[${index}][issuer]" class="cn-input cn-input-small cn-input-with-icon-field">
+        </div>
       </div>
       <div class="cn-form-field">
         <label>Issue Date</label>

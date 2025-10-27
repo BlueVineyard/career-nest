@@ -245,6 +245,26 @@
   margin: 0;
 }
 
+/* Icon Input Styles */
+.cn-input-with-icon {
+  position: relative;
+  width: 100%;
+}
+
+.cn-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4a5568;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cn-input-with-icon-field {
+  padding-left: 2.5rem !important;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .cn-profile-edit-container {

@@ -249,12 +249,12 @@
   color: #c53030;
 }
 
-/* Form Fields - Match login page */
-.cn-form-field {
+/* Form Fields - Scoped to Modal Only */
+.cn-modal-content .cn-form-field {
   margin-bottom: 1.25rem;
 }
 
-.cn-form-field label {
+.cn-modal-content .cn-form-field label {
   display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
@@ -262,11 +262,11 @@
   font-size: 0.875rem;
 }
 
-.cn-input-wrapper {
+.cn-modal-content .cn-input-wrapper {
   position: relative;
 }
 
-.cn-input-icon {
+.cn-modal-content .cn-input-icon {
   position: absolute;
   left: 1rem;
   top: 50%;
@@ -275,7 +275,7 @@
   pointer-events: none;
 }
 
-.cn-input {
+.cn-modal-content .cn-input {
   width: 100%;
   padding: 0.875rem 1rem 0.875rem 3rem;
   border: 1px solid #e2e8f0;
@@ -287,23 +287,23 @@
   color: #2d3748;
 }
 
-.cn-input:focus {
+.cn-modal-content .cn-input:focus {
   outline: none;
   border-color: #ff8200;
   background: white;
   box-shadow: 0 0 0 3px rgba(255, 130, 0, 0.08);
 }
 
-.cn-input::placeholder {
+.cn-modal-content .cn-input::placeholder {
   color: #a0aec0;
 }
 
-/* Remember Me Checkbox - Match login page */
-.cn-remember-me {
+/* Remember Me Checkbox - Scoped to Modal */
+.cn-modal-content .cn-remember-me {
   margin-bottom: 1.5rem;
 }
 
-.cn-checkbox-label {
+.cn-modal-content .cn-checkbox-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -311,13 +311,13 @@
   user-select: none;
 }
 
-.cn-checkbox-label input[type="checkbox"] {
+.cn-modal-content .cn-checkbox-label input[type="checkbox"] {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-.cn-checkbox-custom {
+.cn-modal-content .cn-checkbox-custom {
   width: 18px;
   height: 18px;
   border: 2px solid #cbd5e0;
@@ -326,12 +326,12 @@
   transition: all 0.2s ease;
 }
 
-input[type="checkbox"]:checked ~ .cn-checkbox-custom {
+.cn-modal-content input[type="checkbox"]:checked ~ .cn-checkbox-custom {
   border-color: #ff8200;
   background: #ff8200;
 }
 
-input[type="checkbox"]:checked ~ .cn-checkbox-custom::after {
+.cn-modal-content input[type="checkbox"]:checked ~ .cn-checkbox-custom::after {
   content: "✓";
   position: absolute;
   top: 50%;
@@ -343,17 +343,17 @@ input[type="checkbox"]:checked ~ .cn-checkbox-custom::after {
   line-height: 1;
 }
 
-.cn-checkbox-text {
+.cn-modal-content .cn-checkbox-text {
   color: #4a5568;
   font-size: 0.875rem;
 }
 
-/* Password Toggle */
-.cn-password-wrapper {
+/* Password Toggle - Scoped to Modal */
+.cn-modal-content .cn-password-wrapper {
   position: relative;
 }
 
-.cn-password-toggle {
+.cn-modal-content .cn-password-toggle {
   position: absolute;
   right: 1rem;
   top: 50%;
@@ -369,19 +369,19 @@ input[type="checkbox"]:checked ~ .cn-checkbox-custom::after {
   transition: color 0.2s ease;
 }
 
-.cn-password-toggle:hover {
+.cn-modal-content .cn-password-toggle:hover {
   color: #ff8200;
 }
 
-/* Form Options (Remember Me + Forgot Password) */
-.cn-form-options {
+/* Form Options - Scoped to Modal */
+.cn-modal-content .cn-form-options {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
 }
 
-.cn-forgot-link {
+.cn-modal-content .cn-forgot-link {
   color: #ff8200;
   text-decoration: none;
   font-size: 0.875rem;
@@ -389,13 +389,13 @@ input[type="checkbox"]:checked ~ .cn-checkbox-custom::after {
   transition: color 0.2s ease;
 }
 
-.cn-forgot-link:hover {
+.cn-modal-content .cn-forgot-link:hover {
   color: #e67300;
   text-decoration: underline;
 }
 
-/* Submit Button - Match login page */
-.cn-btn {
+/* Submit Button - Scoped to Modal */
+.cn-modal-content .cn-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -410,58 +410,58 @@ input[type="checkbox"]:checked ~ .cn-checkbox-custom::after {
   text-decoration: none;
 }
 
-.cn-btn-primary {
+.cn-modal-content .cn-btn-primary {
   background: #ff8200;
   color: white;
 }
 
-.cn-btn-primary:hover:not(:disabled) {
+.cn-modal-content .cn-btn-primary:hover:not(:disabled) {
   background: #e67300;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 130, 0, 0.25);
 }
 
-.cn-btn-full {
+.cn-modal-content .cn-btn-full {
   width: 100%;
 }
 
-.cn-btn-primary:disabled {
+.cn-modal-content .cn-btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* Register Links - Match login page */
-.cn-register-links {
+/* Register Links - Scoped to Modal */
+.cn-modal-content .cn-register-links {
   margin-top: 2rem;
   padding-top: 2rem;
   border-top: 1px solid #e2e8f0;
   text-align: center;
 }
 
-.cn-register-text {
+.cn-modal-content .cn-register-text {
   color: #718096;
   font-size: 0.95rem;
   margin: 0 0 1rem 0;
 }
 
-.cn-register-buttons {
+.cn-modal-content .cn-register-buttons {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.cn-register-buttons .cn-btn {
+.cn-modal-content .cn-register-buttons .cn-btn {
   width: 100%;
   justify-content: center;
 }
 
-.cn-btn-outline {
+.cn-modal-content .cn-btn-outline {
   background: transparent;
   border: 2px solid #e2e8f0;
   color: #4a5568;
 }
 
-.cn-btn-outline:hover {
+.cn-modal-content .cn-btn-outline:hover {
   background: #f7fafc;
   border-color: #ff8200;
   color: #ff8200;
@@ -513,23 +513,23 @@ input[type="checkbox"]:checked ~ .cn-checkbox-custom::after {
   }
 }
 
-/* Accessibility */
+/* Accessibility - Scoped to Modal */
 .cn-modal-close:focus-visible,
 .cn-login-btn:focus-visible,
-.cn-input:focus-visible,
-.cn-btn-primary:focus-visible,
-.cn-register-link:focus-visible {
+.cn-modal-content .cn-input:focus-visible,
+.cn-modal-content .cn-btn-primary:focus-visible,
+.cn-modal-content .cn-register-link:focus-visible {
   outline: 2px solid #ff8200;
   outline-offset: 2px;
 }
 
-/* Loading State */
-.cn-btn-primary.loading {
+/* Loading State - Scoped to Modal */
+.cn-modal-content .cn-btn-primary.loading {
   position: relative;
   pointer-events: none;
 }
 
-.cn-btn-primary.loading::after {
+.cn-modal-content .cn-btn-primary.loading::after {
   content: "";
   position: absolute;
   width: 16px;
