@@ -639,7 +639,13 @@ class Ajax_Handler
                         }
                     ?>
                         <p class="cn-job-company">
-                            <?php echo esc_html($company_name); ?>
+                            <?php if ($employer_id && get_post_status($employer_id)): ?>
+                                <a href="<?php echo esc_url(get_permalink($employer_id)); ?>" class="cn-employer-link">
+                                    <?php echo esc_html($company_name); ?>
+                                </a>
+                            <?php else: ?>
+                                <?php echo esc_html($company_name); ?>
+                            <?php endif; ?>
                             <?php if ($job_type_name_header): ?>
                                 <span class="cn-company-separator"> | </span>
                                 <span class="cn-job-type-inline cn-job-type-<?php echo esc_attr($job_type_slug_header); ?>">

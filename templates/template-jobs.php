@@ -674,7 +674,14 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                                                 }
                                             ?>
                                                 <p class="cn-job-company">
-                                                    <?php echo esc_html($company_name); ?>
+                                                    <?php if ($employer_id && get_post_status($employer_id)): ?>
+                                                        <a href="<?php echo esc_url(get_permalink($employer_id)); ?>"
+                                                            class="cn-employer-link">
+                                                            <?php echo esc_html($company_name); ?>
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <?php echo esc_html($company_name); ?>
+                                                    <?php endif; ?>
                                                     <?php if ($job_type_name_header): ?>
                                                         <span class="cn-company-separator"> | </span>
                                                         <span
@@ -890,7 +897,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     }
 
     .cn-active-filters-count {
-        color: #0073aa;
+        color: var(--cn-primary-btn);
         font-weight: 500;
     }
 
@@ -947,8 +954,8 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     .cn-filter-input:focus,
     .cn-filter-select:focus {
         outline: none;
-        border-color: #0073aa;
-        box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+        border-color: var(--cn-primary-btn);
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
     }
 
     .cn-filter-actions {
@@ -984,7 +991,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     .cn-salary-display {
         float: right;
         font-size: 0.85rem;
-        color: #0073aa;
+        color: var(--cn-primary-btn);
         font-weight: 600;
     }
 
@@ -1010,7 +1017,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: #0073aa;
+        background: var(--cn-primary-btn);
         cursor: pointer;
         border: 2px solid white;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -1020,18 +1027,18 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: #0073aa;
+        background: var(--cn-primary-btn);
         cursor: pointer;
         border: 2px solid white;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .cn-range-slider::-webkit-slider-thumb:hover {
-        background: #005a87;
+        opacity: 0.9;
     }
 
     .cn-range-slider::-moz-range-thumb:hover {
-        background: #005a87;
+        opacity: 0.9;
     }
 
     .cn-range-labels {
@@ -1059,35 +1066,35 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     }
 
     .cn-btn-primary {
-        background: #0073aa;
+        background: var(--cn-primary-btn);
         color: white;
     }
 
     .cn-btn-primary:hover {
-        background: #005a87;
+        opacity: 0.9;
         color: white;
     }
 
     .cn-btn-secondary {
         background: white;
-        color: #0073aa;
-        border: 1px solid #0073aa;
+        color: var(--cn-primary-btn);
+        border: 1px solid var(--cn-primary-btn);
     }
 
     .cn-btn-secondary:hover {
-        background: #f0f8ff;
+        background: #f5f5f5;
     }
 
     .cn-btn-view-job {
         background: transparent;
-        color: #0073aa;
+        color: var(--cn-primary-btn);
         padding: 0.5rem 1rem;
         font-size: 0.875rem;
     }
 
     .cn-btn-view-job:hover {
-        background: #f0f8ff;
-        color: #005a87;
+        background: #f5f5f5;
+        opacity: 0.9;
     }
 
     /* Job Cards */
@@ -1213,14 +1220,25 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     }
 
     .cn-job-title a:hover {
-        color: #0073aa;
-        text-decoration: underline;
+        color: var(--cn-primary-btn);
+        text-decoration: none;
     }
 
     .cn-job-company {
         margin: 0;
         color: #718096;
         font-size: 14px;
+    }
+
+    .cn-employer-link {
+        color: #718096;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .cn-employer-link:hover {
+        color: var(--cn-primary-btn);
+        text-decoration: none;
     }
 
     .cn-company-separator {
@@ -1338,7 +1356,7 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     .cn-radius-display {
         float: right;
         font-size: 0.85rem;
-        color: #0073aa;
+        color: var(--cn-primary-btn);
         font-weight: 600;
     }
 
@@ -1535,15 +1553,15 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     }
 
     .cn-pagination a:hover {
-        background: #0073aa;
+        background: var(--cn-primary-btn);
         color: white;
-        border-color: #0073aa;
+        border-color: var(--cn-primary-btn);
     }
 
     .cn-pagination .current {
-        background: #0073aa;
+        background: var(--cn-primary-btn);
         color: white;
-        border-color: #0073aa;
+        border-color: var(--cn-primary-btn);
         font-weight: 600;
     }
 
@@ -1648,14 +1666,14 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
     }
 
     .cn-view-toggle-btn:hover {
-        background: #f0f8ff;
-        border-color: #0073aa;
-        color: #0073aa;
+        background: #ff8200;
+        border-color: #ff8200;
+        color: white;
     }
 
     .cn-view-toggle-btn.active {
-        background: #0073aa;
-        border-color: #0073aa;
+        background: #ff8200;
+        border-color: #ff8200;
         color: white;
     }
 
