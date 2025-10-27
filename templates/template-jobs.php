@@ -712,13 +712,30 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                                                     $job_type_name_header = $job_types_terms_header[0]->name;
                                                     $job_type_slug_header = sanitize_title($job_type_name_header);
                                                 }
+
+                                                // Check employer profile completeness
+                                                $employer_completeness = \CareerNest\Profile_Helper::calculate_employer_completeness($employer_id);
+                                                $employer_percentage = $employer_completeness['percentage'];
+                                                $employer_website = get_post_meta($employer_id, '_website', true);
                                             ?>
                                                 <p class="cn-job-company">
                                                     <?php if ($employer_id && get_post_status($employer_id)): ?>
-                                                        <a href="<?php echo esc_url(get_permalink($employer_id)); ?>"
-                                                            class="cn-employer-link">
+                                                        <?php
+                                                        // If profile < 70% complete, link to website instead
+                                                        if ($employer_percentage < 70 && $employer_website):
+                                                        ?>
+                                                            <a href="<?php echo esc_url($employer_website); ?>" target="_blank"
+                                                                rel="noopener noreferrer" class="cn-employer-link">
+                                                                <?php echo esc_html($company_name); ?>
+                                                            </a>
+                                                        <?php elseif ($employer_percentage >= 70): ?>
+                                                            <a href="<?php echo esc_url(get_permalink($employer_id)); ?>"
+                                                                class="cn-employer-link">
+                                                                <?php echo esc_html($company_name); ?>
+                                                            </a>
+                                                        <?php else: ?>
                                                             <?php echo esc_html($company_name); ?>
-                                                        </a>
+                                                        <?php endif; ?>
                                                     <?php else: ?>
                                                         <?php echo esc_html($company_name); ?>
                                                     <?php endif; ?>

@@ -182,4 +182,96 @@ class Profile_Helper
             return 'Needs Work';
         }
     }
+
+    /**
+     * Calculate employer profile completeness percentage
+     * 
+     * @param int $employer_id Employer post ID
+     * @return array Array with 'percentage' and 'missing_fields'
+     */
+    public static function calculate_employer_completeness(int $employer_id): array
+    {
+        if (!$employer_id) {
+            return ['percentage' => 0, 'missing_fields' => []];
+        }
+
+        $fields = [
+            'company_logo' => [
+                'label' => 'Company Logo',
+                'weight' => 15,
+                'check' => fn() => has_post_thumbnail($employer_id)
+            ],
+            'about' => [
+                'label' => 'About Company',
+                'weight' => 20,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_about', true))
+            ],
+            'contact_email' => [
+                'label' => 'Contact Email',
+                'weight' => 10,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_contact_email', true))
+            ],
+            'phone' => [
+                'label' => 'Phone Number',
+                'weight' => 5,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_phone', true))
+            ],
+            'website' => [
+                'label' => 'Company Website',
+                'weight' => 10,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_website', true))
+            ],
+            'location' => [
+                'label' => 'Company Location',
+                'weight' => 10,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_location', true))
+            ],
+            'industry' => [
+                'label' => 'Industry Description',
+                'weight' => 10,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_industry_description', true))
+            ],
+            'company_size' => [
+                'label' => 'Company Size',
+                'weight' => 5,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_company_size', true))
+            ],
+            'founded_year' => [
+                'label' => 'Founded Year',
+                'weight' => 5,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_founded_year', true))
+            ],
+            'mission' => [
+                'label' => 'Mission Statement',
+                'weight' => 5,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_mission', true))
+            ],
+            'specialities' => [
+                'label' => 'Specialities',
+                'weight' => 5,
+                'check' => fn() => !empty(get_post_meta($employer_id, '_specialities', true))
+            ],
+        ];
+
+        $total_weight = 0;
+        $completed_weight = 0;
+        $missing_fields = [];
+
+        foreach ($fields as $key => $field) {
+            $total_weight += $field['weight'];
+
+            if ($field['check']()) {
+                $completed_weight += $field['weight'];
+            } else {
+                $missing_fields[] = $field['label'];
+            }
+        }
+
+        $percentage = $total_weight > 0 ? round(($completed_weight / $total_weight) * 100) : 0;
+
+        return [
+            'percentage' => $percentage,
+            'missing_fields' => $missing_fields
+        ];
+    }
 }

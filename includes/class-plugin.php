@@ -756,6 +756,16 @@ class Plugin
             }
         }
 
+        // Check if we're on single employer profile page
+        if (is_singular('employer')) {
+            wp_enqueue_style(
+                'careernest-single-employer',
+                CAREERNEST_URL . 'assets/css/single-employer.css',
+                [],
+                CAREERNEST_VERSION
+            );
+        }
+
         // Check if we're on single applicant profile page
         if (is_singular('applicant')) {
             wp_enqueue_style(
