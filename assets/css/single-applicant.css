@@ -1,0 +1,727 @@
+/* 
+ * CareerNest - Single Applicant Profile Styles
+ * Modern profile layout with gradient banner design
+ */
+
+/* Container */
+.cn-applicant-profile {
+  min-height: 100vh;
+  padding: 0;
+}
+
+.cn-applicant-container {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* ==========================================
+   PROFILE HEADER - Modern Design
+   ========================================== */
+
+.cn-profile-header-wrapper {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 2rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.cn-profile-banner {
+  height: 132px;
+  background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.2) 0%,
+      transparent 30%,
+      transparent 70%,
+      rgba(0, 0, 0, 0.2) 100%
+    ),
+    var(--cn-primary-btn);
+  position: relative;
+}
+
+.cn-profile-header-content {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 3rem 2.5rem 3rem;
+  gap: 2rem;
+}
+
+/* Left Section - Photo and Info */
+.cn-profile-left-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+}
+
+.cn-profile-photo-wrapper {
+  margin-top: -80px;
+  position: relative;
+  z-index: 10;
+}
+
+.cn-profile-photo {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 6px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cn-profile-photo-placeholder {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%);
+  border: 6px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: bold;
+  color: #666;
+}
+
+.cn-profile-info {
+  flex: 1;
+  text-align: left;
+}
+
+.cn-profile-name {
+  font-size: 26px;
+  font-weight: 700;
+  font-style: normal;
+  margin: 0 0 0.75rem 0;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  line-height: 132%;
+  letter-spacing: 0%;
+  text-transform: capitalize;
+}
+
+.cn-edit-profile-btn {
+  color: #666;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem;
+}
+
+.cn-edit-profile-btn:hover {
+  color: var(--cn-primary-btn);
+  transform: scale(1.1);
+}
+
+.cn-profile-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.cn-location-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.cn-location-item svg {
+  color: #666;
+  width: 16px;
+  height: 16px;
+}
+
+.cn-availability-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  background: #f0fdf4;
+  color: #16a34a;
+  border-radius: 16px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.cn-availability-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: inline-block;
+}
+
+/* Contact Section */
+.cn-profile-contact-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.cn-contact-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cn-contact-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cn-contact-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+}
+
+.cn-contact-icon svg {
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.cn-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.cn-contact-label {
+  font-size: 0.75rem;
+  color: #888;
+  font-weight: 500;
+}
+
+.cn-contact-value {
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.cn-contact-value:hover {
+  color: var(--cn-primary-btn);
+  text-decoration: underline;
+}
+
+/* ==========================================
+   PROFILE BODY
+   ========================================== */
+
+.cn-profile-body {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 2rem;
+  padding: 0 1rem 2rem 1rem;
+}
+
+.cn-profile-main {
+  min-width: 0;
+}
+
+/* Profile Sections */
+.cn-profile-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cn-section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid var(--cn-primary-btn);
+}
+
+.cn-section-content {
+  color: #444;
+  line-height: 1.7;
+}
+
+.cn-section-content p {
+  margin: 0;
+}
+
+/* Read More/Less Links */
+.cn-read-more-link,
+.cn-read-less-link {
+  color: var(--cn-primary-btn);
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline;
+  margin-left: 0.25rem;
+}
+
+.cn-read-more-link:hover,
+.cn-read-less-link:hover {
+  text-decoration: underline;
+}
+
+/* Experience Items */
+.cn-experience-item,
+.cn-education-item,
+.cn-license-item {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cn-experience-item:last-child,
+.cn-education-item:last-child,
+.cn-license-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.cn-experience-icon,
+.cn-education-icon,
+.cn-license-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 12px;
+}
+
+.cn-experience-icon svg,
+.cn-education-icon svg,
+.cn-license-icon svg {
+  stroke: var(--cn-primary-btn);
+}
+
+.cn-experience-details h3,
+.cn-education-details h3,
+.cn-license-details h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.cn-company-name,
+.cn-institution-name,
+.cn-issuer-name {
+  font-size: 14px;
+  color: var(--cn-primary-btn);
+  font-weight: 500;
+  margin: 0 0 0.5rem 0;
+}
+
+.cn-date-range {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 0.75rem 0;
+  font-style: italic;
+}
+
+.cn-notes {
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-top: 0.75rem;
+}
+
+.cn-notes p {
+  margin: 0.5rem 0;
+}
+
+/* Skills */
+.cn-skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cn-skill-tag {
+  display: inline-block;
+  padding: 0.3rem 1rem;
+  background: #f5f5f5;
+  color: #101010;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.cn-skill-tag:hover {
+  background: #e8e8e8;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================
+   SIDEBAR
+   ========================================== */
+
+.cn-profile-sidebar {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+}
+
+.cn-sidebar-card {
+  background: #fafafa;
+  border: 1px solid #dadada;
+  border-radius: 8px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: none;
+}
+
+.cn-sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1.25rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.cn-sidebar-item {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+
+.cn-sidebar-item:last-child {
+  margin-bottom: 0;
+}
+
+.cn-sidebar-icon {
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eeeeee;
+  border-radius: 999px;
+}
+
+.cn-sidebar-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.cn-sidebar-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cn-sidebar-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cn-sidebar-value {
+  font-size: 18px;
+  color: #1a1a1a;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.cn-sidebar-link {
+  font-size: 0.95rem;
+  color: var(--cn-primary-btn);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.cn-sidebar-link:hover {
+  color: var(--cn-primary-btn);
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* Download Button */
+.cn-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  background: var(--cn-primary-btn);
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.cn-download-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.cn-download-btn svg {
+  flex-shrink: 0;
+}
+
+/* Additional Links */
+.cn-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cn-link-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--cn-primary-btn);
+  text-decoration: none;
+  font-weight: normal;
+  transition: color 0.2s ease;
+}
+
+.cn-link-with-icon:hover {
+  color: var(--cn-primary-btn);
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+.cn-link-icon {
+  flex-shrink: 0;
+}
+
+.cn-link-notes {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Platform-specific link colors */
+.cn-link-linkedin {
+  color: #0077b5;
+}
+
+.cn-link-github {
+  color: #333;
+}
+
+.cn-link-twitter {
+  color: #1da1f2;
+}
+
+.cn-link-facebook {
+  color: #1877f2;
+}
+
+.cn-link-instagram {
+  color: #e4405f;
+}
+
+.cn-link-portfolio {
+  color: var(--cn-primary-btn);
+}
+
+.cn-link-website {
+  color: #666;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+@media (max-width: 1024px) {
+  .cn-profile-header-content {
+    padding: 0 2rem 2rem 2rem;
+  }
+
+  .cn-profile-body {
+    grid-template-columns: 1fr;
+  }
+
+  .cn-profile-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .cn-profile-banner {
+    height: 140px;
+  }
+
+  .cn-profile-header-content {
+    flex-direction: column;
+    padding: 0 1.5rem 2rem 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .cn-profile-left-section {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+  }
+
+  .cn-profile-photo-wrapper {
+    margin-top: -70px;
+  }
+
+  .cn-profile-photo,
+  .cn-profile-photo-placeholder {
+    width: 140px;
+    height: 140px;
+  }
+
+  .cn-profile-photo-placeholder span {
+    font-size: 3.5rem;
+  }
+
+  .cn-profile-name {
+    font-size: 2rem;
+    justify-content: flex-start;
+  }
+
+  .cn-profile-meta {
+    justify-content: flex-start;
+  }
+
+  .cn-profile-contact-section {
+    grid-template-columns: repeat(3, auto);
+    justify-content: flex-start;
+    width: 100%;
+    padding-top: 0;
+    gap: 0.75rem;
+  }
+
+  .cn-contact-card {
+    width: auto;
+    min-width: unset;
+  }
+
+  .cn-contact-info {
+    display: none;
+  }
+
+  .cn-contact-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cn-contact-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cn-profile-section {
+    padding: 1.5rem;
+  }
+
+  .cn-section-title {
+    font-size: 1.5rem;
+  }
+
+  .cn-experience-item,
+  .cn-education-item,
+  .cn-license-item {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .cn-experience-icon,
+  .cn-education-icon,
+  .cn-license-icon {
+    align-self: flex-start;
+  }
+
+  .cn-applicant-container {
+    margin: 0;
+  }
+
+  .cn-profile-header-wrapper {
+    margin: 1rem 0.5rem;
+    border-radius: 12px;
+  }
+
+  .cn-profile-body {
+    padding: 0 0.5rem 1rem 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cn-profile-name {
+    font-size: 1.75rem;
+  }
+
+  .cn-contact-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .cn-sidebar-card {
+    padding: 1.25rem;
+  }
+}
+
+/* ==========================================
+   PRINT STYLES
+   ========================================== */
+
+@media print {
+  .cn-applicant-profile {
+    background: white;
+  }
+
+  .cn-profile-header-wrapper,
+  .cn-profile-section,
+  .cn-sidebar-card {
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+
+  .cn-edit-profile-btn {
+    display: none;
+  }
+
+  .cn-download-btn {
+    display: none;
+  }
+}
