@@ -757,22 +757,23 @@ $render_filter = function ($filter_key) use ($show_category, $show_job_type, $sh
                                         <?php endif; ?>
 
                                         <?php
-                                        // Bookmark icon with conditional tooltip
+                                        // Only show bookmark for logged-in applicants
                                         $is_applicant = is_user_logged_in() && (current_user_can('applicant') || in_array('applicant', wp_get_current_user()->roles));
-                                        $bookmark_tooltip = $is_applicant ? __('Bookmark this job', 'careernest') : __('Log in as an applicant', 'careernest');
+                                        if ($is_applicant):
                                         ?>
-                                        <button type="button"
-                                            class="cn-job-bookmark-btn <?php echo $is_bookmarked ? 'bookmarked' : ''; ?>"
-                                            title="<?php echo esc_attr($bookmark_tooltip); ?>"
-                                            aria-label="<?php echo esc_attr($bookmark_tooltip); ?>">
-                                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path
-                                                    d="M16.1269 3.04559C17.1353 3.16292 17.875 4.03284 17.875 5.0485V19.2504L11 15.8129L4.125 19.2504V5.0485C4.125 4.03284 4.86383 3.16292 5.87308 3.04559C9.27959 2.65017 12.7204 2.65017 16.1269 3.04559Z"
-                                                    stroke="#636363" stroke-width="1.5" stroke-linecap="round"
-                                                    stroke-linejoin="round"></path>
-                                            </svg>
-                                        </button>
+                                            <button type="button"
+                                                class="cn-job-bookmark-btn <?php echo $is_bookmarked ? 'bookmarked' : ''; ?>"
+                                                title="<?php esc_attr_e('Bookmark this job', 'careernest'); ?>"
+                                                aria-label="<?php esc_attr_e('Bookmark this job', 'careernest'); ?>">
+                                                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path
+                                                        d="M16.1269 3.04559C17.1353 3.16292 17.875 4.03284 17.875 5.0485V19.2504L11 15.8129L4.125 19.2504V5.0485C4.125 4.03284 4.86383 3.16292 5.87308 3.04559C9.27959 2.65017 12.7204 2.65017 16.1269 3.04559Z"
+                                                        stroke="#636363" stroke-width="1.5" stroke-linecap="round"
+                                                        stroke-linejoin="round"></path>
+                                                </svg>
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
 
                                     <div class="cn-job-card-meta">

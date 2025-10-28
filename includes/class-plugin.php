@@ -776,6 +776,16 @@ class Plugin
             );
         }
 
+        // Check if we're on single job listing page
+        if (is_singular('job_listing')) {
+            wp_enqueue_style(
+                'careernest-single-job-listing',
+                CAREERNEST_URL . 'assets/css/single-job_listing.css',
+                [],
+                CAREERNEST_VERSION
+            );
+        }
+
         // Check if we're on the login or forgot password page
         $login_page_id = isset($pages['login']) ? (int) $pages['login'] : 0;
         $forgot_password_id = isset($pages['forgot-password']) ? (int) $pages['forgot-password'] : 0;
