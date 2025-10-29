@@ -23,6 +23,9 @@ class Import_Export
         add_action('admin_post_cn_download_job_template', [$this, 'download_job_template']);
         add_action('admin_post_cn_export_jobs', [$this, 'export_jobs']);
         add_action('admin_post_cn_import_jobs', [$this, 'import_jobs']);
+        add_action('admin_post_cn_download_employer_template', [$this, 'download_employer_template']);
+        add_action('admin_post_cn_export_employers', [$this, 'export_employers']);
+        add_action('admin_post_cn_import_employers', [$this, 'import_employers']);
         add_action('wp_ajax_cn_get_employer_team', [$this, 'ajax_get_employer_team']);
     }
 
@@ -268,11 +271,74 @@ class Import_Export
                     </div>
                 </div>
 
-                <!-- Future: Employers Section -->
-                <div class="cn-ie-section" style="opacity: 0.5;">
-                    <h2><?php echo esc_html__('Employers (Coming Soon)', 'careernest'); ?></h2>
-                    <p><?php echo esc_html__('Employer import/export functionality will be available in a future update.', 'careernest'); ?>
-                    </p>
+                <!-- Employers Section -->
+                <div class="cn-ie-section">
+                    <h2><?php echo esc_html__('Employers', 'careernest'); ?></h2>
+
+                    <!-- Download Template -->
+                    <div class="cn-ie-card">
+                        <h3><?php echo esc_html__('1. Download CSV Template', 'careernest'); ?></h3>
+                        <p><?php echo esc_html__('Download the CSV template to see the required format for importing employers.', 'careernest'); ?>
+                        </p>
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                            <?php wp_nonce_field('cn_download_employer_template', 'cn_employer_template_nonce'); ?>
+                            <input type="hidden" name="action" value="cn_download_employer_template">
+                            <button type="submit" class="button button-secondary">
+                                <?php echo esc_html__('Download Employer Template', 'careernest'); ?>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Export Employers -->
+                    <div class="cn-ie-card">
+                        <h3><?php echo esc_html__('2. Export Existing Employers', 'careernest'); ?></h3>
+                        <p><?php echo esc_html__('Export all published employers to a CSV file.', 'careernest'); ?></p>
+                        <?php
+                        $employer_count = wp_count_posts('employer');
+                        $published_employers = $employer_count->publish;
+                        ?>
+                        <p><strong><?php echo sprintf(__('%d published employers available for export', 'careernest'), $published_employers); ?></strong>
+                        </p>
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                            <?php wp_nonce_field('cn_export_employers', 'cn_export_employers_nonce'); ?>
+                            <input type="hidden" name="action" value="cn_export_employers">
+                            <button type="submit" class="button button-secondary"
+                                <?php echo $published_employers == 0 ? 'disabled' : ''; ?>>
+                                <?php echo esc_html__('Export Employers to CSV', 'careernest'); ?>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Import Employers -->
+                    <div class="cn-ie-card">
+                        <h3><?php echo esc_html__('3. Import Employers from CSV', 'careernest'); ?></h3>
+                        <p><?php echo esc_html__('Upload a CSV file to bulk import employers. All employers in the file will be assigned the selected status.', 'careernest'); ?>
+                        </p>
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
+                            enctype="multipart/form-data">
+                            <?php wp_nonce_field('cn_import_employers', 'cn_import_employers_nonce'); ?>
+                            <input type="hidden" name="action" value="cn_import_employers">
+
+                            <p>
+                                <label
+                                    for="import_employer_status"><strong><?php echo esc_html__('Employer Status', 'careernest'); ?></strong></label><br>
+                                <select name="import_employer_status" id="import_employer_status" required style="min-width: 300px;">
+                                    <option value="publish"><?php echo esc_html__('Published', 'careernest'); ?></option>
+                                    <option value="draft"><?php echo esc_html__('Draft', 'careernest'); ?></option>
+                                </select>
+                            </p>
+
+                            <p>
+                                <label
+                                    for="import_employer_file"><strong><?php echo esc_html__('CSV File', 'careernest'); ?></strong></label><br>
+                                <input type="file" name="import_employer_file" id="import_employer_file" accept=".csv" required>
+                            </p>
+
+                            <button type="submit" class="button button-primary">
+                                <?php echo esc_html__('Import Employers', 'careernest'); ?>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -655,6 +721,302 @@ class Import_Export
 
         // Redirect with success message
         $message = sprintf(__('%d job(s) imported successfully.', 'careernest'), $imported);
+        if (!empty($errors)) {
+            $message .= ' ' . sprintf(__('%d error(s) occurred.', 'careernest'), count($errors));
+        }
+
+        wp_redirect(add_query_arg([
+            'page' => 'careernest-import-export',
+            'message' => urlencode($message)
+        ], admin_url('admin.php')));
+        exit;
+    }
+
+    /**
+     * Download employer CSV template
+     */
+    public function download_employer_template(): void
+    {
+        if (!current_user_can('manage_careernest')) {
+            wp_die(__('Access denied.', 'careernest'));
+        }
+
+        check_admin_referer('cn_download_employer_template', 'cn_employer_template_nonce');
+
+        // Set headers for CSV download
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=employer-import-template.csv');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Open output stream
+        $output = fopen('php://output', 'w');
+
+        // CSV Headers - based on employer meta fields from class-meta-boxes.php
+        $headers = [
+            'company_name',
+            'website',
+            'tagline',
+            'location',
+            'company_size',
+            'industry_description',
+            'specialities',
+            'founded_year',
+            'about',
+            'mission',
+            'spotlight',
+            'interested_in_working'
+        ];
+
+        fputcsv($output, $headers);
+
+        // Example row
+        $example = [
+            'Acme Corporation',
+            'https://www.acme.com',
+            'Building careers that matter',
+            'Toronto, ON',
+            '51-200',
+            'We focus on technology solutions for healthcare and financial services.',
+            'Healthcare, FinTech, Cloud Solutions',
+            '2010',
+            'We are a fast-growing tech company focused on innovation and making a difference in people\'s lives...',
+            'Our mission is to empower businesses through cutting-edge technology and exceptional service...',
+            'Join a team of passionate professionals working on challenging projects with real-world impact...',
+            'We\'re always looking for talented individuals. Submit your resume through our careers page.'
+        ];
+
+        fputcsv($output, $example);
+
+        fclose($output);
+        exit;
+    }
+
+    /**
+     * Export employers to CSV
+     */
+    public function export_employers(): void
+    {
+        if (!current_user_can('manage_careernest')) {
+            wp_die(__('Access denied.', 'careernest'));
+        }
+
+        check_admin_referer('cn_export_employers', 'cn_export_employers_nonce');
+
+        // Get all published employers
+        $employers = get_posts([
+            'post_type' => 'employer',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC'
+        ]);
+
+        if (empty($employers)) {
+            wp_redirect(add_query_arg([
+                'page' => 'careernest-import-export',
+                'error' => urlencode('No employers found to export.')
+            ], admin_url('admin.php')));
+            exit;
+        }
+
+        // Set headers for CSV download
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=employers-export-' . date('Y-m-d') . '.csv');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        // Open output stream
+        $output = fopen('php://output', 'w');
+
+        // CSV Headers
+        $headers = [
+            'employer_id',
+            'company_name',
+            'website',
+            'tagline',
+            'location',
+            'company_size',
+            'industry_description',
+            'specialities',
+            'founded_year',
+            'about',
+            'mission',
+            'spotlight',
+            'interested_in_working',
+            'employer_status'
+        ];
+
+        fputcsv($output, $headers);
+
+        // Export each employer
+        foreach ($employers as $employer) {
+            $row = [
+                $employer->ID,
+                $employer->post_title,
+                get_post_meta($employer->ID, '_website', true),
+                get_post_meta($employer->ID, '_tagline', true),
+                get_post_meta($employer->ID, '_location', true),
+                get_post_meta($employer->ID, '_company_size', true),
+                wp_strip_all_tags(get_post_meta($employer->ID, '_industry_description', true)),
+                get_post_meta($employer->ID, '_specialities', true),
+                get_post_meta($employer->ID, '_founded_year', true),
+                wp_strip_all_tags(get_post_meta($employer->ID, '_about', true)),
+                wp_strip_all_tags(get_post_meta($employer->ID, '_mission', true)),
+                wp_strip_all_tags(get_post_meta($employer->ID, '_spotlight', true)),
+                wp_strip_all_tags(get_post_meta($employer->ID, '_interested_in_working', true)),
+                $employer->post_status
+            ];
+
+            fputcsv($output, $row);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
+     * Import employers from CSV
+     */
+    public function import_employers(): void
+    {
+        if (!current_user_can('manage_careernest')) {
+            wp_die(__('Access denied.', 'careernest'));
+        }
+
+        check_admin_referer('cn_import_employers', 'cn_import_employers_nonce');
+
+        // Check if file was uploaded
+        if (!isset($_FILES['import_employer_file']) || $_FILES['import_employer_file']['error'] !== UPLOAD_ERR_OK) {
+            wp_redirect(add_query_arg([
+                'page' => 'careernest-import-export',
+                'error' => urlencode('Please select a CSV file to import.')
+            ], admin_url('admin.php')));
+            exit;
+        }
+
+        $file = $_FILES['import_employer_file'];
+
+        // Validate file type
+        $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if ($file_ext !== 'csv') {
+            wp_redirect(add_query_arg([
+                'page' => 'careernest-import-export',
+                'error' => urlencode('Invalid file type. Please upload a CSV file.')
+            ], admin_url('admin.php')));
+            exit;
+        }
+
+        // Process CSV
+        $handle = fopen($file['tmp_name'], 'r');
+        if ($handle === false) {
+            wp_redirect(add_query_arg([
+                'page' => 'careernest-import-export',
+                'error' => urlencode('Failed to read CSV file.')
+            ], admin_url('admin.php')));
+            exit;
+        }
+
+        $headers = fgetcsv($handle);
+        $imported = 0;
+        $errors = [];
+
+        while (($data = fgetcsv($handle)) !== false) {
+            // Skip empty rows
+            if (empty(array_filter($data))) {
+                continue;
+            }
+
+            // Map CSV columns to array
+            $employer_data = array_combine($headers, $data);
+
+            // Validate required fields
+            if (empty($employer_data['company_name'])) {
+                $errors[] = 'Row skipped: Missing company name';
+                continue;
+            }
+
+            // Get employer status from form dropdown
+            $employer_status = isset($_POST['import_employer_status']) ? sanitize_text_field($_POST['import_employer_status']) : 'publish';
+
+            // Create employer post
+            $post_data = [
+                'post_type' => 'employer',
+                'post_title' => sanitize_text_field($employer_data['company_name']),
+                'post_status' => $employer_status,
+                'post_author' => get_current_user_id()
+            ];
+
+            $employer_id = wp_insert_post($post_data);
+
+            if (is_wp_error($employer_id)) {
+                $errors[] = 'Failed to create employer: ' . $employer_data['company_name'];
+                continue;
+            }
+
+            // Save meta fields
+            if (!empty($employer_data['website'])) {
+                $website = esc_url_raw($employer_data['website']);
+                if ($website) {
+                    update_post_meta($employer_id, '_website', $website);
+                }
+            }
+
+            if (!empty($employer_data['tagline'])) {
+                update_post_meta($employer_id, '_tagline', sanitize_text_field($employer_data['tagline']));
+            }
+
+            if (!empty($employer_data['location'])) {
+                update_post_meta($employer_id, '_location', sanitize_text_field($employer_data['location']));
+            }
+
+            // Company size validation
+            $allowed_sizes = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'];
+            if (!empty($employer_data['company_size']) && in_array($employer_data['company_size'], $allowed_sizes, true)) {
+                update_post_meta($employer_id, '_company_size', sanitize_text_field($employer_data['company_size']));
+            }
+
+            if (!empty($employer_data['industry_description'])) {
+                update_post_meta($employer_id, '_industry_description', wp_kses_post($employer_data['industry_description']));
+            }
+
+            if (!empty($employer_data['specialities'])) {
+                update_post_meta($employer_id, '_specialities', sanitize_text_field($employer_data['specialities']));
+            }
+
+            // Founded year validation
+            if (!empty($employer_data['founded_year'])) {
+                $year = absint($employer_data['founded_year']);
+                $current_year = (int) gmdate('Y');
+                if ($year >= 1800 && $year <= $current_year) {
+                    update_post_meta($employer_id, '_founded_year', (string) $year);
+                }
+            }
+
+            // Rich text content fields
+            if (!empty($employer_data['about'])) {
+                update_post_meta($employer_id, '_about', wp_kses_post($employer_data['about']));
+            }
+
+            if (!empty($employer_data['mission'])) {
+                update_post_meta($employer_id, '_mission', wp_kses_post($employer_data['mission']));
+            }
+
+            if (!empty($employer_data['spotlight'])) {
+                update_post_meta($employer_id, '_spotlight', wp_kses_post($employer_data['spotlight']));
+            }
+
+            if (!empty($employer_data['interested_in_working'])) {
+                update_post_meta($employer_id, '_interested_in_working', wp_kses_post($employer_data['interested_in_working']));
+            }
+
+            $imported++;
+        }
+
+        fclose($handle);
+
+        // Redirect with success message
+        $message = sprintf(__('%d employer(s) imported successfully.', 'careernest'), $imported);
         if (!empty($errors)) {
             $message .= ' ' . sprintf(__('%d error(s) occurred.', 'careernest'), count($errors));
         }
