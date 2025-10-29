@@ -780,10 +780,10 @@ class Import_Export
             'We focus on technology solutions for healthcare and financial services.',
             'Healthcare, FinTech, Cloud Solutions',
             '2010',
-            'We are a fast-growing tech company focused on innovation and making a difference in people\'s lives...',
+            'We are a fast-growing tech company focused on innovation and making a difference in people's lives...',
             'Our mission is to empower businesses through cutting-edge technology and exceptional service...',
             'Join a team of passionate professionals working on challenging projects with real-world impact...',
-            'We\'re always looking for talented individuals. Submit your resume through our careers page.'
+            'We're always looking for talented individuals. Submit your resume through our careers page.'
         ];
 
         fputcsv($output, $example);
@@ -924,6 +924,12 @@ class Import_Export
         while (($data = fgetcsv($handle)) !== false) {
             // Skip empty rows
             if (empty(array_filter($data))) {
+                continue;
+            }
+
+            // Validate arrays have matching lengths before combining
+            if (count($headers) !== count($data)) {
+                $errors[] = 'Row skipped: Column count mismatch';
                 continue;
             }
 
